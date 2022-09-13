@@ -44,7 +44,7 @@ async fn main() -> mongodb::error::Result<()> {
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(8052);
-    let ip_address = SocketAddr::from(([127, 0, 0, 1], port));
+    let ip_address = SocketAddr::from(([0, 0, 0, 0], port));
     println!("Ignition started on http://{}", &ip_address);
     //launch the server
     axum::Server::bind(&ip_address)
