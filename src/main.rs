@@ -1,12 +1,14 @@
 use axum::{
+    http::StatusCode,
     routing::{get, get_service},
     Router,
-     http::StatusCode,
 };
+use sqlx::postgres::{PgPool, PgPoolOptions};
+use std::env;
 use std::{net::SocketAddr, path::PathBuf};
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
-use std::env;
+
 //local modules
 mod config;
 mod controllers;
@@ -14,7 +16,10 @@ mod routes;
 mod shared;
 
 #[tokio::main]
-async fn main() -> mongodb::error::Result<()> {
+async fn main() {
+    //try connecting to the database
+    let database_connection_string = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|| "postgres://opeolluwa:thunderstorm@localhost/nitride");
     //static file mounting
     let assets_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("views");
     let static_files_service = get_service(
@@ -51,6 +56,4 @@ async fn main() -> mongodb::error::Result<()> {
         .serve(app.into_make_service())
         .await
         .unwrap();
-
-    Ok(())
 }
