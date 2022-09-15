@@ -7,16 +7,17 @@ description = "TNitride"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.65"
 axum = "0.5.15"
 bcrypt = "0.13.0"
 dotenv = "0.15.0"
 futures = "0.3.23"
 jsonwebtoken = "8.1.1"
-mongodb = "2.3.0"
 serde = { version = "1.0.144", features = ["derive"] }
 serde_json = "1.0.85"
 sqlx = { version = "0.6.2", features = ["runtime-tokio-rustls", "postgres", "any"] }
 tokio = { version = "1.20.1", features = ["full"] }
 tower-http = { version = "0.3.4", features = ["cors","fs", "trace"] }
+uuid = "1.1.2"
 validator = { version = "0.16.0", features = ["derive"] }
 

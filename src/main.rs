@@ -1,25 +1,36 @@
-use axum::{
-    http::StatusCode,
-    routing::{get, get_service},
-    Router,
-};
-use sqlx::postgres::{PgPool, PgPoolOptions};
-use std::env;
-use std::{net::SocketAddr, path::PathBuf};
+use anyhow::Context;
+use axum::{http::StatusCode, routing::get_service, Router};
+use sqlx::postgres::PgPoolOptions;
+use std::{env, net::SocketAddr, path::PathBuf};
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 
 //local modules
-mod config;
+// mod config;
 mod controllers;
 mod routes;
 mod shared;
+mod models;
 
 #[tokio::main]
 async fn main() {
-    //try connecting to the database
+    //try parsing database connection string
     let database_connection_string = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|| "postgres://opeolluwa:thunderstorm@localhost/nitride");
+        .unwrap_or_else(|_| String::from("postgres://opeolluwa:thunderstorm@localhost/nitride"));
+
+    //database connection pool
+    let database = PgPoolOptions::new()
+        .max_connections(5)
+        // .connect_timeout(Duration::from_secs(4))
+        .connect(&database_connection_string)
+        .await
+        .expect("Could not connect to database ");
+    println!("Successfully connected to database");
+
+    // This embeds database migrations in the application binary so we can ensure the database
+    // is migrated correctly on startup
+    // sqlx::migrate!().run(&database).await.unwrap();
+
     //static file mounting
     let assets_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("views");
     let static_files_service = get_service(
@@ -32,17 +43,12 @@ async fn main() {
         )
     });
 
-    //connect to database
-    // config::database::mongodb().await;
-    println!("Successfully connected to database");
-
     //initialize cors layer
     let cors = CorsLayer::new().allow_origin(Any);
     //mount the app routes
     let app = Router::new()
         .fallback(static_files_service)
-        .nest("/v1/", routes::root::router())
-        // .route("/", get(|| async { "nitride" }))
+        .nest("/api/v1/", routes::root::router())
         .layer(cors);
     //mount the server to an ip address
     let port = env::var("PORT")
@@ -56,4 +62,6 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
+
+
 }
