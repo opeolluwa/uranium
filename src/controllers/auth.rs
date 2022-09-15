@@ -1,4 +1,4 @@
-use crate::models::users::{ UserInformation};
+use crate::models::users::UserInformation;
 use crate::shared::{jwt_schema::JwtSchema, user_schema::User};
 use axum::{http::StatusCode, response::IntoResponse, Json};
 use bcrypt::{hash, verify};
@@ -24,13 +24,19 @@ pub async fn sign_up(Json(payload): Json<UserInformation>) -> impl IntoResponse 
 
 ///login a new user
 pub async fn login(Json(payload): Json<UserInformation>) -> impl IntoResponse {
+    //destructure the payload
+    let UserInformation {
+        email, password, ..
+    } = payload;
+
+    //validate username and password 
     todo!();
 }
 
 ///reset user password
 pub async fn reset_password(Json(payload): Json<UserInformation>) -> impl IntoResponse {
     //destructure the request body
-   todo!()
+    todo!()
 }
 
 //get the user profile
