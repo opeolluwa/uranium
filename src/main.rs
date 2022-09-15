@@ -33,7 +33,7 @@ async fn main() {
 
     //static file mounting
     let assets_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("views");
-    let static_files_service = get_service(
+    let static_files_service  = get_service(
         ServeDir::new(assets_dir).append_index_html_on_directories(true),
     )
     .handle_error(|error: std::io::Error| async move {
