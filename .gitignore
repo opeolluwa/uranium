@@ -16,3 +16,5 @@ Cargo.lock
 
 #add env to git ignore
 .env
+
+nitride.conf
