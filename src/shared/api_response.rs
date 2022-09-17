@@ -1,28 +1,22 @@
 use serde::{Deserialize, Serialize};
-
+/// the API response is supposed to be an enum of two variants
+/// ApiResponse::Success<D:Data> and ApiResponse::Error<E:Error>
+///
+/// ApiResponse::Success is a generic datatype that will return data if any
+/// ApiResponse::Error is also a generic datatype that returns error with an optional error detail if any
+///
+/// however the two types has been merged into one type  ApiResponse<Data, Error> 
+///Api Response definition
+/// 
+/// #Example
+/// use crate::ApiResponse
+/// let success :ApiResponse<Data, _>
+/// let error : ApiResponse<_, Error>
+/// let neither_data_nor_error : ApiResponse<_,_>
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ApiResponse<D> {
+pub struct ApiResponse<Data, Error> {
     pub success: bool,
     pub message: String,
-    pub data: Option<D>,
-    pub error: Option<D>,
-    #[serde(rename = "statusCode")]
-    pub status_code: Option<u32>,
+    pub data: Option<Data>,
+    pub error: Option<Error>,
 }
-
-//response builder
-// impl<D: Copy> ApiResponse<D> {
-//     //success response
-//     pub fn success(&self) -> Self {
-//         ApiResponse::<D> {
-//             success: self.success,
-//             message: self.message.clone(),
-//             data: self.data,
-//             error: None,
-//             status_code: None,
-//         }
-//     }
-
-//     //error response builder
-//     // pub fn error(&self) -> Self {}
-// }

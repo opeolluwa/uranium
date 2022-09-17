@@ -1,13 +1,16 @@
 use crate::models::users::UserInformation;
-// use crate::shared::api_response::{Error as ErrorResponse, Success as SuccessResponse};
+use crate::shared::api_response::ApiResponse;
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
 use axum::Extension;
-use axum::{/* http::StatusCode, */ response::IntoResponse, Json};
+use axum::Json;
+use sqlx::PgPool;
+
 // use futures::FutureExt;
 // use bcrypt::{hash, verify};
 // use jsonwebtoken::{encode, EncodingKey, Header};
 // use serde_json::json;
 // use sqlx::postgres::PgRow;
-use sqlx::PgPool;
 // use std::env;
 // use validator::Validate;
 
@@ -43,20 +46,46 @@ pub async fn login(
     } = payload;
 
     println!("inside login route controller");
-    println!("email{} , password {}", &email, &password);
-    //TODO: validate email and password
 
-    //fetch the user information
+    /*
+     * validate the password and the email
+     * if either is missing send error response
+     */
+    if email == None || password == None {
+        let response: ApiResponse<_, _> = ApiResponse::<_, _> {
+            success: true,
+            message: String::from("missing email or password "),
+            data: None,
+            error: None,
+        };
+        return (StatusCode::BAD_REQUEST, Json(response));
+    }
+
+    /*
+     * if both email and password is provided ,
+     * fetch the user information
+     * if none if found send error else confirm the user password
+     * if correct password, return jwt
+     */
     let user_information =
         sqlx::query_as::<_, UserInformation>("SELECT * FROM user_information WHERE email = $1")
-            .bind(email.trim())
+            .bind(Some(email))
             .fetch_one(&database)
             .await
             .unwrap();
 
+    //move query result to a new variable
+    let user: UserInformation = user_information;
+    //build up response
+    let response: ApiResponse<UserInformation, _> = ApiResponse::<UserInformation, _> {
+        success: true,
+        message: String::from("user successfully retrieved"),
+        data: Some(user),
+        error: None::<UserInformation>,
+    };
 
-
-    println!("{:#?}", &user_information);
+    //return the user data
+    (StatusCode::OK, Json(response))
 }
 
 ///reset user password
