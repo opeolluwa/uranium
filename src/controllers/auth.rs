@@ -1,14 +1,18 @@
+use crate::models::users::UserAuthCredentials;
 use crate::models::users::UserInformation;
 use crate::shared::api_response::ApiResponse;
+use crate::shared::jwt_schema::JwtPayload;
+use crate::shared::jwt_schema::JwtSchema;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Extension;
 use axum::Json;
+use jsonwebtoken::{encode, EncodingKey, Header};
 use sqlx::PgPool;
+use std::env;
 
 // use futures::FutureExt;
 // use bcrypt::{hash, verify};
-// use jsonwebtoken::{encode, EncodingKey, Header};
 // use serde_json::json;
 // use sqlx::postgres::PgRow;
 // use std::env;
@@ -37,21 +41,18 @@ pub async fn sign_up(Json(_payload): Json<UserInformation>) -> impl IntoResponse
 /// return result or error
 /// Result<(StatusCode, Json<SuccessResponse<UserInformation>>), ErrorResponse<String>>
 pub async fn login(
-    Json(payload): Json<UserInformation>,
+    Json(payload): Json<UserAuthCredentials>,
     Extension(database): Extension<PgPool>,
 ) -> impl IntoResponse {
     //destructure the payload to fetch user details
-    let UserInformation {
-        email, password, ..
-    } = payload;
-
+    let UserAuthCredentials { email, password } = payload;
     println!("inside login route controller");
 
     /*
      * validate the password and the email
      * if either is missing send error response
      */
-    if email == None || password == None {
+    if email.is_empty() || password.is_empty() {
         let response: ApiResponse<_, _> = ApiResponse::<_, _> {
             success: true,
             message: String::from("missing email or password "),
@@ -76,12 +77,37 @@ pub async fn login(
 
     //move query result to a new variable
     let user: UserInformation = user_information;
+    let UserInformation {
+        email,
+        fullname,
+        username,
+        ..
+    } = user;
+    //:encrypt the user data
+    let jwt_payload = JwtSchema {
+        id: String::from("c1961edd-6558-58f1-b56c-7931b93386a4"),
+        email,
+        fullname,
+        username,
+    };
+    let jwt_secret = env::var("JWT_SECRET")
+        .unwrap_or("Ux6qlTEMdT0gSLq9GHp812R9XP3KSGSWcyrPpAypsTpRHxvLqYkeYNYfRZjL9".to_string());
+    let token = encode(
+        &Header::default(),
+        &jwt_payload,
+        &EncodingKey::from_secret(jwt_secret.as_bytes()),
+    )
+    .unwrap();
+
     //build up response
-    let response: ApiResponse<UserInformation, _> = ApiResponse::<UserInformation, _> {
+    let response: ApiResponse<JwtPayload, _> = ApiResponse::<JwtPayload, _> {
         success: true,
         message: String::from("user successfully retrieved"),
-        data: Some(user),
-        error: None::<UserInformation>,
+        data: Some(JwtPayload {
+            token,
+            token_type: String::from("Bearer"),
+        }),
+        error: None::<String>,
     };
 
     //return the user data
