@@ -18,6 +18,7 @@ serde_json = "1.0.85"
 sqlx = { version = "0.6.2", features = ["runtime-tokio-rustls", "postgres", "any"] }
 tokio = { version = "1.20.1", features = ["full"] }
 tower-http = { version = "0.3.4", features = ["cors","fs", "trace"] }
+tracing = "0.1.36"
 uuid = "1.1.2"
 validator = { version = "0.16.0", features = ["derive"] }
 

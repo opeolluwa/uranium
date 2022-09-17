@@ -6,6 +6,7 @@ pub struct JwtSchema {
     pub email: String,
     pub fullname: String,
     pub username: String,
+    pub exp: usize,
 }
 
 ///Define jwt payload

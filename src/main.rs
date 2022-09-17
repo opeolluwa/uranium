@@ -53,7 +53,7 @@ async fn main() {
     //mount the app routes and middleware
     let app = Router::new()
         .fallback(static_files_service)
-        .route("/api/auth", post(controllers::auth::login))
+        // .route("/api/auth", post(controllers::auth::login))
         .nest("/api/v1/", routes::root::router())
         .layer(cors)
         .layer(Extension(database));

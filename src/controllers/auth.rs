@@ -75,6 +75,7 @@ pub async fn login(
             .await
             .unwrap();
 
+
     //move query result to a new variable
     let user: UserInformation = user_information;
     let UserInformation {
@@ -83,12 +84,15 @@ pub async fn login(
         username,
         ..
     } = user;
+
+
     //:encrypt the user data
     let jwt_payload = JwtSchema {
         id: String::from("c1961edd-6558-58f1-b56c-7931b93386a4"),
         email,
         fullname,
         username,
+        exp: 2000000000, //may 2023
     };
     let jwt_secret = env::var("JWT_SECRET")
         .unwrap_or("Ux6qlTEMdT0gSLq9GHp812R9XP3KSGSWcyrPpAypsTpRHxvLqYkeYNYfRZjL9".to_string());
