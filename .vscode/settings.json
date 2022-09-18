@@ -3,6 +3,7 @@
     "cSpell.words": [
         "bson",
         "dotenv",
+        "jsonwebtoken",
         "sqlx"
     ]
 }

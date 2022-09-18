@@ -1,5 +1,3 @@
-use axum::routing::post;
-// use anyhow::Context;
 use axum::{extract::Extension, http::StatusCode, routing::get_service, Router};
 use sqlx::postgres::PgPoolOptions;
 use std::{env, net::SocketAddr, path::PathBuf};
@@ -27,10 +25,10 @@ async fn main() {
         .await
         .expect("Could not connect to database ");
     println!("Successfully connected to database");
-
-    // This embeds database migrations in the application binary so we can ensure the database
+ //execute migration
+     // This embeds database migrations in the application binary so we can ensure the database
     // is migrated correctly on startup
-    // sqlx::migrate!().run(&database).await.unwrap();
+    // sqlx::migrate!().run(&database).await.expect("already exec db migrations");
 
     //static file mounting
     let assets_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("views");

@@ -7,6 +7,7 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Extension;
 use axum::Json;
+use jsonwebtoken::Algorithm;
 use jsonwebtoken::{encode, EncodingKey, Header};
 use sqlx::PgPool;
 use std::env;
@@ -75,29 +76,33 @@ pub async fn login(
             .await
             .unwrap();
 
-
     //move query result to a new variable
     let user: UserInformation = user_information;
     let UserInformation {
+        id,
         email,
         fullname,
-        username,
         ..
     } = user;
-
-
+    
     //:encrypt the user data
     let jwt_payload = JwtSchema {
-        id: String::from("c1961edd-6558-58f1-b56c-7931b93386a4"),
+        id: id.to_string(),
         email,
         fullname,
-        username,
         exp: 2000000000, //may 2023
     };
-    let jwt_secret = env::var("JWT_SECRET")
-        .unwrap_or("Ux6qlTEMdT0gSLq9GHp812R9XP3KSGSWcyrPpAypsTpRHxvLqYkeYNYfRZjL9".to_string());
+    let jwt_secret = env::var("JWT_SECRET").unwrap_or(String::from(
+        "Ux6qlTEMdT0gSLq9GHp812R9XP3KSGSWcyrPpAypsTpRHxvLqYkeYNYfRZjL9",
+    ));
+    //use a custom header
+    let jwt_header = Header {
+        alg: Algorithm::HS512,
+        ..Default::default()
+    };
+    //build u the jwt token
     let token = encode(
-        &Header::default(),
+        &jwt_header,
         &jwt_payload,
         &EncodingKey::from_secret(jwt_secret.as_bytes()),
     )

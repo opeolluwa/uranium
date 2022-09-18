@@ -5,15 +5,16 @@ use serde::{Deserialize, Serialize};
 /// ApiResponse::Success is a generic datatype that will return data if any
 /// ApiResponse::Error is also a generic datatype that returns error with an optional error detail if any
 ///
-/// however the two types has been merged into one type  ApiResponse<Data, Error> 
+/// however the two types has been merged into one type  ApiResponse<Data, Error>
 ///Api Response definition
-/// 
+///
 /// #Example
 /// use crate::ApiResponse
 /// let success :ApiResponse<Data, _>
 /// let error : ApiResponse<_, Error>
 /// let neither_data_nor_error : ApiResponse<_,_>
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ApiResponse<Data, Error> {
     pub success: bool,
     pub message: String,
