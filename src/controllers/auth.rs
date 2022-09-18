@@ -7,13 +7,14 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Extension;
 use axum::Json;
+use bcrypt::verify;
+use bcrypt::BcryptError;
 use jsonwebtoken::Algorithm;
 use jsonwebtoken::{encode, EncodingKey, Header};
 use sqlx::PgPool;
 use std::env;
 
 // use futures::FutureExt;
-// use bcrypt::{hash, verify};
 // use serde_json::json;
 // use sqlx::postgres::PgRow;
 // use std::env;
@@ -82,9 +83,49 @@ pub async fn login(
         id,
         email,
         fullname,
+        password: hashed_password,
         ..
     } = user;
-    
+
+    // check password for correctness
+    let is_correct_password = verify(password, &hashed_password);
+    match is_correct_password {
+        Ok(result) => {
+            if result == false {
+                //build up response
+                let response: ApiResponse<_, String> = ApiResponse::<_, String> {
+                    success: true,
+                    message: String::from("incorrect password"),
+                    data: None,
+                    error: None::<String>,
+                };
+                return (StatusCode::UNAUTHORIZED, Json(response));
+            }
+        }
+        Err(error) => {
+            //build up response
+            let response: ApiResponse<_, String> = ApiResponse::<_, String> {
+                success: false,
+                message: String::from("incorrect password"),
+                data: None,
+                error: Some(BcryptError::InvalidCost(error.to_string()).to_string()),
+            };
+            // println!("{:?}", response);
+            return (StatusCode::UNAUTHORIZED, Json(response));
+        }
+    }
+    /*  if is_correct_password == false {
+        //build up response
+        let response: ApiResponse<_, String> = ApiResponse::<_, String> {
+            success: true,
+            message: String::from("incorrect password"),
+            data: None,
+            error: None::<String>,
+        };
+
+        //return incorrect password error
+        return (StatusCode::UNAUTHORIZED, Json(response));
+    } */
     //:encrypt the user data
     let jwt_payload = JwtSchema {
         id: id.to_string(),
