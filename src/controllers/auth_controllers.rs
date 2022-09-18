@@ -114,18 +114,7 @@ pub async fn login(
             return (StatusCode::UNAUTHORIZED, Json(response));
         }
     }
-    /*  if is_correct_password == false {
-        //build up response
-        let response: ApiResponse<_, String> = ApiResponse::<_, String> {
-            success: true,
-            message: String::from("incorrect password"),
-            data: None,
-            error: None::<String>,
-        };
-
-        //return incorrect password error
-        return (StatusCode::UNAUTHORIZED, Json(response));
-    } */
+ 
     //:encrypt the user data
     let jwt_payload = JwtSchema {
         id: id.to_string(),
