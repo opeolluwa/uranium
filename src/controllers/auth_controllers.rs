@@ -114,7 +114,7 @@ pub async fn login(
             return (StatusCode::UNAUTHORIZED, Json(response));
         }
     }
- 
+
     //:encrypt the user data
     let jwt_payload = JwtSchema {
         id: id.to_string(),

@@ -2,9 +2,17 @@ use std::env;
 use std::net::SocketAddr;
 
 fn main() {
+
     /*
      * if you can read the environment variable value for PORt from the .env
      * parse the read value into the variable value_from_env els use 8405
+     *  <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
+                            You recently requested to reset your password for your
+                            {{$data['product']}} account. Use the button below to
+                            reset it. <strong style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box;">This
+                              password reset is only valid for the next 24
+                              hours.</strong>
+                          </p>
      */
     let port = env::var("PORT")
         .ok()

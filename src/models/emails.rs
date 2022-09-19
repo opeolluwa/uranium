@@ -1,6 +1,5 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-
 
 ///the email will be stored as a struct having `id` and a nested `context` types
 /// the `id ` is essentially a uuid and the context is a json
@@ -17,11 +16,11 @@ pub struct EmailSchema {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EmailContext {
     /// the sender fullname
-    pub fullname: Option<String>,
+    pub fullname: String,
     /// the sender or recipient email address
-    pub email: Option<String>,
+    pub email: String,
     ///the email subject
-    pub subject: Option<String>,
+    pub subject: String,
     /// the message content
-    pub message: Option<String>,
+    pub message: String,
 }

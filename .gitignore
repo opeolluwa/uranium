@@ -18,3 +18,7 @@ Cargo.lock
 .env
 
 nitride.conf
+
+#ignore binary files in the sandbox
+sandbox/*
+!sandbox/*.rs

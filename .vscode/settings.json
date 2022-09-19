@@ -2,9 +2,11 @@
     "workbench.colorCustomizations": {},
     "cSpell.words": [
         "bson",
+        "chrono",
         "dotenv",
         "jsonwebtoken",
         "lettre",
+        "singlepart",
         "sqlx"
     ]
 }
