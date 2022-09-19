@@ -4,6 +4,7 @@
         "bson",
         "dotenv",
         "jsonwebtoken",
+        "lettre",
         "sqlx"
     ]
 }

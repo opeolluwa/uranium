@@ -1,4 +1,5 @@
 use axum::{extract::Extension, http::StatusCode, routing::get_service, Router};
+use dotenv::dotenv;
 use sqlx::postgres::PgPoolOptions;
 use std::{env, net::SocketAddr, path::PathBuf};
 use tower_http::cors::{Any, CorsLayer};
@@ -13,9 +14,11 @@ mod shared;
 
 #[tokio::main]
 async fn main() {
+    // parse the .env file in development
+    dotenv().ok();
     //try parsing database connection string
-    let database_connection_string = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| String::from("postgres://opeolluwa:thunderstorm@localhost/nitride"));
+    let database_connection_string =
+        env::var("DATABASE_URL").expect("database ulr env is not provided");
 
     //database connection pool
     let database = PgPoolOptions::new()
