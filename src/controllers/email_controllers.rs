@@ -4,6 +4,8 @@ use lettre::message::{header, MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
 use std::env;
+
+use crate::models::emails::EmailContext;
 ///send email
 /// receive the user email, subject, fullname and message
 /// call on lettre to dispatch the mail to the user
@@ -33,7 +35,7 @@ pub async fn send_email() -> impl IntoResponse {
         env::var("SMTP_USERNAME").expect("SMTP username not provided"),
         env::var("SMTP_PASSWORD").expect("SMTP password not provided"),
     );
- 
+
     // Open a remote connection to the smtp sever
     let mailer = SmtpTransport::relay(&env::var("SMTP_HOST").expect("SMTP host not provided"))
         .unwrap()
@@ -51,7 +53,54 @@ pub async fn send_email() -> impl IntoResponse {
 
 ///receive email being sent from the portfolio
 /// store it in the database
-pub async fn receive_email() -> impl IntoResponse {}
+pub async fn receive_email(Json(payload): Json<EmailContext>) -> impl IntoResponse {
+    //destructure the email fields from the payload
+    let EmailContext {
+        fullname,
+        email: from_email,
+        subject,
+        message,
+    } = payload;
+
+    let email = Message::builder()
+        .from("Nitride <opeolluwa@nitride.tld>".parse().unwrap())
+        .reply_to("Yuin <opeolluwa@gmail.com>".parse().unwrap())
+        .to("Hei <adefemiadeoye@yahoo.com>".parse().unwrap())
+        .subject(subject.expect("error parsing subject").to_string())
+        .multipart(
+            MultiPart::alternative() // This is composed of two parts.
+                .singlepart(
+                    SinglePart::builder()
+                        .header(header::ContentType::TEXT_PLAIN)
+                        .body(String::from("Hello from Lettre! A mailer library for Rust")), // Every message should have a plain text fallback.
+                )
+                .singlepart(
+                    SinglePart::builder()
+                        .header(header::ContentType::TEXT_HTML)
+                        .body(String::from(EMAIL_TEMPLATE)),
+                ),
+        )
+        .unwrap();
+
+    let credentials = Credentials::new(
+        env::var("SMTP_USERNAME").expect("SMTP username not provided"),
+        env::var("SMTP_PASSWORD").expect("SMTP password not provided"),
+    );
+
+    // Open a remote connection to the smtp sever
+    let mailer = SmtpTransport::relay(&env::var("SMTP_HOST").expect("SMTP host not provided"))
+        .unwrap()
+        .credentials(credentials)
+        .build();
+
+    // Send the email
+    let res = match mailer.send(&email) {
+        Ok(_) => format!("Email sent successfully!"),
+        Err(e) => format!("Could not send email: {:?}", e),
+    };
+
+    Json(res)
+}
 
 ///reply email
 /// receive only the user email and subject and message
