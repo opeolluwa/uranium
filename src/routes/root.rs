@@ -4,5 +4,5 @@ use axum::Router;
 pub fn router() -> axum::Router {
     Router::new()
         .nest("/auth", auth_routes::routes())
-        .nest("/email", email_routes::routes())
+        .nest("/emails", email_routes::routes())
 }

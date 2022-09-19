@@ -25,8 +25,8 @@ async fn main() {
         .await
         .expect("Could not connect to database ");
     println!("Successfully connected to database");
- //execute migration
-     // This embeds database migrations in the application binary so we can ensure the database
+    //execute migration
+    // This embeds database migrations in the application binary so we can ensure the database
     // is migrated correctly on startup
     // sqlx::migrate!().run(&database).await.expect("already exec db migrations");
 
@@ -51,7 +51,10 @@ async fn main() {
     //mount the app routes and middleware
     let app = Router::new()
         .fallback(static_files_service)
-        // .route("/api/auth", post(controllers::auth::login))
+        /* .route(
+            "/api/email/send",
+            axum::routing::post(controllers::email_controllers::send_email),
+        ) */
         .nest("/api/v1/", routes::root::router())
         .layer(cors)
         .layer(Extension(database));
