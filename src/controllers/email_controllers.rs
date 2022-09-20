@@ -89,9 +89,10 @@ pub async fn receive_email(Json(payload): Json<EmailContext>) -> impl IntoRespon
     let email_content = format!(
         r#"
     <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
-    Hi, you have a new email from {sender_email} </br> see the message content below                      
+    You have a new email from {sender_email}. See the message content below                      
     </p>
 
+    
     
     <!--email content ---->
      <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;margin-top:15px;margin-bottom:15px">
