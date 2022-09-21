@@ -38,43 +38,48 @@ pub struct ApiSuccessResponse<Data> {
 }
 
 ///ApiErrorResponse
+/// the error content should be returned as an error of string
 pub enum ApiErrorResponse {
-    WrongCredentials,
-    BadRequest,
-    TokenCreation,
-    InvalidToken,
+    WrongCredentials { error: Vec<String> },
+    BadRequest { error: Vec<String> },
+    ServerError { error: Vec<String> },
+    InvalidToken { error: Vec<String> },
 }
 
 ///implement into response trait for api error
 impl IntoResponse for ApiErrorResponse {
     fn into_response(self) -> Response {
-        let (status_code, error_message) = match self {
-            ApiErrorResponse::WrongCredentials => {
+        let (status_code, error_message, error_details) = match self {
+            ApiErrorResponse::WrongCredentials { error } => {
                 //missing Authorization credentials
                 (
                     StatusCode::UNAUTHORIZED,
                     String::from("Wrong or missing authorization credentials"),
+                    error.clone(),
                 )
             }
-            ApiErrorResponse::BadRequest => (
+            ApiErrorResponse::BadRequest { error } => (
                 StatusCode::BAD_REQUEST,
                 String::from("Badly formatted or missing credentials"),
+                error.clone(),
             ),
-            ApiErrorResponse::TokenCreation => (
+            ApiErrorResponse::ServerError { error } => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 String::from("Internal Server Response"),
+                error.clone(),
             ),
-            ApiErrorResponse::InvalidToken => (
+            ApiErrorResponse::InvalidToken { error } => (
                 StatusCode::BAD_REQUEST,
                 String::from("Invalid token or missing authorization token"),
+                error.clone(),
             ),
         };
         //build the response body using the ApiResponse struct
-        let response_body: ApiResponse<_, String> = ApiResponse::<_, String> {
+        let response_body: ApiResponse<_, Vec<String>> = ApiResponse::<_, Vec<String>> {
             success: false,
             message: error_message,
             data: None::<String>,
-            error: None,
+            error: Some(error_details),
         };
 
         //build up the response status code and the response content
