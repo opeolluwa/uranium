@@ -39,10 +39,12 @@ pub struct ApiSuccessResponse<Data> {
 
 ///ApiErrorResponse
 /// the error content should be returned as an error of string
+#[allow(dead_code)]
 pub enum ApiErrorResponse {
     WrongCredentials { error: Vec<String> },
     BadRequest { error: Vec<String> },
     ServerError { error: Vec<String> },
+    ConflictError { error: Vec<String> },
     InvalidToken { error: Vec<String> },
 }
 
@@ -70,6 +72,11 @@ impl IntoResponse for ApiErrorResponse {
             ),
             ApiErrorResponse::InvalidToken { error } => (
                 StatusCode::BAD_REQUEST,
+                String::from("Invalid token or missing authorization token"),
+                error.clone(),
+            ),
+             ApiErrorResponse::ConflictError { error } => (
+                StatusCode::CONFLICT,
                 String::from("Invalid token or missing authorization token"),
                 error.clone(),
             ),

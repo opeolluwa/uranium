@@ -21,26 +21,29 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: user_information; Type: TABLE; Schema: public; Owner: opeolluwa
+-- Name: emails; Type: TABLE; Schema: public; Owner: opeolluwa
 --
 
-CREATE TABLE public.user_information (
+CREATE TABLE public.emails (
     id uuid NOT NULL,
-    email character varying NOT NULL UNIQUE,
-    username character varying NOT NULL,
-    password character varying NOT NULL,
-    fullname character varying NOT NULL
+    sender_name character varying,
+    sender_email character varying,
+    email_subject character varying,
+    email_body character varying,
+    reply json[],
+    star boolean DEFAULT false,
+    date_sent date
 );
 
 
-ALTER TABLE public.user_information OWNER TO opeolluwa;
+ALTER TABLE public.emails OWNER TO opeolluwa;
 
 --
--- Name: user_information user_information_pkey; Type: CONSTRAINT; Schema: public; Owner: opeolluwa
+-- Name: emails emails_pkey; Type: CONSTRAINT; Schema: public; Owner: opeolluwa
 --
 
-ALTER TABLE ONLY public.user_information
-    ADD CONSTRAINT user_information_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.emails
+    ADD CONSTRAINT emails_pkey PRIMARY KEY (id);
 
 
 --

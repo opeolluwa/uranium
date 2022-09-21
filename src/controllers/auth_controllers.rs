@@ -28,7 +28,7 @@ use uuid::Uuid;
 pub async fn sign_up(
     Json(payload): Json<UserInformation>,
     Extension(database): Extension<PgPool>,
-) -> Result<(StatusCode, Json<ApiSuccessResponse<UserInformation>>), ApiErrorResponse> {
+) -> Result<(StatusCode, Json<ApiSuccessResponse<UserModel>>), ApiErrorResponse> {
     //destructure the request body
     let UserInformation {
         fullname,
@@ -57,8 +57,8 @@ pub async fn sign_up(
     //generate id and hashed password
     let id = Uuid::new_v4();
     let hashed_password = bcrypt::hash(&password, DEFAULT_COST).unwrap();
-    let new_user = sqlx::query_as::<_, UserInformation>(
-        "INSERT INTO user_information (id, fullname, username, password, email) VALUES ($1, $2, $3, $4, $5)",
+    let new_user =  sqlx::query_as::<_, UserModel>(
+        "INSERT INTO user_information (id, fullname, username, password, email) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (email) DO NOTHING RETURNING *",
     )
     .bind(Some(id))
     .bind(Some(fullname))
@@ -71,16 +71,23 @@ pub async fn sign_up(
     match new_user {
         Ok(result) => {
             //build the response
-            let response: ApiSuccessResponse<UserInformation> =
-                ApiSuccessResponse::<UserInformation> {
-                    success: true,
-                    message: String::from("missing email or password "),
-                    data: Some(result),
-                };
+            let response: ApiSuccessResponse<UserModel> = ApiSuccessResponse::<UserModel> {
+                success: true,
+                message: String::from("User account successfully created"),
+                data: Some(UserModel {
+                    password: "".to_string(),
+                    ..result // other fields
+                }),
+            };
             Ok((StatusCode::CREATED, Json(response)))
+            // println!("{:#?}", result);
+            // todo!()
         }
-        Err(err) => Err(ApiErrorResponse::ServerError {
-            error: vec![err.to_string()],
+        Err(err) => Err(ApiErrorResponse::ConflictError {
+            error: vec![
+                err.to_string(),
+                format!("an account with {email} already exists"),
+            ],
         }),
     }
     // Ok(/* (axum::http::StatusCode, axum::Json<ApiSuccessResponse<UserInformation>>) */)
@@ -134,76 +141,72 @@ pub async fn login(
             .fetch_one(&database)
             .await;
 
-    let user = match user_information {
-        Ok(user) => user,
-        /*  Err(_) => UserInformation {
-            id: Uuid::parse_str(""),
-            fullname: "".to_string(),
-            email: "".to_string(),
-            password: "".to_string(),
-            username: "".to_string(),
-        }, */
-        Err(_) => todo!(),
-    };
+    match user_information {
+        Ok(user) => {
+            let verify_password = verify(password, &user.password);
+            match verify_password {
+                Ok(is_correct_password) => {
+                    //if the password is not correct
+                    if !is_correct_password {
+                        return Err(ApiErrorResponse::WrongCredentials {
+                            error: vec![String::from("incorrect password")],
+                        });
+                    }
 
-    let verify_password = verify(password, &user.password);
-    match verify_password {
-        Ok(is_correct_password) => {
-            //if the password is not correct
-            if !is_correct_password {
-                return Err(ApiErrorResponse::BadRequest {
-                    error: vec![String::from("incorrect password")],
-                });
-            }
+                    // destructure the user if the password is correct
+                    let UserModel {
+                        id,
+                        email,
+                        fullname,
+                        ..
+                    } = &user;
 
-            // destructure the user if the password is correct
-            let UserModel {
-                id,
-                email,
-                fullname,
-                ..
-            } = &user;
+                    //encrypt the user data
+                    let jwt_payload = JwtSchema {
+                        id: id.to_string(),
+                        email: email.to_string(),
+                        fullname: fullname.to_string(),
+                        exp: 2000000000, //may 2023
+                    };
+                    let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| {
+                        String::from(
+                            "Ux6qlTEMdT0gSLq9GHp812R9XP3KSGSWcyrPpAypsTpRHxvLqYkeYNYfRZjL9",
+                        )
+                    });
+                    //use a custom header
+                    let jwt_header = Header {
+                        alg: Algorithm::HS512,
+                        ..Default::default()
+                    };
 
-            //encrypt the user data
-            let jwt_payload = JwtSchema {
-                id: id.to_string(),
-                email: email.to_string(),
-                fullname: fullname.to_string(),
-                exp: 2000000000, //may 2023
-            };
-            let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| {
-                String::from("Ux6qlTEMdT0gSLq9GHp812R9XP3KSGSWcyrPpAypsTpRHxvLqYkeYNYfRZjL9")
-            });
-            //use a custom header
-            let jwt_header = Header {
-                alg: Algorithm::HS512,
-                ..Default::default()
-            };
+                    //build the user the jwt token
+                    let token = encode(
+                        &jwt_header,
+                        &jwt_payload,
+                        &EncodingKey::from_secret(jwt_secret.as_bytes()),
+                    )
+                    .unwrap();
 
-            //build the user the jwt token
-            let token = encode(
-                &jwt_header,
-                &jwt_payload,
-                &EncodingKey::from_secret(jwt_secret.as_bytes()),
-            )
-            .unwrap();
-
-            let response = ApiSuccessResponse::<JwtPayload> {
-                success: true,
-                message: String::from("user successfully logged in"),
-                data: Some(JwtPayload {
-                    token,
-                    token_type: String::from("Bearer"),
+                    let response = ApiSuccessResponse::<JwtPayload> {
+                        success: true,
+                        message: String::from("user successfully logged in"),
+                        data: Some(JwtPayload {
+                            token,
+                            token_type: String::from("Bearer"),
+                        }),
+                    };
+                    // response
+                    Ok((StatusCode::OK, Json(response)))
+                }
+                Err(err) => Err(ApiErrorResponse::BadRequest {
+                    error: vec![err.to_string()],
                 }),
-            };
-            // response
-            Ok((StatusCode::OK, Json(response)))
+            }
         }
-        Err(err) => Err(ApiErrorResponse::BadRequest {
+        Err(err) => Err(ApiErrorResponse::ServerError {
             error: vec![err.to_string()],
         }),
     }
-
     //return the user data
     // (StatusCode::OK, Json(response))
     // Ok(response)
