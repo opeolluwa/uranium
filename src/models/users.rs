@@ -5,7 +5,7 @@ use std::collections::HashMap;
 /// define the user data structure
 /// implement debug, serialize, deserializing and #[derive(sqlx::FromRow
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
-pub struct UserInformation {
+pub struct UserModel {
     pub id: Uuid,
     pub fullname: String,
     pub email: String,
@@ -17,6 +17,12 @@ pub struct UserInformation {
 /// to be used for making access retrieve user information
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct UserAuthCredentials {
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct UserInformation {
     pub fullname: String,
     pub email: String,
     pub password: String,
@@ -32,7 +38,7 @@ pub trait EnumerateFields {
 }
 
 ///return the UserInformation as an array of
-impl EnumerateFields for UserAuthCredentials {
+impl EnumerateFields for UserInformation {
     fn collect_as_strings(&self) -> HashMap<String, String> {
         /* return a key value pair of the the entries
          * to avoid borrow checker error and possible error from dereferencing,
@@ -41,6 +47,20 @@ impl EnumerateFields for UserAuthCredentials {
         HashMap::from([
             (String::from("fullname"), self.fullname.clone()),
             (String::from("username"), self.username.clone()),
+            (String::from("password"), self.password.clone()),
+            (String::from("email"), self.email.clone()),
+        ])
+    }
+}
+
+///return the UserInformation as an array of
+impl EnumerateFields for UserAuthCredentials {
+    fn collect_as_strings(&self) -> HashMap<String, String> {
+        /* return a key value pair of the the entries
+         * to avoid borrow checker error and possible error from dereferencing,
+         * clone the values of the struct
+         */
+        HashMap::from([
             (String::from("password"), self.password.clone()),
             (String::from("email"), self.email.clone()),
         ])

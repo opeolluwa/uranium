@@ -1,8 +1,8 @@
 use crate::models::users::EnumerateFields;
 use crate::models::users::UserAuthCredentials;
 use crate::models::users::UserInformation;
+use crate::models::users::UserModel;
 use crate::shared::api_response::ApiErrorResponse;
-use crate::shared::api_response::ApiResponse;
 use crate::shared::api_response::ApiSuccessResponse;
 use crate::shared::jwt_schema::JwtPayload;
 use crate::shared::jwt_schema::JwtSchema;
@@ -11,7 +11,6 @@ use axum::response::IntoResponse;
 use axum::Extension;
 use axum::Json;
 use bcrypt::verify;
-use bcrypt::BcryptError;
 use bcrypt::DEFAULT_COST;
 use jsonwebtoken::Algorithm;
 use jsonwebtoken::{encode, EncodingKey, Header};
@@ -27,11 +26,11 @@ use uuid::Uuid;
 
 ///create a new user
 pub async fn sign_up(
-    Json(payload): Json<UserAuthCredentials>,
+    Json(payload): Json<UserInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<UserInformation>>), ApiErrorResponse> {
     //destructure the request body
-    let UserAuthCredentials {
+    let UserInformation {
         fullname,
         password,
         username,
@@ -130,7 +129,7 @@ pub async fn login(
      * if correct password, return jwt
      */
     let user_information =
-        sqlx::query_as::<_, UserInformation>("SELECT * FROM user_information WHERE email = $1")
+        sqlx::query_as::<_, UserModel>("SELECT * FROM user_information WHERE email = $1")
             .bind(Some(email))
             .fetch_one(&database)
             .await;
@@ -147,11 +146,67 @@ pub async fn login(
         Err(_) => todo!(),
     };
 
+    let verify_password = verify(password, &user.password);
+    match verify_password {
+        Ok(is_correct_password) => {
+            //if the password is not correct
+            if !is_correct_password {
+                return Err(ApiErrorResponse::BadRequest {
+                    error: vec![String::from("incorrect password")],
+                });
+            }
 
-    
+            // destructure the user if the password is correct
+            let UserModel {
+                id,
+                email,
+                fullname,
+                ..
+            } = &user;
+
+            //encrypt the user data
+            let jwt_payload = JwtSchema {
+                id: id.to_string(),
+                email: email.to_string(),
+                fullname: fullname.to_string(),
+                exp: 2000000000, //may 2023
+            };
+            let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| {
+                String::from("Ux6qlTEMdT0gSLq9GHp812R9XP3KSGSWcyrPpAypsTpRHxvLqYkeYNYfRZjL9")
+            });
+            //use a custom header
+            let jwt_header = Header {
+                alg: Algorithm::HS512,
+                ..Default::default()
+            };
+
+            //build the user the jwt token
+            let token = encode(
+                &jwt_header,
+                &jwt_payload,
+                &EncodingKey::from_secret(jwt_secret.as_bytes()),
+            )
+            .unwrap();
+
+            let response = ApiSuccessResponse::<JwtPayload> {
+                success: true,
+                message: String::from("user successfully logged in"),
+                data: Some(JwtPayload {
+                    token,
+                    token_type: String::from("Bearer"),
+                }),
+            };
+            // response
+            Ok((StatusCode::OK, Json(response)))
+        }
+        Err(err) => Err(ApiErrorResponse::BadRequest {
+            error: vec![err.to_string()],
+        }),
+    }
+
     //return the user data
     // (StatusCode::OK, Json(response))
-    todo!()
+    // Ok(response)
 }
 
 ///reset user password
