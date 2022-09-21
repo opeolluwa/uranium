@@ -37,10 +37,7 @@ pub async fn send_email() -> impl IntoResponse {
                 .singlepart(
                     SinglePart::builder()
                         .header(header::ContentType::TEXT_HTML)
-                        .body(parse_email_template(
-                            content.to_string(),
-                            recipient_name.to_string(),
-                        )),
+                        .body(parse_email_template(content.to_string(), recipient_name)),
                 ),
         )
         .unwrap();
@@ -102,7 +99,7 @@ pub async fn receive_email(Json(payload): Json<EmailContext>) -> impl IntoRespon
     );
 
     //call on the template parser
-    let message_content = parse_email_template(String::from(email_content), "Opeoluwa".to_string());
+    let message_content = parse_email_template(email_content, "Opeoluwa".to_string());
 
     let email = Message::builder()
         .from(from_email.parse().unwrap())
@@ -114,7 +111,7 @@ pub async fn receive_email(Json(payload): Json<EmailContext>) -> impl IntoRespon
                 .singlepart(
                     SinglePart::builder()
                         .header(header::ContentType::TEXT_HTML)
-                        .body(String::from(message_content)),
+                        .body(message_content),
                 ),
         )
         .unwrap();

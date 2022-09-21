@@ -17,7 +17,7 @@ pub struct UserInformation {
 /// to be used for making access retrieve user information
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct UserAuthCredentials {
-   pub fullname: String,
+    pub fullname: String,
     pub email: String,
     pub password: String,
     pub username: String,

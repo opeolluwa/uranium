@@ -1,7 +1,9 @@
 use crate::models::users::EnumerateFields;
 use crate::models::users::UserAuthCredentials;
 use crate::models::users::UserInformation;
+use crate::shared::api_response::ApiErrorResponse;
 use crate::shared::api_response::ApiResponse;
+use crate::shared::api_response::ApiSuccessResponse;
 use crate::shared::jwt_schema::JwtPayload;
 use crate::shared::jwt_schema::JwtSchema;
 use axum::http::StatusCode;
@@ -27,7 +29,7 @@ use uuid::Uuid;
 pub async fn sign_up(
     Json(payload): Json<UserAuthCredentials>,
     Extension(database): Extension<PgPool>,
-) -> impl IntoResponse {
+) -> Result<(StatusCode, Json<ApiSuccessResponse<UserInformation>>), ApiErrorResponse> {
     //destructure the request body
     let UserAuthCredentials {
         fullname,
@@ -47,14 +49,14 @@ pub async fn sign_up(
     }
 
     //if we have empty fields return error to client
-    if bad_request_errors.len() >= 1 {
+    if !bad_request_errors.is_empty() {
         let response: ApiResponse<_, Vec<String>> = ApiResponse::<_, Vec<String>> {
             success: true,
             message: String::from("badly formatted input"),
             data: None::<UserInformation>,
             error: Some(bad_request_errors),
         };
-        return (StatusCode::BAD_REQUEST, Json(response));
+        return Err(ApiErrorResponse::BadRequest);
     }
 
     //generate id and hashed password
@@ -74,13 +76,13 @@ pub async fn sign_up(
 
     // let new_user: Result<UserInformation, Err> = Ok(new_user);
     //build the response
-    let response: ApiResponse<UserInformation, _> = ApiResponse::<UserInformation, _> {
+    let response: ApiSuccessResponse<UserInformation> = ApiSuccessResponse::<UserInformation> {
         success: true,
         message: String::from("missing email or password "),
         data: Some(new_user),
-        error: None::<Vec<String>>,
     };
-    return (StatusCode::CREATED, Json(response));
+    Ok((StatusCode::CREATED, Json(response)))
+    // Ok(/* (axum::http::StatusCode, axum::Json<ApiSuccessResponse<UserInformation>>) */)
 }
 
 ///login a new user
@@ -139,7 +141,7 @@ pub async fn login(
     let is_correct_password = verify(password, &hashed_password);
     match is_correct_password {
         Ok(result) => {
-            if result == false {
+            if !result {
                 //build up response
                 let response: ApiResponse<_, String> = ApiResponse::<_, String> {
                     success: true,
@@ -170,9 +172,9 @@ pub async fn login(
         fullname,
         exp: 2000000000, //may 2023
     };
-    let jwt_secret = env::var("JWT_SECRET").unwrap_or(String::from(
-        "Ux6qlTEMdT0gSLq9GHp812R9XP3KSGSWcyrPpAypsTpRHxvLqYkeYNYfRZjL9",
-    ));
+    let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| {
+        String::from("Ux6qlTEMdT0gSLq9GHp812R9XP3KSGSWcyrPpAypsTpRHxvLqYkeYNYfRZjL9")
+    });
     //use a custom header
     let jwt_header = Header {
         alg: Algorithm::HS512,
