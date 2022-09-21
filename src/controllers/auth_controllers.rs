@@ -1,3 +1,4 @@
+use crate::models::users::EnumerateFields;
 use crate::models::users::UserAuthCredentials;
 use crate::models::users::UserInformation;
 use crate::shared::api_response::ApiResponse;
@@ -9,10 +10,12 @@ use axum::Extension;
 use axum::Json;
 use bcrypt::verify;
 use bcrypt::BcryptError;
+use bcrypt::DEFAULT_COST;
 use jsonwebtoken::Algorithm;
 use jsonwebtoken::{encode, EncodingKey, Header};
 use sqlx::PgPool;
 use std::env;
+use uuid::Uuid;
 
 // use futures::FutureExt;
 // use serde_json::json;
@@ -21,20 +24,63 @@ use std::env;
 // use validator::Validate;
 
 ///create a new user
-pub async fn sign_up(Json(_payload): Json<UserInformation>) -> impl IntoResponse {
-    //destructure the request
-    // todo!();
-    print!("hey");
-    //create new user
-    /*  collection.insert_one(&user, None).await.unwrap();
-    (
-        StatusCode::CREATED,
-        Json(json!({
-            "success":true,
-            "message":"user successfully created".to_string(),
-            "data":None::<User>
-        })),
-    ) */
+pub async fn sign_up(
+    Json(payload): Json<UserAuthCredentials>,
+    Extension(database): Extension<PgPool>,
+) -> impl IntoResponse {
+    //destructure the request body
+    let UserAuthCredentials {
+        fullname,
+        password,
+        username,
+        email,
+    } = &payload;
+
+    //check through the fields to see that no field was badly formatted
+    let entries = &payload.collect_as_strings();
+    let mut bad_request_errors: Vec<String> = Vec::new();
+    for (key, value) in entries {
+        if value.is_empty() {
+            let error = format!("{key} is empty");
+            bad_request_errors.push(error);
+        }
+    }
+
+    //if we have empty fields return error to client
+    if bad_request_errors.len() >= 1 {
+        let response: ApiResponse<_, Vec<String>> = ApiResponse::<_, Vec<String>> {
+            success: true,
+            message: String::from("badly formatted input"),
+            data: None::<UserInformation>,
+            error: Some(bad_request_errors),
+        };
+        return (StatusCode::BAD_REQUEST, Json(response));
+    }
+
+    //generate id and hashed password
+    let id = Uuid::new_v4();
+    let hashed_password = bcrypt::hash(&password, DEFAULT_COST).unwrap();
+    let new_user = sqlx::query_as::<_, UserInformation>(
+        "INSERT INTO user_information (id, fullname, username, password, email) VALUES ($1, $2, $3, $4, $5)",
+    )
+    .bind(Some(id))
+    .bind(Some(fullname))
+    .bind(Some(username))
+    .bind(Some(hashed_password))
+    .bind(Some(email))
+    .fetch_one(&database)
+    .await
+    .unwrap();
+
+    // let new_user: Result<UserInformation, Err> = Ok(new_user);
+    //build the response
+    let response: ApiResponse<UserInformation, _> = ApiResponse::<UserInformation, _> {
+        success: true,
+        message: String::from("missing email or password "),
+        data: Some(new_user),
+        error: None::<Vec<String>>,
+    };
+    return (StatusCode::CREATED, Json(response));
 }
 
 ///login a new user
@@ -47,7 +93,9 @@ pub async fn login(
     Extension(database): Extension<PgPool>,
 ) -> impl IntoResponse {
     //destructure the payload to fetch user details
-    let UserAuthCredentials { email, password } = payload;
+    let UserAuthCredentials {
+        email, password, ..
+    } = payload;
     println!("inside login route controller");
 
     /*

@@ -4,5 +4,5 @@
 cd ../dashboard &&  npm run build
 cd ../nitride
 # copy the static files to the server
-mkdir views
+rm -rf views/*
 cp -r ../dashboard/dist/* ./views
