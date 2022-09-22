@@ -207,9 +207,6 @@ pub async fn login(
             error: vec![err.to_string()],
         }),
     }
-    //return the user data
-    // (StatusCode::OK, Json(response))
-    // Ok(response)
 }
 
 ///reset user password

@@ -1,8 +1,7 @@
-use axum::{
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    Json,
-};
+use axum::http::StatusCode;
+use axum::response::IntoResponse;
+use axum::response::Response;
+use axum::Json;
 use serde::{Deserialize, Serialize};
 /// the API response is supposed to be an enum of two variants
 /// ApiResponse::Success<D:Data> and ApiResponse::Error<E:Error>
@@ -28,6 +27,7 @@ pub struct ApiResponse<Data, Error> {
 }
 
 ///Api success response
+/// the api success response returns succes
 /// accepts message and data from handle/controller
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -75,9 +75,9 @@ impl IntoResponse for ApiErrorResponse {
                 String::from("Invalid token or missing authorization token"),
                 error.clone(),
             ),
-             ApiErrorResponse::ConflictError { error } => (
+            ApiErrorResponse::ConflictError { error } => (
                 StatusCode::CONFLICT,
-                String::from("Invalid token or missing authorization token"),
+                String::from("The record you are trying to create already exists"),
                 error.clone(),
             ),
         };

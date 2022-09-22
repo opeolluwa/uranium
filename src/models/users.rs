@@ -2,30 +2,44 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use std::collections::HashMap;
 
-/// define the user data structure
+/// define the user data structure that shall serve as the basis of serial
 /// implement debug, serialize, deserializing and #[derive(sqlx::FromRow
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct UserModel {
+    ///the user uniques identifier 
     pub id: Uuid,
+    ///the user fullname
     pub fullname: String,
+    ///the user email
     pub email: String,
+    ///the user password
     pub password: String,
+    /// the user username
     pub username: String,
 }
 
 ///user authorization information
-/// to be used for making access retrieve user information
+/// to be used for making login in requests
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct UserAuthCredentials {
+    ///the user email
     pub email: String,
+    ///the user password
     pub password: String,
 }
 
+
+///the user information is derived from the user model
+/// it shall be responsible for providing the user information such as in JWT encryption 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct UserInformation {
+    /// the user fullname
     pub fullname: String,
+    /// the user email
     pub email: String,
+    /// the user password
     pub password: String,
+    /// the user unique username
     pub username: String,
 }
 
