@@ -3,9 +3,13 @@ use crate::shared::api_response::ApiResponse;
 use axum::response::IntoResponse;
 use axum::Json;
 use chrono::Datelike;
-use lettre::message::{header, MultiPart, SinglePart};
+use lettre::message::header;
+use lettre::message::MultiPart;
+use lettre::message::SinglePart;
 use lettre::transport::smtp::authentication::Credentials;
-use lettre::{Message, SmtpTransport, Transport};
+use lettre::Message;
+use lettre::SmtpTransport;
+use lettre::Transport;
 // use maud::{html, PreEscaped, DOCTYPE};
 use std::env;
 ///send email
