@@ -46,6 +46,7 @@ pub enum ApiErrorResponse {
     ServerError { error: Vec<String> },
     ConflictError { error: Vec<String> },
     InvalidToken { error: Vec<String> },
+    NotFound { error: Vec<String> },
 }
 
 ///implement into response trait for api error
@@ -78,6 +79,12 @@ impl IntoResponse for ApiErrorResponse {
             ApiErrorResponse::ConflictError { error } => (
                 StatusCode::CONFLICT,
                 String::from("The record you are trying to create already exists"),
+                error.clone(),
+            ),
+            //not found error
+            ApiErrorResponse::NotFound { error } => (
+                StatusCode::NOT_FOUND,
+                String::from("The requested Resource was not found"),
                 error.clone(),
             ),
         };

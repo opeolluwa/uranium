@@ -11,8 +11,8 @@ pub fn routes() -> axum::Router {
         .route("/", post(receive_email))
         .route("/send", post(send_email))
         .route("/reply", post(receive_email))
-        .route("/:emailId", get(fetch_email))
-        .route("/:emailId", delete(delete_email))
-        .route("/:emailId", put(star_email))
-        .route("/:emailId", patch(reply_email))
+        .route("/:email_id", get(fetch_email))
+        .route("/:email_id", delete(delete_email))
+        .route("/:email_id", put(star_email))
+        .route("/:email_id", patch(reply_email))
 }

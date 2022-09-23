@@ -2,6 +2,7 @@ use crate::models::emails::EmailContext;
 use crate::shared::api_response::ApiErrorResponse;
 use crate::shared::api_response::ApiResponse;
 use crate::shared::api_response::ApiSuccessResponse;
+use anyhow::Ok;
 use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -16,9 +17,9 @@ use lettre::Message;
 use lettre::SmtpTransport;
 use lettre::Transport;
 use sqlx::PgPool;
-use uuid::Uuid;
-// use maud::{html, PreEscaped, DOCTYPE};
 use std::env;
+use uuid::Uuid;
+
 ///send email
 /// receive the user email, subject, fullname and message
 /// call on lettre to dispatch the mail to the user
@@ -170,33 +171,10 @@ pub async fn receive_email(
 pub async fn reply_email(
     Path(email_id): Path<Uuid>,
     Extension(database): Extension<PgPool>,
-) -> Result<(StatusCode, Json<ApiSuccessResponse<EmailContext>>), ApiErrorResponse> {
-    let fetched_email = sqlx::query_as::<_, EmailContext>("SELECT * FROM emails WHERE id = $1")
-        .bind(Some(email_id))
-        .fetch_one(&database)
-        .await;
-
-    //return the fetched email
-    match fetched_email {
-        // if email is found, return the mail
-        Ok(email) => {
-            //build up the response
-            let ok_response_body: ApiSuccessResponse<EmailContext> = ApiSuccessResponse {
-                success: true,
-                message: String::from("email successfully retrieved "),
-                data: Some(email),
-            };
-
-            //return the response body
-            Ok((StatusCode::OK, Json(ok_response_body)))
-            // todo!()
-        }
-        //return a not found error
-        Err(error) => Err(ApiErrorResponse::NotFound {
-            error: vec![error.to_string()],
-        }),
-    }
+) -> impl IntoResponse {
+    todo!();
 }
+
 ///delete email
 ///receive the id of the mail to delete
 ///exec the query on the database
@@ -204,32 +182,7 @@ pub async fn reply_email(
 pub async fn delete_email(
     Path(email_id): Path<Uuid>,
     Extension(database): Extension<PgPool>,
-) -> Result<(StatusCode, Json<ApiSuccessResponse<EmailContext>>), ApiErrorResponse> {
-    let fetched_email = sqlx::query_as::<_, EmailContext>("SELECT * FROM emails WHERE id = $1")
-        .bind(Some(email_id))
-        .fetch_one(&database)
-        .await;
-
-    //return the fetched email
-    match fetched_email {
-        // if email is found, return the mail
-        Ok(email) => {
-            //build up the response
-            let ok_response_body: ApiSuccessResponse<EmailContext> = ApiSuccessResponse {
-                success: true,
-                message: String::from("email successfully retrieved "),
-                data: Some(email),
-            };
-
-            //return the response body
-            Ok((StatusCode::OK, Json(ok_response_body)))
-            // todo!()
-        }
-        //return a not found error
-        Err(error) => Err(ApiErrorResponse::NotFound {
-            error: vec![error.to_string()],
-        }),
-    }
+) -> impl IntoResponse {
 }
 
 ///fetch email
@@ -257,13 +210,13 @@ pub async fn fetch_email(
             };
 
             //return the response body
-            Ok((StatusCode::OK, Json(ok_response_body)))
-            // todo!()
-        }
+            // Ok((StatusCode::OK, Json(ok_response_body)))
+            todo!()
+        },
         //return a not found error
-        Err(error) => Err(ApiErrorResponse::NotFound {
+        Err(error) => ApiErrorResponse::NotFound {
             error: vec![error.to_string()],
-        }),
+        },
     }
 }
 
@@ -272,32 +225,7 @@ pub async fn fetch_email(
 pub async fn star_email(
     Path(email_id): Path<Uuid>,
     Extension(database): Extension<PgPool>,
-) -> Result<(StatusCode, Json<ApiSuccessResponse<EmailContext>>), ApiErrorResponse> {
-    let fetched_email = sqlx::query_as::<_, EmailContext>("SELECT * FROM emails WHERE id = $1")
-        .bind(Some(email_id))
-        .fetch_one(&database)
-        .await;
-
-    //return the fetched email
-    match fetched_email {
-        // if email is found, return the mail
-        Ok(email) => {
-            //build up the response
-            let ok_response_body: ApiSuccessResponse<EmailContext> = ApiSuccessResponse {
-                success: true,
-                message: String::from("email successfully retrieved "),
-                data: Some(email),
-            };
-
-            //return the response body
-            Ok((StatusCode::OK, Json(ok_response_body)))
-            // todo!()
-        }
-        //return a not found error
-        Err(error) => Err(ApiErrorResponse::NotFound {
-            error: vec![error.to_string()],
-        }),
-    }
+) -> impl IntoResponse {
 }
 
 ///accept template data

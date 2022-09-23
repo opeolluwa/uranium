@@ -1,6 +1,6 @@
 [package]
 authors = ["Adeoye Adefemi <adefemiadeoye@yahoo.com>"]
-description = "TNitride"
+description = "acompound of nitrogen  https://github.com/opeolluwa/nirogen"
 edition = "2021"
 name = "nitride"
 version = "0.1.0"
@@ -23,4 +23,4 @@ tokio = {version = "1.20.1", features = ["full"]}
 tower-http = {version = "0.3.4", features = ["cors", "fs", "trace"]}
 tracing = "0.1.36"
 uuid = {version = "1.1.2", features = ["serde", "v4"]}
-validator = {version = "0.16.0", features = ["derive"]}
+validator = { version = "0.16.0", features = ["derive"] }
