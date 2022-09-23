@@ -5,9 +5,9 @@ Minimal Authentication server in Rust
 ## Requirement
 - [Rust](https://www.rust-lang.org/tools/install) v1.63 or greater 
 - [PostgreSQL](https://www.postgresql.org/download/) PostgreSQL server v14.5 or greater
--  [sqlx](https://crates.io/crates/sqlx) for interacting with the database,
--  [sqlx-cli](https://crates.io/crates/sqlx-cli), a command line tool for sqlx,
--  [cargo watch](https://crates.io/crates/cargo-watch), a tool for watching the project files and recompiling when they change,
+- [sqlx](https://crates.io/crates/sqlx) for interacting with the database,
+- [sqlx-cli](https://crates.io/crates/sqlx-cli), a command line tool for sqlx,
+- [cargo watch](https://crates.io/crates/cargo-watch), a tool for watching the project files and recompiling when they change,
 
 ## Installation (development)
 

@@ -1,6 +1,8 @@
 use crate::models::emails::EmailContext;
 use crate::shared::api_response::ApiResponse;
+use axum::extract::Path;
 use axum::response::IntoResponse;
+use axum::Extension;
 use axum::Json;
 use chrono::Datelike;
 use lettre::message::header;
@@ -10,12 +12,17 @@ use lettre::transport::smtp::authentication::Credentials;
 use lettre::Message;
 use lettre::SmtpTransport;
 use lettre::Transport;
+use sqlx::PgPool;
+use uuid::Uuid;
 // use maud::{html, PreEscaped, DOCTYPE};
 use std::env;
 ///send email
 /// receive the user email, subject, fullname and message
 /// call on lettre to dispatch the mail to the user
-pub async fn send_email() -> impl IntoResponse {
+pub async fn send_email(
+    Json(payload): Json<EmailContext>,
+    Extension(database): Extension<PgPool>,
+) -> impl IntoResponse {
     let content = r#"
     <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
                             You recently requested to reset your password for your
@@ -68,7 +75,10 @@ pub async fn send_email() -> impl IntoResponse {
 
 ///receive email being sent from the portfolio
 /// store it in the database
-pub async fn receive_email(Json(payload): Json<EmailContext>) -> impl IntoResponse {
+pub async fn receive_email(
+    Json(payload): Json<EmailContext>,
+    Extension(database): Extension<PgPool>,
+) -> impl IntoResponse {
     //destructure the email fields from the payload
     let EmailContext {
         fullname: sender_name,
@@ -80,13 +90,13 @@ pub async fn receive_email(Json(payload): Json<EmailContext>) -> impl IntoRespon
     //format email sender name
     let from_email = format!("{sender_name} <{sender_email}>");
     let reply_to = format!("{sender_name} <{sender_email}>");
-    /*    let email_content = html!(
-        (DOCTYPE)
-        p{"Hey, you have a new email from (sender_name) "}
-        p {"See the the message content below"}
-        p { "(message_content)"}
-    ); */
-
+    let receiver_address = format!(
+        "{} <{}>",
+        env::var("SMTP_REPLY_TO_NAME").expect("SMTP User not specified"),
+        env::var("SMTP_REPLY_TO_ADDRESS")
+            .expect("SMTP Address not provided")
+            .to_ascii_uppercase()
+    );
     let email_content = format!(
         r#"
     <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
@@ -108,7 +118,7 @@ pub async fn receive_email(Json(payload): Json<EmailContext>) -> impl IntoRespon
     let email = Message::builder()
         .from(from_email.parse().unwrap())
         .reply_to(reply_to.parse().unwrap())
-        .to("Hei <adefemiadeoye@yahoo.com>".parse().unwrap())
+        .to(receiver_address.parse().unwrap())
         .subject(email_subject)
         .multipart(
             MultiPart::alternative() // This is composed of two parts.
@@ -153,21 +163,38 @@ pub async fn receive_email(Json(payload): Json<EmailContext>) -> impl IntoRespon
 ///reply email
 /// receive only the user email and subject and message
 /// send the message to the user
-pub async fn reply_email() -> impl IntoResponse {}
+pub async fn reply_email(
+    Path(email_id): Path<Uuid>,
+    Extension(database): Extension<PgPool>,
+) -> impl IntoResponse {
+    todo!();
+}
 
 ///delete email
 ///receive the id of the mail to delete
 ///exec the query on the database
 /// return result
-pub async fn delete_email() -> impl IntoResponse {}
+pub async fn delete_email(
+    Path(email_id): Path<Uuid>,
+    Extension(database): Extension<PgPool>,
+) -> impl IntoResponse {
+}
 
 ///fetch email
 /// retrieve an email from the data store
-pub async fn fetch_email() -> impl IntoResponse {}
+pub async fn fetch_email(
+    Path(email_id): Path<Uuid>,
+    Extension(database): Extension<PgPool>,
+) -> impl IntoResponse {
+}
 
 ///star email
 /// mark email as important
-pub async fn star_email() -> impl IntoResponse {}
+pub async fn star_email(
+    Path(email_id): Path<Uuid>,
+    Extension(database): Extension<PgPool>,
+) -> impl IntoResponse {
+}
 
 ///accept template data
 /// fill in the content
@@ -267,7 +294,7 @@ fn parse_email_template(email_content: String, recipient_name: String) -> String
                       <tr>
                         <td class="content-cell" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; padding: 35px;" align="center">
                           <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; line-height: 1.5em; margin-top: 0; color: #aeaeae; font-size: 12px; text-align: center;">
-                            &copy; {current_year} <a href="https://www.linkedin.com/in/adefemi-adeoye">Opeoluwa</a>.
+                            &copy; {current_year} <a href="https://www.linkedin.com/in/adefemi-adeoye">Adeoye Adefemi</a>.
                             All rights reserved.</p>
                         </td>
                       </tr>

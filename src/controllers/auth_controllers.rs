@@ -18,12 +18,6 @@ use sqlx::PgPool;
 use std::env;
 use uuid::Uuid;
 
-// use futures::FutureExt;
-// use serde_json::json;
-// use sqlx::postgres::PgRow;
-// use std::env;
-// use validator::Validate;
-
 ///create a new user
 pub async fn sign_up(
     Json(payload): Json<UserInformation>,
