@@ -15,11 +15,29 @@ use lettre::transport::smtp::authentication::Credentials;
 use lettre::Message;
 use lettre::SmtpTransport;
 use lettre::Transport;
+use once_cell::sync::Lazy;
 use sqlx::PgPool;
 use std::env;
 use uuid::Uuid;
 
-///send email
+//the secrets
+/// the once_cell create all us to add types lazily to variables with const and static binding
+/// see documentation on https://docs.rs/once_cell/latest/once_cell/
+static SMTP_USERNAME: Lazy<String> =
+    Lazy::new(|| env::var("SMTP_USERNAME").expect("SMTP username not provided"));
+static SMTP_PASSWORD: Lazy<String> =
+    Lazy::new(|| env::var("SMTP_PASSWORD").expect("SMTP password not provided"));
+static SMTP_HOST: Lazy<String> =
+    Lazy::new(|| env::var("SMTP_HOST").expect("SMTP host not provided"));
+static SMTP_REPLY_TO_ADDRESS: Lazy<String> =
+    Lazy::new(|| env::var("SMTP_PASSWORD").expect("SMTP reply-to-address not specified"));
+static SMTP_REPLY_TO_NAME: Lazy<String> =
+    Lazy::new(|| env::var("SMTP_REPLY_TO_NAME").expect("SMTP reply-to-name not provided"));
+static FRONTEND_URL: Lazy<String> = Lazy::new(|| {
+    env::var("FRONTEND_URL").unwrap_or_else(|_| String::from("https://opeolluwa.verce.app"))
+});
+
+///send email handler
 /// receive the user email, subject, fullname and message
 /// call on lettre to dispatch the mail to the user
 pub async fn send_email(
@@ -56,13 +74,10 @@ pub async fn send_email(
         )
         .unwrap();
 
-    let credentials = Credentials::new(
-        env::var("SMTP_USERNAME").expect("SMTP username not provided"),
-        env::var("SMTP_PASSWORD").expect("SMTP password not provided"),
-    );
+    let credentials = Credentials::new(SMTP_USERNAME.to_string(), SMTP_PASSWORD.to_string());
 
     // Open a remote connection to the smtp sever
-    let mailer = SmtpTransport::relay(&env::var("SMTP_HOST").expect("SMTP host not provided"))
+    let mailer = SmtpTransport::relay(&SMTP_HOST)
         .unwrap()
         .credentials(credentials)
         .build();
@@ -113,15 +128,8 @@ pub async fn receive_email(
             //send an auto response on success
             let from_email = format!("{sender_name} <{sender_email}>");
             let reply_to = format!("{sender_name} <{sender_email}>");
-            let frontend_url = &env::var("FRONTEND_URL")
-                .unwrap_or_else(|_| String::from("https://opeolluwa.verce.app"));
-            let receiver_address = format!(
-                "{} <{}>",
-                env::var("SMTP_REPLY_TO_NAME").expect("SMTP User not specified"),
-                env::var("SMTP_REPLY_TO_ADDRESS")
-                    .expect("SMTP Address not provided")
-                    .to_ascii_uppercase()
-            );
+            let receiver_address =
+                format!("{:?} <{:?}>", SMTP_REPLY_TO_NAME, SMTP_REPLY_TO_ADDRESS);
 
             //the auto response email content
             let email_content = format!(
@@ -137,7 +145,8 @@ pub async fn receive_email(
      Thanks for reaching out, </br>
      Your email sent on <a href="{frontend_url}">{frontend_url}</a> has been received and will be attended to shortly.                
     </p>
-    "#
+    "#,
+                frontend_url = FRONTEND_URL.to_lowercase()
             );
 
             //call on the template parser
@@ -156,10 +165,8 @@ pub async fn receive_email(
                         ),
                 )
                 .unwrap();
-            let credentials = Credentials::new(
-                env::var("SMTP_USERNAME").expect("SMTP username not provided"),
-                env::var("SMTP_PASSWORD").expect("SMTP password not provided"),
-            );
+            let credentials =
+                Credentials::new(SMTP_USERNAME.to_string(), SMTP_PASSWORD.to_string());
 
             // Open a remote connection to the smtp sever
             let mailer =
