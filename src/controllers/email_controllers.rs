@@ -16,15 +16,15 @@ use lettre::Message;
 use lettre::SmtpTransport;
 use lettre::Transport;
 use sqlx::PgPool;
-use uuid::Uuid;
-// use maud::{html, PreEscaped, DOCTYPE};
 use std::env;
+use uuid::Uuid;
+
 ///send email
 /// receive the user email, subject, fullname and message
 /// call on lettre to dispatch the mail to the user
 pub async fn send_email(
-    Json(payload): Json<EmailContext>,
-    Extension(database): Extension<PgPool>,
+    Json(_payload): Json<EmailContext>,
+    Extension(_database): Extension<PgPool>,
 ) -> impl IntoResponse {
     let content = r#"
     <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
@@ -81,87 +81,125 @@ pub async fn send_email(
 pub async fn receive_email(
     Json(payload): Json<EmailContext>,
     Extension(database): Extension<PgPool>,
-) -> impl IntoResponse {
+) -> Result<(StatusCode, Json<ApiResponse<(), ()>>), ApiErrorResponse> {
     //destructure the email fields from the payload
     let EmailContext {
         fullname: sender_name,
         email: sender_email,
         subject: email_subject,
-        message: message_content,
+        message: email_body,
         ..
-    } = payload;
+    } = &payload;
 
-    //format email sender name
-    let from_email = format!("{sender_name} <{sender_email}>");
-    let reply_to = format!("{sender_name} <{sender_email}>");
-    let receiver_address = format!(
-        "{} <{}>",
-        env::var("SMTP_REPLY_TO_NAME").expect("SMTP User not specified"),
-        env::var("SMTP_REPLY_TO_ADDRESS")
-            .expect("SMTP Address not provided")
-            .to_ascii_uppercase()
-    );
-    let email_content = format!(
-        r#"
+    //generate an  Id store the email in a database
+    let id = Uuid::new_v4();
+    let new_email =  sqlx::query_as::<_, EmailContext>(
+        "INSERT INTO emails (id, sender_name, sender_email, email_subject) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (email) DO NOTHING RETURNING *",
+    )
+    .bind(Some(id))
+    .bind(Some(sender_name))
+    .bind(Some(sender_email))
+    .bind(Some(email_subject))
+    .bind(Some(email_body))
+    .fetch_one(&database).await;
+
+    /*
+     * get the status of the received email
+     * if successful, send an auto responder to the sender
+     * if not return an error
+     */
+    match new_email {
+        Ok(_) => {
+            //send an auto response on success
+            let from_email = format!("{sender_name} <{sender_email}>");
+            let reply_to = format!("{sender_name} <{sender_email}>");
+            let frontend_url = &env::var("FRONTEND_URL")
+                .unwrap_or_else(|_| String::from("https://opeolluwa.verce.app"));
+            let receiver_address = format!(
+                "{} <{}>",
+                env::var("SMTP_REPLY_TO_NAME").expect("SMTP User not specified"),
+                env::var("SMTP_REPLY_TO_ADDRESS")
+                    .expect("SMTP Address not provided")
+                    .to_ascii_uppercase()
+            );
+
+            //the auto response email content
+            let email_content = format!(
+                r#"
     <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
-    You have a new email from {sender_email}. See the message content below                      
+       Hello <b>{sender_name}</b>,                
     </p>
 
     
     
     <!--email content ---->
      <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;margin-top:15px;margin-bottom:15px">
-     <strong>&#34;<strong><em>{message_content}</em><strong>&#34;<strong>                     
+     Thanks for reaching out, </br>
+     Your email sent on <a href="{frontend_url}">{frontend_url}</a> has been received and will be attended to shortly.                
     </p>
     "#
-    );
+            );
 
-    //call on the template parser
-    let message_content = parse_email_template(email_content, "Opeoluwa".to_string());
+            //call on the template parser
+            let message_content = parse_email_template(email_content, sender_name.to_string());
+            let email = Message::builder()
+                .from(from_email.parse().unwrap())
+                .reply_to(reply_to.parse().unwrap())
+                .to(receiver_address.parse().unwrap())
+                .subject(email_subject)
+                .multipart(
+                    MultiPart::alternative() // This is composed of two parts.
+                        .singlepart(
+                            SinglePart::builder()
+                                .header(header::ContentType::TEXT_HTML)
+                                .body(message_content),
+                        ),
+                )
+                .unwrap();
+            let credentials = Credentials::new(
+                env::var("SMTP_USERNAME").expect("SMTP username not provided"),
+                env::var("SMTP_PASSWORD").expect("SMTP password not provided"),
+            );
 
-    let email = Message::builder()
-        .from(from_email.parse().unwrap())
-        .reply_to(reply_to.parse().unwrap())
-        .to(receiver_address.parse().unwrap())
-        .subject(email_subject)
-        .multipart(
-            MultiPart::alternative() // This is composed of two parts.
-                .singlepart(
-                    SinglePart::builder()
-                        .header(header::ContentType::TEXT_HTML)
-                        .body(message_content),
-                ),
-        )
-        .unwrap();
+            // Open a remote connection to the smtp sever
+            let mailer =
+                SmtpTransport::relay(&env::var("SMTP_HOST").expect("SMTP host not provided"))
+                    .unwrap()
+                    .credentials(credentials)
+                    .build();
 
-    let credentials = Credentials::new(
-        env::var("SMTP_USERNAME").expect("SMTP username not provided"),
-        env::var("SMTP_PASSWORD").expect("SMTP password not provided"),
-    );
+            // Send the email, if the mail is successful save it
+            match mailer.send(&email) {
+                Ok(_) => {
+                    let response_body: ApiResponse<(), ()> = ApiResponse::<(), ()> {
+                        success: true,
+                        message: String::from("Message successfully sent"),
+                        data: None,
+                        error: None,
+                    };
+                    //the response with ok status code and response body
+                    (StatusCode::OK, Json(response_body))
+                }
+                Err(error_message) => {
+                    // the HTTP response body
+                    let response_body: ApiResponse<(), ()> = ApiResponse::<(), ()> {
+                        success: false,
+                        message: format!("failed to send message due to {:?}", error_message),
+                        data: None,
+                        error: None,
+                    };
+                    // the response body and status code
+                    (StatusCode::SERVICE_UNAVAILABLE, Json(response_body))
+                }
+            };
+            //send the response back to the client application
 
-    // Open a remote connection to the smtp sever
-    let mailer = SmtpTransport::relay(&env::var("SMTP_HOST").expect("SMTP host not provided"))
-        .unwrap()
-        .credentials(credentials)
-        .build();
-
-    // Send the email
-    let res: ApiResponse<_, _> = match mailer.send(&email) {
-        Ok(_) => ApiResponse::<(), ()> {
-            success: true,
-            message: String::from("Message successfully sent"),
-            data: None,
-            error: None,
-        },
-        Err(error_message) => ApiResponse::<_, _> {
-            success: false,
-            message: format!("failed to send message due to {:?}", error_message),
-            data: None,
-            error: None,
-        },
-    };
-
-    Json(res)
+            todo!()
+        }
+        Err(error_message) => Err(ApiErrorResponse::ServerError {
+            error: error_message.to_string(),
+        }),
+    }
 }
 
 ///reply email
@@ -192,8 +230,8 @@ pub async fn reply_email(
             // todo!()
         }
         //return a not found error
-        Err(error) => Err(ApiErrorResponse::NotFound {
-            error: vec![error.to_string()],
+        Err(error_message) => Err(ApiErrorResponse::NotFound {
+            error: error_message.to_string(),
         }),
     }
 }
@@ -226,8 +264,8 @@ pub async fn delete_email(
             // todo!()
         }
         //return a not found error
-        Err(error) => Err(ApiErrorResponse::NotFound {
-            error: vec![error.to_string()],
+        Err(error_message) => Err(ApiErrorResponse::NotFound {
+            error: error_message.to_string(),
         }),
     }
 }
@@ -261,8 +299,8 @@ pub async fn fetch_email(
             // todo!()
         }
         //return a not found error
-        Err(error) => Err(ApiErrorResponse::NotFound {
-            error: vec![error.to_string()],
+        Err(error_message) => Err(ApiErrorResponse::NotFound {
+            error: error_message.to_string(),
         }),
     }
 }
@@ -294,8 +332,8 @@ pub async fn star_email(
             // todo!()
         }
         //return a not found error
-        Err(error) => Err(ApiErrorResponse::NotFound {
-            error: vec![error.to_string()],
+        Err(error_message) => Err(ApiErrorResponse::NotFound {
+            error: error_message.to_string(),
         }),
     }
 }

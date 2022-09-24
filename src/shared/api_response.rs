@@ -41,12 +41,12 @@ pub struct ApiSuccessResponse<Data> {
 /// the error content should be returned as an error of string
 #[allow(dead_code)]
 pub enum ApiErrorResponse {
-    WrongCredentials { error: Vec<String> },
-    BadRequest { error: Vec<String> },
-    ServerError { error: Vec<String> },
-    ConflictError { error: Vec<String> },
-    InvalidToken { error: Vec<String> },
-    NotFound { error: Vec<String> },
+    WrongCredentials { error: String },
+    BadRequest { error: String },
+    ServerError { error: String },
+    ConflictError { error: String },
+    InvalidToken { error: String },
+    NotFound { error: String },
 }
 
 ///implement into response trait for api error
@@ -89,7 +89,7 @@ impl IntoResponse for ApiErrorResponse {
             ),
         };
         //build the response body using the ApiResponse struct
-        let response_body: ApiResponse<_, Vec<String>> = ApiResponse::<_, Vec<String>> {
+        let response_body: ApiResponse<_, String> = ApiResponse::<_, String> {
             success: false,
             message: error_message,
             data: None::<String>,
