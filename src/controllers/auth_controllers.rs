@@ -215,7 +215,15 @@ pub async fn login(
 /// to do this, get the jwt token fom the header,
 /// validate the token
 /// return the user details if no error else return the apt error code and response
-pub async fn user_profile(Json(_payload): Json<UserInformation>) -> impl IntoResponse {}
+// pub async fn user_profile(Json(_payload): Json<UserInformation>) -> impl IntoResponse {}
+
+pub async fn user_profile(claims: JwtClaims) -> Result<String, ApiErrorResponse> {
+    // Send the protected data to the user
+    Ok(format!(
+        "Welcome to the protected area :)\nYour data:\n{}",
+        claims
+    ))
+}
 
 ///reset user password
 pub async fn reset_password(Json(_payload): Json<UserInformation>) -> impl IntoResponse {

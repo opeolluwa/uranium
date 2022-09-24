@@ -1,14 +1,20 @@
 use super::api_response::ApiErrorResponse as AuthError;
 use axum::async_trait;
-use axum::extract::{FromRequestParts, TypedHeader};
+use axum::extract::{FromRequest, RequestParts, TypedHeader};
 use axum::headers::{authorization::Bearer, Authorization};
-use axum::http::request::Parts;
 use jsonwebtoken::decode;
 use jsonwebtoken::Validation;
 use jsonwebtoken::{DecodingKey, EncodingKey};
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
+///fetch the JWT defined environment and assign it's value to a life
+/// call on the new method of JwtEncryption keys to accept and pass down the secret to the jsonwebtoken crate EncodingKey and DecodingKey modules
+static JWT_SECRET: Lazy<JwtEncryptionKeys> = Lazy::new(|| -> JwtEncryptionKeys {
+    let secret = std::env::var("JWT_SECRET").expect("Invalid or missing JWT Secret");
+    JwtEncryptionKeys::new(secret.as_bytes())
+});
 ///defines fields in the JWT encryption and decryption payload
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JwtClaims {
@@ -19,29 +25,27 @@ pub struct JwtClaims {
 }
 
 #[async_trait]
-impl<S> FromRequestParts<S> for JwtClaims
+impl<S> FromRequest<S> for JwtClaims
 where
-    S: Send + Sync,
+    S: Send,
 {
     type Rejection = AuthError;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request(req: &mut RequestParts<S>) -> Result<Self, Self::Rejection> {
         // Extract the token from the authorization header
         let TypedHeader(Authorization(bearer)) =
-            TypedHeader::<Authorization<Bearer>>::from_request_parts(parts, state)
+            TypedHeader::<Authorization<Bearer>>::from_request(req)
                 .await
-                .map_err(|_| AuthError::InvalidToken {
-                    error: "error_message".to_String(),
+                .map_err(|err| AuthError::InvalidToken {
+                    error: err.to_string(),
                 })?;
+
         // Decode the user data
-        let token_data = decode::<JwtClaims>(
-            bearer.token(),
-            &JwtEncryptionKeys::decoding,
-            &Validation::default(),
-        )
-        .map_err(|_| AuthError::InvalidToken {
-            error: "error_message".to_String(),
-        })?;
+        let token_data =
+            decode::<JwtClaims>(bearer.token(), &JWT_SECRET.decoding, &Validation::default())
+                .map_err(|err| AuthError::InvalidToken {
+                    error: err.to_string(),
+                })?;
         Ok(token_data.claims)
     }
 }
