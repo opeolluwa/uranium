@@ -10,7 +10,7 @@
             };
 
             //:encrypt the user data
-            let jwt_payload = JwtSchema {
+            let jwt_payload = JwtClaims {
                 id: id.to_string(),
                 email,
                 fullname,

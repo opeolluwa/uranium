@@ -60,3 +60,6 @@ pub struct ValidatedForm<T>(pub T);
 //         Ok(ValidatedForm(value))
 //     }
 // }
+
+
+// TODO implement enumerate field for email context

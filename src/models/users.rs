@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use std::collections::HashMap;
+use crate::shared::api_response::EnumerateFields;
 
 /// define the user data structure that shall serve as the basis of serial
 /// implement debug, serialize, deserializing and #[derive(sqlx::FromRow
@@ -41,14 +42,6 @@ pub struct UserInformation {
     pub password: String,
     /// the user unique username
     pub username: String,
-}
-
-///  a trait to return the field of the structs as an array of strings
-///  the implementation on user information will return the user is, firstname, username ...
-/// on the user authentication struct, the implementation will return the user email and password
-
-pub trait EnumerateFields {
-    fn collect_as_strings(&self) -> HashMap<String, String>;
 }
 
 ///return the UserInformation as an array of
