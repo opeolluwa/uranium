@@ -2,8 +2,8 @@ use super::api_response::ApiErrorResponse as AuthError;
 use axum::async_trait;
 use axum::extract::{FromRequest, RequestParts, TypedHeader};
 use axum::headers::{authorization::Bearer, Authorization};
-use jsonwebtoken::decode;
 use jsonwebtoken::Validation;
+use jsonwebtoken::{decode, Algorithm};
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
@@ -40,12 +40,24 @@ where
                     error: err.to_string(),
                 })?;
 
-        // Decode the user data
-        let token_data =
-            decode::<JwtClaims>(bearer.token(), &JWT_SECRET.decoding, &Validation::default())
+        /*
+         * Decode the user data
+         * the encoding uses a custom algorithm,
+         * reconfigure the jsonwebtoken crate to use the custom algorithm that was used for encryption
+         *
+         * typically, the decryption ought to be
+         * Validation::default())
                 .map_err(|err| AuthError::InvalidToken {
                     error: err.to_string(),
                 })?;
+
+        * how ever we will be using a custom algorithm below
+         */
+        let validation = Validation::new(Algorithm::HS512);
+        let token_data = decode::<JwtClaims>(bearer.token(), &JWT_SECRET.decoding, &validation)
+            .map_err(|err| AuthError::InvalidToken {
+                error: err.to_string(),
+            })?;
         Ok(token_data.claims)
     }
 }
