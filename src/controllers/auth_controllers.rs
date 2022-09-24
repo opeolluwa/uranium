@@ -217,12 +217,35 @@ pub async fn login(
 /// return the user details if no error else return the apt error code and response
 // pub async fn user_profile(Json(_payload): Json<UserInformation>) -> impl IntoResponse {}
 
-pub async fn user_profile(claims: JwtClaims) -> Result<String, ApiErrorResponse> {
+pub async fn user_profile(
+    authenticated_user: JwtClaims,
+    Extension(database): Extension<PgPool>,
+) -> impl IntoResponse {
     // Send the protected data to the user
-    Ok(format!(
-        "Welcome to the protected area :)\nYour data:\n{}",
-        claims
-    ))
+    // fetch the user details from the database using...
+    //the user id from the authenticated_user object
+    let user_information =
+        sqlx::query_as::<_, UserInformation>("SELECT * FROM user_information WHERE id = $1")
+            .bind(Some(authenticated_user.id))
+            .fetch_one(&database)
+            .await;
+
+    //handle errors
+    match user_information {
+        Ok(user_object) => {
+            //build up the response body
+            let response_body: ApiSuccessResponse<UserInformation> = ApiSuccessResponse {
+                success: true,
+                message: "User information successfully fetched ".to_string(),
+                data: Some(user_object),
+            };
+
+            Json(response_body)
+        },
+         Err(error_message) => {
+            Err(ApiErrorResponse::BadRequest{error:error_message.to_string()})
+        }
+    }
 }
 
 ///reset user password
