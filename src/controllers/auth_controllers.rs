@@ -1,11 +1,12 @@
-use crate::models::users::EnumerateFields;
 use crate::models::users::UserAuthCredentials;
 use crate::models::users::UserInformation;
 use crate::models::users::UserModel;
 use crate::shared::api_response::ApiErrorResponse;
 use crate::shared::api_response::ApiSuccessResponse;
+use crate::shared::api_response::EnumerateFields;
+use crate::shared::jwt_schema::JwtClaims;
+use crate::shared::jwt_schema::JwtEncryptionKeys;
 use crate::shared::jwt_schema::JwtPayload;
-use crate::shared::jwt_schema::JwtSchema;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Extension;
@@ -13,10 +14,17 @@ use axum::Json;
 use bcrypt::verify;
 use bcrypt::DEFAULT_COST;
 use jsonwebtoken::Algorithm;
-use jsonwebtoken::{encode, EncodingKey, Header};
+use jsonwebtoken::{encode, Header};
+use once_cell::sync::Lazy;
 use sqlx::PgPool;
-use std::env;
 use uuid::Uuid;
+
+///fetch the JWT defined environment and assign it's value to a life
+/// call on the new method of JwtEncryption keys to accept and pass down the secret to the jsonwebtoken crate EncodingKey and DecodingKey modules
+static JWT_SECRET: Lazy<JwtEncryptionKeys> = Lazy::new(|| -> JwtEncryptionKeys {
+    let secret = std::env::var("JWT_SECRET").expect("Invalid or missing JWT Secret");
+    JwtEncryptionKeys::new(secret.as_bytes())
+});
 
 ///create a new user
 /// accept the user credentials,
@@ -148,7 +156,7 @@ pub async fn login(
             let verify_password = verify(password, &user.password);
             match verify_password {
                 Ok(is_correct_password) => {
-                    //if the password is not correct
+                    //send error if the password is not correct
                     if !is_correct_password {
                         return Err(ApiErrorResponse::WrongCredentials {
                             error: String::from("incorrect password"),
@@ -164,36 +172,28 @@ pub async fn login(
                     } = &user;
 
                     //encrypt the user data
-                    let jwt_payload = JwtSchema {
+                    let jwt_payload = JwtClaims {
                         id: id.to_string(),
                         email: email.to_string(),
                         fullname: fullname.to_string(),
                         exp: 2000000000, //may 2023
                     };
-                    let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| {
-                        String::from(
-                            "Ux6qlTEMdT0gSLq9GHp812R9XP3KSGSWcyrPpAypsTpRHxvLqYkeYNYfRZjL9",
-                        )
-                    });
+                    //fetch the JWT secret
+                    /*   let jwt_secret = crate::shared::jwt_schema::jwt_secret(); */
                     //use a custom header
                     let jwt_header = Header {
                         alg: Algorithm::HS512,
                         ..Default::default()
                     };
 
-                    //build the user the jwt token
-                    let token = encode(
-                        &jwt_header,
-                        &jwt_payload,
-                        &EncodingKey::from_secret(jwt_secret.as_bytes()),
-                    )
-                    .unwrap();
-
+                    //build the user jwt token
+                    let token = encode(&jwt_header, &jwt_payload, &JWT_SECRET.encoding);
+                    //construct and return a response
                     let response: ApiSuccessResponse<JwtPayload> = ApiSuccessResponse::<JwtPayload> {
                         success: true,
                         message: String::from("user successfully logged in"),
                         data: Some(JwtPayload {
-                            token,
+                            token: token.unwrap(),
                             token_type: String::from("Bearer"),
                         }),
                     };
@@ -211,10 +211,9 @@ pub async fn login(
     }
 }
 
-
 ///get the user profile
 /// to do this, get the jwt token fom the header,
-/// validate the token 
+/// validate the token
 /// return the user details if no error else return the apt error code and response
 pub async fn user_profile(Json(_payload): Json<UserInformation>) -> impl IntoResponse {}
 
@@ -223,7 +222,6 @@ pub async fn reset_password(Json(_payload): Json<UserInformation>) -> impl IntoR
     //destructure the request body
     todo!()
 }
-
 
 //update user profile
 pub async fn update_user_profile(Json(_payload): Json<UserInformation>) -> impl IntoResponse {}
