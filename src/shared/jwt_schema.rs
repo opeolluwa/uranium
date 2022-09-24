@@ -1,5 +1,11 @@
+use super::api_response::ApiErrorResponse as AuthError;
+use axum::async_trait;
+use axum::extract::{FromRequestParts, TypedHeader};
+use axum::headers::{authorization::Bearer, Authorization};
+use axum::http::request::Parts;
+use jsonwebtoken::decode;
+use jsonwebtoken::Validation;
 use jsonwebtoken::{DecodingKey, EncodingKey};
-use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
@@ -12,6 +18,34 @@ pub struct JwtClaims {
     pub exp: usize,
 }
 
+#[async_trait]
+impl<S> FromRequestParts<S> for JwtClaims
+where
+    S: Send + Sync,
+{
+    type Rejection = AuthError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        // Extract the token from the authorization header
+        let TypedHeader(Authorization(bearer)) =
+            TypedHeader::<Authorization<Bearer>>::from_request_parts(parts, state)
+                .await
+                .map_err(|_| AuthError::InvalidToken {
+                    error: "error_message".to_String(),
+                })?;
+        // Decode the user data
+        let token_data = decode::<JwtClaims>(
+            bearer.token(),
+            &JwtEncryptionKeys::decoding,
+            &Validation::default(),
+        )
+        .map_err(|_| AuthError::InvalidToken {
+            error: "error_message".to_String(),
+        })?;
+        Ok(token_data.claims)
+    }
+}
+
 //implement Display for JwtClaims to allow easy debugging
 impl Display for JwtClaims {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -22,8 +56,6 @@ impl Display for JwtClaims {
         )
     }
 }
-
-
 
 ///define JWT encryption and decryption secretes
 pub struct JwtEncryptionKeys {

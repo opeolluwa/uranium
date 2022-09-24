@@ -37,9 +37,9 @@ pub struct ApiSuccessResponse<Data> {
     pub data: Option<Data>,
 }
 
-///ApiEzlsAAnVChDQJEZDW9pAq7ks98gjolpfASBHAi8BJ3Y9TeUDHcX9HovV5BzrS4hUKX5tBmB4acfQrrorResponse
+
 /// the error content should be returned as an error of string
-// #[allow(dead_code)]
+#[allow(dead_code)]
 pub enum ApiErrorResponse {
     WrongCredentials { error: String },
     BadRequest { error: String },

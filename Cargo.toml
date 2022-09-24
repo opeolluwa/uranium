@@ -8,11 +8,12 @@ version = "0.1.0"
 
 [dependencies]
 anyhow = "1.0.65"
-axum = "0.5.15"
+axum = { version = "0.5.15", features = ["headers"] }
 bcrypt = "0.13.0"
 chrono = "0.4.22"
 dotenv = "0.15.0"
 futures = "0.3.23"
+headers = "0.3.8"
 jsonwebtoken = "8.1.1"
 lettre = "0.10.1"
 maud = "0.23.0"
