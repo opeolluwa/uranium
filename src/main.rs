@@ -70,7 +70,7 @@ async fn main() {
     let port = env::var("PORT")
         .ok()
         .and_then(|value_from_env| value_from_env.parse().ok())
-        .unwrap_or(8445);
+        .unwrap_or(4835);
     /*
      * if there is an env value,
      * try the parse the value to determine of the environment is development or production
