@@ -1,5 +1,7 @@
 # nitride
-Minimal Authentication server in Rust
+An admin dashboard built on  [Vue.js](https://vuejs.org/), [TypeScript](https://www.typescriptlang.org/), [Rust](https://www.rust-lang.org/), and [PostgreSQL](https://www.postgresql.org/).
+
+See the UI source code [here](https://github.com/opeolluwa/nitride-ui).
 
 
 ## Requirement

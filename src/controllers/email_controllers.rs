@@ -1,4 +1,5 @@
 use crate::models::emails::EmailContext;
+use crate::models::emails::EmailModel;
 use crate::shared::api_response::ApiErrorResponse;
 use crate::shared::api_response::ApiResponse;
 use crate::shared::api_response::ApiSuccessResponse;
@@ -108,8 +109,8 @@ pub async fn receive_email(
 
     //generate an  Id store the email in a database
     let id = Uuid::new_v4();
-    let new_email =  sqlx::query_as::<_, EmailContext>(
-        "INSERT INTO emails (id, sender_name, sender_email, email_subject) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (email) DO NOTHING RETURNING *",
+    let new_email =  sqlx::query_as::<_, EmailModel>(
+        "INSERT INTO emails (id, sender_name, sender_email, email_subject, email_body) VALUES ($1, $2, $3, $4, $5)  RETURNING *",
     )
     .bind(Some(id))
     .bind(Some(sender_name))
@@ -127,17 +128,19 @@ pub async fn receive_email(
         Ok(_) => {
             //send an auto response on success
             let from_email = format!("{sender_name} <{sender_email}>");
-            let reply_to = format!("{sender_name} <{sender_email}>");
-            let receiver_address =
-                format!("{:?} <{:?}>", SMTP_REPLY_TO_NAME, SMTP_REPLY_TO_ADDRESS);
+             let reply_to = format!(
+                "{:?} <{:?}>",
+               "adeoye", "adefemiadeoye@yahoo.com"
+            );
+            let receiver_address = format!("{sender_name} <{sender_email}>");
 
+            println!("{:#?}", &receiver_address);
+
+            // todo!()
             //the auto response email content
             let email_content = format!(
                 r#"
-    <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
-       Hello <b>{sender_name}</b>,                
-    </p>
-
+   
     
     
     <!--email content ---->
@@ -153,7 +156,7 @@ pub async fn receive_email(
             let message_content = parse_email_template(email_content, sender_name.to_string());
             let email = Message::builder()
                 .from(from_email.parse().unwrap())
-                .reply_to(reply_to.parse().unwrap())
+                .reply_to( "adeoye <adefemiadeoye@yahoo.com>".parse().unwrap())
                 .to(receiver_address.parse().unwrap())
                 .subject(email_subject)
                 .multipart(
@@ -185,23 +188,16 @@ pub async fn receive_email(
                         error: None,
                     };
                     //the response with ok status code and response body
-                    (StatusCode::OK, Json(response_body))
+                    Ok((StatusCode::OK, Json(response_body)))
                 }
-                Err(error_message) => {
-                    // the HTTP response body
-                    let response_body: ApiResponse<(), ()> = ApiResponse::<(), ()> {
-                        success: false,
-                        message: format!("failed to send message due to {:?}", error_message),
-                        data: None,
-                        error: None,
-                    };
-                    // the response body and status code
-                    (StatusCode::SERVICE_UNAVAILABLE, Json(response_body))
-                }
-            };
+                Err(error_message) => Err(ApiErrorResponse::ConflictError {
+                    error: error_message.to_string(),
+                }),
+            }
             //send the response back to the client application
 
-            todo!()
+            // todo!()
+            // response
         }
         Err(error_message) => Err(ApiErrorResponse::ServerError {
             error: error_message.to_string(),
@@ -421,7 +417,7 @@ fn parse_email_template(email_content: String, recipient_name: String) -> String
                           <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
                             &nbsp;</p>
                           <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
-                            Best Regards,<br />Opeoluwa</p>
+                            Best Regards,<br />Adeoye Adefemi</p>
                           <hr style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box;" />
                           <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
                             <small style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box;">If

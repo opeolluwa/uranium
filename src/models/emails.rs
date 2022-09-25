@@ -23,9 +23,29 @@ pub struct EmailSchema {
 /// the email context
 /// derive sqlx::FromRow  trait to make the struct queryable as database model
 #[derive(Debug, Serialize, Deserialize, Validate, sqlx::FromRow)]
-pub struct EmailContext {
+#[serde(rename_all = "camelCase")]
+pub struct EmailModel {
     ///a uniques identifier for the email item essentially a UUID 
     id:Uuid,
+    /// the sender fullname
+    #[validate(length(min = 1, "sender name seems invalid")) ]
+    pub sender_name: String,
+    /// the sender or recipient email address
+    #[validate(email)]
+    pub sender_email: String,
+    ///the email subject
+    #[validate(length(min = 1, "email subject cannot be empty "))]
+    pub email_subject: String,
+    /// the message content
+    #[validate(length(min = 10, "message body may only be longer than 10 characters"))]
+    pub email_body: String,
+}
+
+
+/// the email context
+/// derive sqlx::FromRow  trait to make the struct queryable as database model
+#[derive(Debug, Serialize, Deserialize, Validate, sqlx::FromRow)]
+pub struct EmailContext {
     /// the sender fullname
     #[validate(length(min = 1, "sender name seems invalid"))]
     pub fullname: String,
