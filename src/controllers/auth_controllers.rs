@@ -329,5 +329,5 @@ pub async fn reset_password(
     }
 }
 
-//update user profile
+///update user profile
 pub async fn update_user_profile(Json(_payload): Json<UserInformation>) -> impl IntoResponse {}

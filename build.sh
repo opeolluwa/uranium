@@ -1,8 +1,8 @@
 #!bin/bash
 
 # build the project static files
-cd ../dashboard &&  npm run build
+cd ../nitride-ui &&  npm run build
 cd ../nitride
 # copy the static files to the server
 rm -rf views/*
-cp -r ../dashboard/dist/* ./views
+cp -r ../nitride-ui/dist/* ./views
