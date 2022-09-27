@@ -1,3 +1,4 @@
+use crate::models::users::ResetUserPassword;
 use crate::models::users::UserAuthCredentials;
 use crate::models::users::UserInformation;
 use crate::models::users::UserModel;
@@ -252,11 +253,81 @@ pub async fn user_profile(
     }
 }
 
+/*
+ * get the user details from the JWT claims
+ * use the the extracted details to fetch the user data
+ * send error if no user with the provided data was found
+ *
+ * if found, update the password, expire the JWt,
+ * generate new JWT. send new JWT to the client and a success response
+ */
 ///reset user password
-pub async fn reset_password(Json(_payload): Json<UserInformation>) -> impl IntoResponse {
-    //destructure the request body
-    todo!()
+pub async fn reset_password(
+    Json(payload): Json<ResetUserPassword>,
+    authenticated_user: JwtClaims,
+    Extension(database): Extension<PgPool>,
+) -> impl IntoResponse {
+    //check through the fields to see that no field was badly formatted
+    let entries = &payload.collect_as_strings();
+    let mut bad_request_errors: Vec<String> = Vec::new();
+    for (key, value) in entries {
+        if value.is_empty() {
+            let error = format!("{key} is empty");
+            bad_request_errors.push(error);
+        }
+    }
+
+    if &payload.new_password.trim() != &payload.confirm_password {
+        bad_request_errors.push(format!("Password does not match"));
+    }
+
+    //if we have empty fields return error to client
+    if !bad_request_errors.is_empty() {
+        return Err(ApiErrorResponse::BadRequest {
+            error: bad_request_errors.join(", ").to_string(),
+        });
+    }
+
+    //destructure the payload
+    let user_information =
+        sqlx::query_as::<_, UserInformation>("SELECT * FROM user_information WHERE email = $1")
+            .bind(Some(authenticated_user.email.trim()))
+            .fetch_one(&database)
+            .await;
+
+    //handle errors
+    match user_information {
+        Ok(_) => {
+            //update the user password
+            let new_hashed_password =
+                bcrypt::hash(payload.new_password, bcrypt::DEFAULT_COST).unwrap();
+            let updated_user = sqlx::query_as::<_, UserInformation>(
+                "UPDATE user_information SET password = $1 WHERE email = $2 RETURNING *",
+            )
+            .bind(Some(new_hashed_password.trim()))
+            .bind(Some(authenticated_user.email.trim()))
+            .fetch_one(&database)
+            .await
+            .unwrap();
+
+            //build up the response body
+            // don't return the value of the user password
+            let response_body: ApiSuccessResponse<UserInformation> = ApiSuccessResponse {
+                success: true,
+                message: "User password successfully updated".to_string(),
+                data: Some(UserInformation {
+                    password: "".to_string(),
+                    ..updated_user
+                }),
+            };
+            //return the response
+            Ok(Json(response_body))
+        }
+        Err(error_message) => Err(ApiErrorResponse::BadRequest {
+            error: error_message.to_string(),
+        }),
+    }
 }
 
-//update user profile
+///update user profile
 pub async fn update_user_profile(Json(_payload): Json<UserInformation>) -> impl IntoResponse {}

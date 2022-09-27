@@ -30,9 +30,9 @@ static SMTP_PASSWORD: Lazy<String> =
     Lazy::new(|| env::var("SMTP_PASSWORD").expect("SMTP password not provided"));
 static SMTP_HOST: Lazy<String> =
     Lazy::new(|| env::var("SMTP_HOST").expect("SMTP host not provided"));
-static SMTP_REPLY_TO_ADDRESS: Lazy<String> =
+static _SMTP_REPLY_TO_ADDRESS: Lazy<String> =
     Lazy::new(|| env::var("SMTP_PASSWORD").expect("SMTP reply-to-address not specified"));
-static SMTP_REPLY_TO_NAME: Lazy<String> =
+static _SMTP_REPLY_TO_NAME: Lazy<String> =
     Lazy::new(|| env::var("SMTP_REPLY_TO_NAME").expect("SMTP reply-to-name not provided"));
 static FRONTEND_URL: Lazy<String> = Lazy::new(|| {
     env::var("FRONTEND_URL").unwrap_or_else(|_| String::from("https://opeolluwa.verce.app"))
@@ -127,11 +127,9 @@ pub async fn receive_email(
     match new_email {
         Ok(_) => {
             //send an auto response on success
+            //TODO : dynamically get reply to email
             let from_email = format!("{sender_name} <{sender_email}>");
-             let reply_to = format!(
-                "{:?} <{:?}>",
-               "adeoye", "adefemiadeoye@yahoo.com"
-            );
+            let _reply_to = format!("{:?} <{:?}>", "adeoye", "adefemiadeoye@yahoo.com");
             let receiver_address = format!("{sender_name} <{sender_email}>");
 
             println!("{:#?}", &receiver_address);
@@ -156,7 +154,7 @@ pub async fn receive_email(
             let message_content = parse_email_template(email_content, sender_name.to_string());
             let email = Message::builder()
                 .from(from_email.parse().unwrap())
-                .reply_to( "adeoye <adefemiadeoye@yahoo.com>".parse().unwrap())
+                .reply_to("adeoye <adefemiadeoye@yahoo.com>".parse().unwrap())
                 .to(receiver_address.parse().unwrap())
                 .subject(email_subject)
                 .multipart(
