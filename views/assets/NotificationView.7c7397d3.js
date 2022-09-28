@@ -1,1 +1,0 @@
-import{A as o}from"./AppEmptyState.58b5ca56.js";import{d as e,_ as n,r as p,o as a,c}from"./index.5c88f123.js";const s=e({name:"NotificationView",components:{AppEmptyState:o}});function r(i,m,_,f,d,l){const t=p("AppEmptyState");return a(),c(t)}const $=n(s,[["render",r]]);export{$ as default};
