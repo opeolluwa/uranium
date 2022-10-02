@@ -16,8 +16,8 @@ pub struct ProjectsModel {
     pub description: String,
     ///the technologies used, stored as array of string
     pub technologies_used: Vec<String>,
-    ///the date the project was added to the database
-    pub date_added: String, //TODO: change to dateTime
+    //the date the project was added to the database
+    // pub date_added: String, //TODO: change to dateTime
     ///the project repository url
     pub repo_url: String,
     ///the url of the deployed application if any
@@ -34,8 +34,8 @@ pub struct ProjectInformation {
     pub description: String,
     ///the technologies used, stored as array of string
     pub technologies_used: Vec<String>,
-    ///the date the project was added to the database
-    pub date_added: String, //TODO: change to dateTime
+    //the date the project was added to the database
+    // pub date_added: sqlx::postgres::PgValueFormat, //TODO: change to dateTime
     ///the project repository url
     pub repo_url: String,
     ///the url of the deployed application if any

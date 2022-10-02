@@ -35,7 +35,7 @@ pub async fn add_project(
         //the technologies used, stored as array of string
         technologies_used,
         //the date the project was added to the database
-        date_added,
+        // date_added,
         //the project repository url
         repo_url,
         //the url of the deployed application if any
@@ -50,11 +50,11 @@ pub async fn add_project(
      */
     let project_id = Uuid::new_v4();
     let new_project =  sqlx::query_as::<_, ProjectsModel>(
-        "INSERT INTO project_information (id, name, description, date_added, technologies_used, repo_url, live_url) VALUES ($1, $2, $3, $4, $5, $, $7) ON CONFLICT (name) DO NOTHING RETURNING *",
+        "INSERT INTO project_information (id, name, description, technologies_used, repo_url, live_url) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (name) DO NOTHING RETURNING *",
     )
     .bind(Some(project_id))
     .bind(Some(project_name))
-    .bind(Some(date_added))
+    // .bind(Some(date_added))
     .bind(Some(project_description))
     .bind(Some(technologies_used))
     .bind(Some(repo_url))
@@ -73,8 +73,12 @@ pub async fn add_project(
             //send the response
             Ok((StatusCode::CREATED, Json(response_body)))
         }
-        Err(error_message) => Err(ApiErrorResponse::ServerError {
-            error: error_message.to_string(),
+        Err(error_message) => Err(ApiErrorResponse::ConflictError {
+            error: vec![
+                error_message.to_string(),
+                "data most likely exists".to_string(),
+            ]
+            .join(" because "),
         }),
     }
 }
@@ -88,13 +92,11 @@ pub async fn edit_project() -> impl IntoResponse {}
 
 ///get all projects
 /// retrieve all project with pagination
-pub async fn get_all_projects(
-    Extension(database): Extension<PgPool>,
-) -> impl IntoResponse {
+pub async fn get_all_projects(Extension(database): Extension<PgPool>) -> impl IntoResponse {
     //fetch all projects ...
     //TODO: implement pagination logic
-     let fetched_projects = sqlx::query_as::<_, ProjectsModel>("SELECT * FROM project_information")
-        .fetch(&database);
- 
+    let fetched_projects =
+        sqlx::query_as::<_, ProjectsModel>("SELECT * FROM project_information").fetch(&database);
+
     todo!()
 }
