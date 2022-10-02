@@ -25,10 +25,10 @@ pub struct EmailSchema {
 #[derive(Debug, Serialize, Deserialize, Validate, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct EmailModel {
-    ///a uniques identifier for the email item essentially a UUID 
-    id:Uuid,
+    ///a uniques identifier for the email item essentially a UUID
+    id: Uuid,
     /// the sender fullname
-    #[validate(length(min = 1, "sender name seems invalid")) ]
+    #[validate(length(min = 1, "sender name seems invalid"))]
     pub sender_name: String,
     /// the sender or recipient email address
     #[validate(email)]
@@ -40,7 +40,6 @@ pub struct EmailModel {
     #[validate(length(min = 10, "message body may only be longer than 10 characters"))]
     pub email_body: String,
 }
-
 
 /// the email context
 /// derive sqlx::FromRow  trait to make the struct queryable as database model
@@ -80,6 +79,5 @@ pub struct ValidatedForm<T>(pub T);
 //         Ok(ValidatedForm(value))
 //     }
 // }
-
 
 // TODO implement enumerate field for email context

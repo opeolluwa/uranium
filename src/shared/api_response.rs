@@ -37,7 +37,6 @@ pub struct ApiSuccessResponse<Data> {
     pub data: Option<Data>,
 }
 
-
 /// the error content should be returned as an error of string
 #[allow(dead_code)]
 pub enum ApiErrorResponse {
@@ -58,34 +57,34 @@ impl IntoResponse for ApiErrorResponse {
                 (
                     StatusCode::UNAUTHORIZED,
                     String::from("Wrong or missing authorization credentials"),
-                    error.clone(),
+                    error,
                 )
             }
             ApiErrorResponse::BadRequest { error } => (
                 StatusCode::BAD_REQUEST,
                 String::from("Badly formatted or missing credentials"),
-                error.clone(),
+                error,
             ),
             ApiErrorResponse::ServerError { error } => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 String::from("Internal Server Response"),
-                error.clone(),
+                error,
             ),
             ApiErrorResponse::InvalidToken { error } => (
                 StatusCode::BAD_REQUEST,
                 String::from("Invalid token or missing authorization token"),
-                error.clone(),
+                error,
             ),
             ApiErrorResponse::ConflictError { error } => (
                 StatusCode::CONFLICT,
                 String::from("The record you are trying to create already exists"),
-                error.clone(),
+                error,
             ),
             //not found error
             ApiErrorResponse::NotFound { error } => (
                 StatusCode::NOT_FOUND,
                 String::from("The requested Resource was not found"),
-                error.clone(),
+                error,
             ),
         };
         //build the response body using the ApiResponse struct
@@ -104,7 +103,25 @@ impl IntoResponse for ApiErrorResponse {
 ///  a trait to return the field of the structs as an array of strings
 ///  the implementation on user information will return the user is, firstname, username ...
 /// on the user authentication struct, the implementation will return the user email and password
-
+/// # example
+/// ```rust
+///   //destructure the HTTP request body
+///   let UserInformation {
+///     fullname,
+///  password,
+///       username,
+///    email,
+///   } = &payload;
+///  check through the fields to see that no field was badly formatted
+///  let entries = &payload.collect_as_strings();
+///  let mut bad_request_errors: Vec<String> = Vec::new();
+///  for (key, value) in entries {
+///   if value.is_empty() {
+///   let error = format!("{key} is empty");
+///   bad_request_errors.push(error);
+///  }
+/// }
+/// ```
 pub trait EnumerateFields {
     fn collect_as_strings(&self) -> std::collections::HashMap<String, String>;
 }

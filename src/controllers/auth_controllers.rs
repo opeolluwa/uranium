@@ -57,7 +57,7 @@ pub async fn sign_up(
     //if we have empty fields return error to client
     if !bad_request_errors.is_empty() {
         return Err(ApiErrorResponse::BadRequest {
-            error: bad_request_errors.join(", ").to_string(),
+            error: bad_request_errors.join(", "),
         });
     }
 
@@ -98,8 +98,7 @@ pub async fn sign_up(
                 err.to_string(),
                 format!("an account with {email} already exists"),
             ]
-            .join(", ")
-            .to_string(),
+            .join(", "),
         }),
     }
 }
@@ -136,7 +135,7 @@ pub async fn login(
     //if we have empty fields return error to client
     if !bad_request_errors.is_empty() {
         return Err(ApiErrorResponse::BadRequest {
-            error: bad_request_errors.join(", ").to_string(),
+            error: bad_request_errors.join(", "),
         });
     }
 
@@ -277,14 +276,14 @@ pub async fn reset_password(
         }
     }
 
-    if &payload.new_password.trim() != &payload.confirm_password {
-        bad_request_errors.push(format!("Password does not match"));
+    if payload.new_password.trim() != payload.confirm_password {
+        bad_request_errors.push("Password does not match".to_string());
     }
 
     //if we have empty fields return error to client
     if !bad_request_errors.is_empty() {
         return Err(ApiErrorResponse::BadRequest {
-            error: bad_request_errors.join(", ").to_string(),
+            error: bad_request_errors.join(", "),
         });
     }
 

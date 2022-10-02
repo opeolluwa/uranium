@@ -85,7 +85,7 @@ pub async fn send_email(
 
     // Send the email
     let res = match mailer.send(&email) {
-        Ok(_) => format!("Email sent successfully!"),
+        Ok(_) => "Email sent successfully!".to_string(),
         Err(e) => format!("Could not send email: {:?}", e),
     };
 
