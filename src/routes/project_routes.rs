@@ -12,4 +12,5 @@ pub fn routes() -> axum::Router {
         .route("/", post(project_controllers::add_project))
         .route("/", put(project_controllers::edit_project))
         .route("/", get(project_controllers::get_all_projects))
+        .route("/:project_id", get(project_controllers::get_project_by_id))
 }
