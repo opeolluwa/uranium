@@ -1,8 +1,6 @@
-use crate::{
-    models::projects::{ProjectInformation, ProjectsModel},
-    shared::api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields},
-};
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use crate::models::projects::{ProjectInformation, ProjectsModel};
+use crate::shared::api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields};
+use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -84,18 +82,78 @@ pub async fn add_project(
 }
 
 ///edit project
-/// accept the project id
+/// accept the project id as route parameter
 /// find the project
 /// effect edits
 /// return updated project object
-pub async fn edit_project() -> impl IntoResponse {}
+pub async fn edit_project(
+    Path(project_id): Path<Uuid>,
+    Extension(database): Extension<PgPool>,
+) -> Result<(StatusCode, Json<ApiSuccessResponse<ProjectsModel>>), ApiErrorResponse> {
+    //fetch the project from the database  using the project id
+    let fetched_project =
+        sqlx::query_as::<_, ProjectsModel>("SELECT * FROM project_information WHERE id = $1")
+            .bind(project_id)
+            .fetch_one(&database)
+            .await;
+
+    //handle errors
+    match fetched_project {
+        Ok(project) => {
+            //build the project body
+            let response_body: ApiSuccessResponse<ProjectsModel> = ApiSuccessResponse {
+                success: true,
+                message: "Project successfully retrieved".to_string(),
+                data: Some(project),
+            };
+            //return the response with 200 status code
+            Ok((StatusCode::OK, Json(response_body)))
+        }
+        Err(error_message) => Err(ApiErrorResponse::NotFound {
+            error: error_message.to_string(),
+        }),
+    }
+}
+
+///get one project
+/// collect the project id from the client
+/// search the database for the project
+/// return success and response or 404 error
+pub async fn get_project_by_id(
+    Path(project_id): Path<Uuid>,
+    Extension(database): Extension<PgPool>,
+) -> Result<(StatusCode, Json<ApiSuccessResponse<ProjectsModel>>), ApiErrorResponse> {
+    //fetch the project from the database  using the project id
+    let fetched_project =
+        sqlx::query_as::<_, ProjectsModel>("SELECT * FROM project_information WHERE id = $1")
+            .bind(project_id)
+            .fetch_one(&database)
+            .await;
+
+    //handle errors
+    match fetched_project {
+        Ok(project) => {
+            //build the project body
+            let response_body: ApiSuccessResponse<ProjectsModel> = ApiSuccessResponse {
+                success: true,
+                message: "Project successfully retrieved".to_string(),
+                data: Some(project),
+            };
+            //return the response with 200 status code
+            Ok((StatusCode::OK, Json(response_body)))
+        }
+        Err(error_message) => Err(ApiErrorResponse::NotFound {
+            error: error_message.to_string(),
+        }),
+    }
+}
 
 ///get all projects
 /// retrieve all project with pagination
 pub async fn get_all_projects(Extension(database): Extension<PgPool>) -> impl IntoResponse {
     //fetch all projects ...
     //TODO: implement pagination logic
-    let fetched_projects =
+    let _fetched_projects =
         sqlx::query_as::<_, ProjectsModel>("SELECT * FROM project_information").fetch(&database);
 
     todo!()
