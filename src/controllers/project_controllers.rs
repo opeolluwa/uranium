@@ -1,5 +1,6 @@
 use crate::models::projects::{ProjectInformation, ProjectsModel};
 use crate::shared::api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields};
+use crate::shared::jwt_schema::JwtClaims;
 use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -11,6 +12,7 @@ use uuid::Uuid;
 /// - repoUrl - the project repository
 ///
 pub async fn add_project(
+    _claims: JwtClaims,
     Json(payload): Json<ProjectInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<ProjectsModel>>), ApiErrorResponse> {
@@ -87,6 +89,7 @@ pub async fn add_project(
 /// effect edits
 /// return updated project object
 pub async fn edit_project(
+    _claims: JwtClaims,
     Path(project_id): Path<Uuid>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<ProjectsModel>>), ApiErrorResponse> {
@@ -120,6 +123,7 @@ pub async fn edit_project(
 /// search the database for the project
 /// return success and response or 404 error
 pub async fn get_project_by_id(
+    _claims: JwtClaims,
     Path(project_id): Path<Uuid>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<ProjectsModel>>), ApiErrorResponse> {
@@ -150,7 +154,10 @@ pub async fn get_project_by_id(
 
 ///get all projects
 /// retrieve all project with pagination
-pub async fn get_all_projects(Extension(database): Extension<PgPool>) -> impl IntoResponse {
+pub async fn get_all_projects(
+    _claims: JwtClaims,
+    Extension(database): Extension<PgPool>,
+) -> impl IntoResponse {
     //fetch all projects ...
     //TODO: implement pagination logic
     let _fetched_projects =

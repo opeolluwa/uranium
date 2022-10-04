@@ -1,46 +1,35 @@
 use crate::shared::api_response::EnumerateFields;
+// use sqlx::types::time::Date;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
 // use validator::Validate;
 
-/// the project model
+/// the note model
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct NotesModel {
-    ///the project unique identifier
+    ///the note unique identifier
     pub id: Uuid,
-    /// the project name
-    pub name: String,
-    ///the project description
+    /// the note title 
+    pub title: String,
+    ///the note description
     pub description: String,
-    ///the technologies used, stored as array of string
-    pub technologies_used: Vec<String>,
-    ///the project repository url
-    pub repo_url: String,
-    ///the url of the deployed application if any
-    pub live_url: String,
+    // the date the note was created at 
+    // pub created_at : Date
+    // the last the note was updated 
+    // pub updated_at :Date
 }
 
 ///for working with input and output
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct NotesInformation {
-    /// the project name
-    pub name: String,
-    ///the project description
+    pub title: String,
+    ///the note description
     pub description: String,
-    ///the technologies used, stored as array of string
-    pub technologies_used: Vec<String>,
-    //the date the project was added to the database
-    // pub date_added: sqlx::postgres::PgValueFormat, //TODO: change to dateTime
-    ///the project repository url
-    pub repo_url: String,
-    ///the url of the deployed application if any
-    pub live_url: String,
 }
 
-///implement enumerate fields for the project schema
+///implement enumerate fields for the note schema
 impl EnumerateFields for NotesInformation {
     /* return a key value pair of the the entries
      * to avoid borrow checker error and possible error from dereferencing,
@@ -48,13 +37,8 @@ impl EnumerateFields for NotesInformation {
      */
     fn collect_as_strings(&self) -> std::collections::HashMap<String, String> {
         HashMap::from([
-            (String::from("projectName"), self.name.clone()),
-            (String::from("projectDescription"), self.description.clone()),
-            (String::from("repoUrl"), self.repo_url.clone()),
-            /* (
-                String::from("technologiesUsed"),
-                self.technologies_used.clone(),
-            ), */
+            (String::from("noteName"), self.title.clone()),
+            (String::from("noteDescription"), self.description.clone()),
         ])
     }
 }
