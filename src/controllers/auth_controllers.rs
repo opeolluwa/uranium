@@ -5,6 +5,7 @@ use crate::models::users::UserModel;
 use crate::shared::api_response::ApiErrorResponse;
 use crate::shared::api_response::ApiSuccessResponse;
 use crate::shared::api_response::EnumerateFields;
+use crate::shared::jwt_schema::set_jtw_exp;
 use crate::shared::jwt_schema::JwtClaims;
 use crate::shared::jwt_schema::JwtEncryptionKeys;
 use crate::shared::jwt_schema::JwtPayload;
@@ -176,7 +177,7 @@ pub async fn login(
                         id: id.to_string(),
                         email: email.to_string(),
                         fullname: fullname.to_string(),
-                        exp: 2000000000, //may 2023
+                        exp: set_jtw_exp(4), //set expirations to 4 hours
                     };
                     //fetch the JWT secret
                     /*   let jwt_secret = crate::shared::jwt_schema::jwt_secret(); */
