@@ -11,13 +11,13 @@ use uuid::Uuid;
 pub struct NotesModel {
     ///the note unique identifier
     pub id: Uuid,
-    /// the note title 
+    /// the note title
     pub title: String,
     ///the note description
     pub description: String,
-    // the date the note was created at 
+    // the date the note was created at
     // pub created_at : Date
-    // the last the note was updated 
+    // the last the note was updated
     // pub updated_at :Date
 }
 
