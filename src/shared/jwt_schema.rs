@@ -8,6 +8,7 @@ use jsonwebtoken::{DecodingKey, EncodingKey};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
+use std::time::SystemTime;
 
 ///fetch the JWT defined environment and assign it's value to a life
 /// call on the new method of JwtEncryption keys to accept and pass down the secret to the jsonwebtoken crate EncodingKey and DecodingKey modules
@@ -21,7 +22,7 @@ pub struct JwtClaims {
     pub id: String,
     pub email: String,
     pub fullname: String,
-    pub exp: usize,
+    pub exp: u64,
 }
 
 #[async_trait]
@@ -95,4 +96,22 @@ impl JwtEncryptionKeys {
 pub struct JwtPayload {
     pub token: String,
     pub token_type: String,
+}
+
+/// set the expiration of token
+pub fn set_jtw_exp(exp: u8) -> u64 {
+    // the current time
+    let now = SystemTime::now();
+    // unix epoch elapsed time
+    let unix_epoch_elapsed_time = now
+        .duration_since(std::time::UNIX_EPOCH)
+        .expect("something went wrong");
+    //accept the exp, convert it to seconds
+    let exp_hours_to_second = (exp as u64) * 60 * 60;
+    // return the token expiration as the summation of current unix epoch elapsed time
+    let hours_from_now =
+        unix_epoch_elapsed_time + std::time::Duration::from_secs(exp_hours_to_second);
+
+    //return the result as seconds
+    hours_from_now.as_secs()
 }
