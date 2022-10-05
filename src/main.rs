@@ -1,12 +1,13 @@
 use axum::{extract::Extension, http::StatusCode, routing::get_service, Router};
 use dotenv::dotenv;
 use sqlx::postgres::PgPoolOptions;
+use tower_http::trace::TraceLayer;
 use std::{env, net::SocketAddr, path::PathBuf};
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 //local modules
-// mod config;
 mod controllers;
 mod models;
 mod routes;
@@ -14,6 +15,15 @@ mod shared;
 
 #[tokio::main]
 async fn main() {
+    //logger
+     tracing_subscriber::registry()
+        .with(tracing_subscriber::EnvFilter::new(
+            std::env::var("RUST_LOG")
+                .unwrap_or_else(|_| "logging=debug,tower_http=debug".into()),
+        ))
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
     // parse the .env file in development
     dotenv().ok();
     //try parsing database connection string
@@ -54,12 +64,9 @@ async fn main() {
     //mount the app routes and middleware
     let app = Router::new()
         .fallback(static_files_service)
-        /* .route(
-            "/api/email/send",
-            axum::routing::post(controllers::email_controllers::send_email),
-        ) */
         .nest("/api/v1/", routes::root::router())
         .layer(cors)
+        .layer(TraceLayer::new_for_http())
         .layer(Extension(database));
 
     //mount the server to an ip address
@@ -109,3 +116,4 @@ async fn main() {
         .await
         .unwrap();
 }
+
