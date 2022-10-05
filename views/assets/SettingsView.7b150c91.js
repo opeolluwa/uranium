@@ -1,0 +1,1 @@
+import{A as o}from"./AppNetworkError.17e2a553.js";import{_ as t,r,o as n,a as s,e as a,F as c,b as p}from"./index.686b4ede.js";const _={name:"SettingsView",components:{AppNetworkError:o}},i=p("h2",null,"Settings",-1);function m(l,d,f,u,k,w){const e=r("AppNetworkError");return n(),s(c,null,[i,a(e)],64)}const A=t(_,[["render",m]]);export{A as default};
