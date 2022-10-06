@@ -4,7 +4,27 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>nitride</title>
+    <!-- <meta http-equiv="content-security-policy" content="default-src https:"> -->
+    <meta name="description" content="a compound of nitrogen">
+    <meta property="og:title" content="nitride" />
+    <meta property="og:description" content="a compound of nitrogen"/>
+    <meta property="og:image"
+      content="http://nitride.onrender.com/favicon/apple-touch-icon.png" />
+    <meta property="og:image:alt" content="nitride" />
+    <!--twitter -->
+    <meta name="twitter:title" content="nitride">
+    <meta name="twitter:description" content="a compound of nitrogen"/>
+    <meta name="twitter:url" content="https://nitride.onrender.com/?src=twitter"
+      />
+    <meta name="twitter:image:src"
+      content="http://nitride.onrender.com/favicon/apple-touch-icon.png"/>
+    <meta name="twitter:image:alt" content="nitride" />
+    <meta name="twitter:creator" content="@opeolluwa">
+    <meta name="twitter:site" content="@perfmattersconf">
+    <!--the application is web capable-->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>nitride </title>
     <meta name="description" content="a compound of nitrogen">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,20 +35,20 @@
     <link
       href="https://fonts.googleapis.com/css2?family=Bakbak+One&family=Inter:wght@300;400&family=Mulish:wght@200;300;400;500;600&family=Open+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap"
       rel="stylesheet">
-    <link rel="icon" href="/assets/favicon.a6824a89.ico">
-    <link rel="mask-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAADLUlEQVRYR+2XX0jTURTHv/e3Ld10as7MSAmlSQ+B9VCEIRj1liZSCUUPglEh9iDizH+lllgoVJQkgT5mGVISPVSUSCD6kFQQhCP/QLgshebmNt3c7f6m+fNOt99P3PDF8zDGdu65n3PO957f/RGgTjDFl1aDoBjATkLYtzAapaAs/CT7aG2ejmkkpnhrLRHQEMY9A4emtJqYEqyTLOXEzQBg1ZggFQlWsSSbYmI7NhVAzHoLYN0V0CcRpB9TIdGognb74ol1/qX4Y/ZiuNeDGcv6JKUYQKMFcm5F4tB5DQT12qPCu0Dx6ZkbrypdmHco07UyALZf4RMt9p3QKIpq7nOj46wTTOWypghgf64aFzp0ssFWOnReceBLt0d2jSKAwk4++7lZip4KJ4Y/LPg2MGarkHdbi8gYqTXmPg/az8j3QRaAPRtQN6JHRLQU/E2jC7335rnssoo1OFnPhLJkbhfFjVQbvDJFkAWI3U1Q+VnPbXY/2w7LNy/32w4jQVk/79d82Ibp0eBCkAVIPiCg5F00t1ntnhm4/aorMH02/tSDCFKlHuXYMT7Ig/qLQhYgNVOFyz1Ry+u8HoqqXbY1xdUwrsc2nQTQXjALc++iTgKZLEDaURUuvZQAFhhAdQCA+jGmlSgJoIMBDG8UIPkga8FbvxaksBa4+JwEFWvBBN+Ctlw7xgY22IK4FIJrQ7y47mbZMfmdD2xIIygf5P1ajtgw9WODImS3JdSP8r19XefEx1Y3V4LMixqcapKOoWeO4rp4DHm3VVKQ1YC4oui5jg0b9fJiJ7vDdJU4uEFU8EALXTyjXbKRfg8e54VgEInxMk6rca5t9SimS8OeiNPKz7quOjD0NESjWIxf1K3D3iypCsGO1ujAYvY0uP58IRS1QHSMYAchvyUSGfkabtisBBEr8rXHjRdlLrhmgh7/5T8VA/xfYUhlF5LjaiSmC9DFSReS3+KF5L0HUyMKnsEr2NYNoCwv5V5bAMRksHrD/T4YqCG+FxMGYGEAScq7FkJPSiyk3GCtYY/wmyEMqzgUO7Y14oVLKDeUVgkgxawiSeFuh6/swC+APrwzHdv0Dx5qPlEf+iwaAAAAAElFTkSuQmCC"
+    <link rel="icon" href="/favicon/favicon.ico">
+    <link rel="mask-icon" href="/favicon/favicon-32x32.png"
       color="#FFFFFF">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#101010">
     <link rel="apple-touch-icon" sizes="180x180"
-      href="/assets/apple-touch-icon.540958b1.png">
+      href="/favicon/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32"
-      href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAADLUlEQVRYR+2XX0jTURTHv/e3Ld10as7MSAmlSQ+B9VCEIRj1liZSCUUPglEh9iDizH+lllgoVJQkgT5mGVISPVSUSCD6kFQQhCP/QLgshebmNt3c7f6m+fNOt99P3PDF8zDGdu65n3PO957f/RGgTjDFl1aDoBjATkLYtzAapaAs/CT7aG2ejmkkpnhrLRHQEMY9A4emtJqYEqyTLOXEzQBg1ZggFQlWsSSbYmI7NhVAzHoLYN0V0CcRpB9TIdGognb74ol1/qX4Y/ZiuNeDGcv6JKUYQKMFcm5F4tB5DQT12qPCu0Dx6ZkbrypdmHco07UyALZf4RMt9p3QKIpq7nOj46wTTOWypghgf64aFzp0ssFWOnReceBLt0d2jSKAwk4++7lZip4KJ4Y/LPg2MGarkHdbi8gYqTXmPg/az8j3QRaAPRtQN6JHRLQU/E2jC7335rnssoo1OFnPhLJkbhfFjVQbvDJFkAWI3U1Q+VnPbXY/2w7LNy/32w4jQVk/79d82Ibp0eBCkAVIPiCg5F00t1ntnhm4/aorMH02/tSDCFKlHuXYMT7Ig/qLQhYgNVOFyz1Ry+u8HoqqXbY1xdUwrsc2nQTQXjALc++iTgKZLEDaURUuvZQAFhhAdQCA+jGmlSgJoIMBDG8UIPkga8FbvxaksBa4+JwEFWvBBN+Ctlw7xgY22IK4FIJrQ7y47mbZMfmdD2xIIygf5P1ajtgw9WODImS3JdSP8r19XefEx1Y3V4LMixqcapKOoWeO4rp4DHm3VVKQ1YC4oui5jg0b9fJiJ7vDdJU4uEFU8EALXTyjXbKRfg8e54VgEInxMk6rca5t9SimS8OeiNPKz7quOjD0NESjWIxf1K3D3iypCsGO1ujAYvY0uP58IRS1QHSMYAchvyUSGfkabtisBBEr8rXHjRdlLrhmgh7/5T8VA/xfYUhlF5LjaiSmC9DFSReS3+KF5L0HUyMKnsEr2NYNoCwv5V5bAMRksHrD/T4YqCG+FxMGYGEAScq7FkJPSiyk3GCtYY/wmyEMqzgUO7Y14oVLKDeUVgkgxawiSeFuh6/swC+APrwzHdv0Dx5qPlEf+iwaAAAAAElFTkSuQmCC">
+      href="/favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16"
-      href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABaUlEQVQ4T2MsFfpYx8jEWMXI8J+dgQTwn4HxJ8O//62M5cIffzIwMrCRoBeu9D8Dw0/GcpGPQJp8gNMAARlGBjF1JrDJr27+Y/jwBLs9WA3w72JnsEhgY2BkZAQb8P//f4ZTi34xrC/5ieFUDAOUbZkZUtdxM/z7+5/h7IrfYA3G4awMTCyMDHNCvjLcOfgXxRAMA9wq2RmcitgZLm38zbAs5TtYccRMDgaDIDaGAxN/MuxoQXUFhgHBEzgYTKPZGPb0/GDY0/kLbIBTMRuDWwUH0EW/GFbn/sDvArgB3UADusgwwK0K6IVCdoaL638xLE+D2BY+nYPBMATohUlALzQT8IKKPTNDyhpuhr9//jOcXAhxgXkcGwMzKyPDvPCvDLf2EQhEkIagflA4sKJE49nlvxnW5KP6H6QWZ0ISVmRkENeAJKSXN/4xvL1PQkIiJWEzlol8+kFqToRZAMqRjORnZwZgdmZoBQBq3pyoWAmUygAAAABJRU5ErkJggg==">
+      href="/favicon/favicon-16x16.png">
     <link rel="manifest" href="/manifest.json">
 
-    <script type="module" crossorigin src="/assets/index.7fc8e612.js"></script>
-    <link rel="stylesheet" href="/assets/index.01171e4c.css">
+    <script type="module" crossorigin src="/assets/index.e9cf2f0c.js"></script>
+    <link rel="stylesheet" href="/assets/index.8e25aa54.css">
   <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
 
   <body>
