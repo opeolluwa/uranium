@@ -1,10 +1,10 @@
 use axum::{extract::Extension, http::StatusCode, routing::get_service, Router};
 use dotenv::dotenv;
 use sqlx::postgres::PgPoolOptions;
-use tower_http::trace::TraceLayer;
 use std::{env, net::SocketAddr, path::PathBuf};
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
+use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 //local modules
@@ -16,10 +16,9 @@ mod shared;
 #[tokio::main]
 async fn main() {
     //logger
-     tracing_subscriber::registry()
+    tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("RUST_LOG")
-                .unwrap_or_else(|_| "logging=debug,tower_http=debug".into()),
+            std::env::var("RUST_LOG").unwrap_or_else(|_| "logging=debug,tower_http=debug".into()),
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
@@ -116,4 +115,3 @@ async fn main() {
         .await
         .unwrap();
 }
-
