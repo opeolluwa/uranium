@@ -18,6 +18,8 @@ use bcrypt::DEFAULT_COST;
 use jsonwebtoken::Algorithm;
 use jsonwebtoken::{encode, Header};
 use once_cell::sync::Lazy;
+use serde_json::json;
+use serde_json::Value;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -221,7 +223,7 @@ pub async fn login(
 pub async fn user_profile(
     authenticated_user: JwtClaims,
     Extension(database): Extension<PgPool>,
-) -> Result<Json<ApiSuccessResponse<UserInformation>>, ApiErrorResponse> {
+) -> Result<Json<ApiSuccessResponse<Value>>, ApiErrorResponse> {
     // Send the protected data to the user
     // fetch the user details from the database using...
     //the user id from the authenticated_user object
@@ -236,13 +238,15 @@ pub async fn user_profile(
         Ok(user_object) => {
             //build up the response body
             // don't return the value of the user password
-            let response_body: ApiSuccessResponse<UserInformation> = ApiSuccessResponse {
+            let response_body: ApiSuccessResponse<Value> = ApiSuccessResponse {
                 success: true,
-                message: "User information successfully fetched ".to_string(),
-                data: Some(UserInformation {
+                message: "User information successfully fetched".to_string(),
+                data: Some(json!({
+                    "user":UserInformation {
                     password: "".to_string(),
                     ..user_object
-                }),
+                }
+                })),
             };
 
             Ok(Json(response_body))
