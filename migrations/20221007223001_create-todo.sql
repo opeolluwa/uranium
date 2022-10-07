@@ -1,3 +1,4 @@
+-- Add migration script here
 --
 -- PostgreSQL database dump
 --
