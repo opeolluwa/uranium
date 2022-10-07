@@ -13,5 +13,5 @@ pub fn routes() -> axum::Router {
         .route("/login", post(auth_controllers::login))
         .route("/reset-password", put(auth_controllers::reset_password))
         .route("/me", get(auth_controllers::user_profile))
-        .route("/update/me", put(auth_controllers::update_user_profile))
+        .route("/me", put(auth_controllers::update_user_profile))
 }

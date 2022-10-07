@@ -1,25 +1,15 @@
-use crate::models::users::ResetUserPassword;
-use crate::models::users::UserAuthCredentials;
-use crate::models::users::UserInformation;
-use crate::models::users::UserModel;
-use crate::shared::api_response::ApiErrorResponse;
-use crate::shared::api_response::ApiSuccessResponse;
-use crate::shared::api_response::EnumerateFields;
-use crate::shared::jwt_schema::set_jtw_exp;
-use crate::shared::jwt_schema::JwtClaims;
-use crate::shared::jwt_schema::JwtEncryptionKeys;
-use crate::shared::jwt_schema::JwtPayload;
-use axum::http::StatusCode;
-use axum::response::IntoResponse;
-use axum::Extension;
-use axum::Json;
-use bcrypt::verify;
-use bcrypt::DEFAULT_COST;
-use jsonwebtoken::Algorithm;
-use jsonwebtoken::{encode, Header};
+use crate::{
+    models::users::{ResetUserPassword, UserAuthCredentials, UserInformation, UserModel},
+    shared::{
+        api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields},
+        jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload},
+    },
+};
+use axum::{http::StatusCode, Extension, Json};
+use bcrypt::{verify, DEFAULT_COST};
+use jsonwebtoken::{encode, Algorithm, Header};
 use once_cell::sync::Lazy;
-use serde_json::json;
-use serde_json::Value;
+use serde_json::{json, Value};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -88,10 +78,9 @@ pub async fn sign_up(
             let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
                 success: true,
                 message: String::from("User account successfully created"),
-                data: Some(json!(UserModel {
-                    password: "".to_string(),
+                data: Some(json!({"user":UserModel {
                     ..result // other fields
-                })),
+                }})),
             };
             //return the response
             Ok((StatusCode::CREATED, Json(response)))
@@ -106,11 +95,10 @@ pub async fn sign_up(
     }
 }
 
-///login a new user
+///Login a New User :
 /// to login a user, fetch the request body and the database pool
 /// use the pool to query the database for the user details in the request body
 /// return result or error
-/// Result<(StatusCode, Json<SuccessResponse<UserInformation>>), ErrorResponse<String>>
 pub async fn login(
     Json(payload): Json<UserAuthCredentials>,
     Extension(database): Extension<PgPool>,
@@ -214,12 +202,12 @@ pub async fn login(
     }
 }
 
-///get the user profile
-/// to do this, get the jwt token fom the header,
-/// validate the token
-/// return the user details if no error else return the apt error code and response
-// pub async fn user_profile(Json(_payload): Json<UserInformation>) -> impl IntoResponse {}
-
+/// Get the user profile fom the database.
+/// To do this,
+/// 1. Get the jwt token fom the header,
+/// 2. Validate the token then get the user_id from the validated token
+/// 3. use the user_id to make request to the database
+/// return the user details if no error else return the appropriate error code and response
 pub async fn user_profile(
     authenticated_user: JwtClaims,
     Extension(database): Extension<PgPool>,
@@ -270,7 +258,7 @@ pub async fn reset_password(
     Json(payload): Json<ResetUserPassword>,
     authenticated_user: JwtClaims,
     Extension(database): Extension<PgPool>,
-) -> impl IntoResponse {
+) -> Result<Json<ApiSuccessResponse<()>>, ApiErrorResponse> {
     //check through the fields to see that no field was badly formatted
     let entries = &payload.collect_as_strings();
     let mut bad_request_errors: Vec<String> = Vec::new();
@@ -305,7 +293,7 @@ pub async fn reset_password(
             //update the user password
             let new_hashed_password =
                 bcrypt::hash(payload.new_password, bcrypt::DEFAULT_COST).unwrap();
-            let updated_user = sqlx::query_as::<_, UserInformation>(
+            sqlx::query_as::<_, UserInformation>(
                 "UPDATE user_information SET password = $1 WHERE email = $2 RETURNING *",
             )
             .bind(Some(new_hashed_password.trim()))
@@ -316,13 +304,10 @@ pub async fn reset_password(
 
             //build up the response body
             // don't return the value of the user password
-            let response_body: ApiSuccessResponse<UserInformation> = ApiSuccessResponse {
+            let response_body: ApiSuccessResponse<_> = ApiSuccessResponse {
                 success: true,
                 message: "User password successfully updated".to_string(),
-                data: Some(UserInformation {
-                    password: "".to_string(),
-                    ..updated_user
-                }),
+                data: None,
             };
             //return the response
             Ok(Json(response_body))
@@ -333,5 +318,45 @@ pub async fn reset_password(
     }
 }
 
-///update user profile
-pub async fn update_user_profile(Json(_payload): Json<UserInformation>) -> impl IntoResponse {}
+/// Get the user profile fom the database.
+/// To do this,
+/// 1. Get the jwt token fom the header,
+/// 2. Validate the token then get the user_id from the validated token
+/// 3. go on to destructure the payload,
+/// 4.  use SQL COALESCE($1, a)  to update the fields  
+/// return the user details if no error else return the appropriate error code and response
+pub async fn update_user_profile(
+    Json(payload): Json<UserInformation>,
+    authenticated_user: JwtClaims,
+    Extension(database): Extension<PgPool>,
+) -> Result<Json<ApiSuccessResponse<Value>>, ApiErrorResponse> {
+    //get the user id from the destructured JWT claims
+    //destructure the payload
+    let user_information = sqlx::query_as::<_, UserInformation>(
+        "UPDATE user_information SET email = COALESCE($1, email), username = COALESCE($2, username), fullname = COALESCE($3, fullname) WHERE id = $4 RETURNING *",
+    )
+    .bind(payload.email)
+    .bind(payload.username)
+    .bind(payload.fullname)
+    .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
+    .fetch_one(&database)
+    .await;
+
+    //handle errors
+    match user_information {
+        Ok(updated_user) => {
+            //build up the response body
+            // don't return the value of the user password
+            let response_body: ApiSuccessResponse<Value> = ApiSuccessResponse {
+                success: true,
+                message: "User information successfully updated".to_string(),
+                data: Some(json!({"user": UserInformation { ..updated_user }})),
+            };
+            //return the response
+            Ok(Json(response_body))
+        }
+        Err(error_message) => Err(ApiErrorResponse::BadRequest {
+            error: error_message.to_string(),
+        }),
+    }
+}
