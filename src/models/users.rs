@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use std::collections::HashMap;
 
+use super::emails::EmailModel;
+
 /// define the user data structure that shall serve as the basis of serial
 /// implement debug, serialize, deserializing and #[derive(sqlx::FromRow
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
@@ -23,7 +25,7 @@ pub struct UserModel {
 /// to be used for making login in requests
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct UserAuthCredentials {
-    ///the user email
+//the user email
     pub email: String,
     ///the user password
     pub password: String,
@@ -98,4 +100,13 @@ impl EnumerateFields for ResetUserPassword {
             ),
         ])
     }
+}
+
+
+
+/// the user dashboard data
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+pub struct UserAccountInformation{
+    profile : UserModel,
+    emails : Vec<EmailModel>
 }
