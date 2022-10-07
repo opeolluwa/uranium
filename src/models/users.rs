@@ -15,7 +15,8 @@ pub struct UserModel {
     pub fullname: String,
     ///the user email
     pub email: String,
-    ///the user password
+    ///the user password, don't return the password when fetching the user data
+    #[serde(skip_serializing)]
     pub password: String,
     /// the user username
     pub username: String,
@@ -25,7 +26,7 @@ pub struct UserModel {
 /// to be used for making login in requests
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct UserAuthCredentials {
-//the user email
+    //the user email
     pub email: String,
     ///the user password
     pub password: String,
@@ -40,6 +41,7 @@ pub struct UserInformation {
     /// the user email
     pub email: String,
     /// the user password
+    #[serde(skip_serializing)]
     pub password: String,
     /// the user unique username
     pub username: String,
@@ -102,11 +104,9 @@ impl EnumerateFields for ResetUserPassword {
     }
 }
 
-
-
 /// the user dashboard data
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
-pub struct UserAccountInformation{
-    profile : UserModel,
-    emails : Vec<EmailModel>
+pub struct UserAccountInformation {
+    profile: UserModel,
+    emails: Vec<EmailModel>,
 }

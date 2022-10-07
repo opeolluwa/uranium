@@ -38,7 +38,7 @@ static JWT_SECRET: Lazy<JwtEncryptionKeys> = Lazy::new(|| -> JwtEncryptionKeys {
 pub async fn sign_up(
     Json(payload): Json<UserInformation>,
     Extension(database): Extension<PgPool>,
-) -> Result<(StatusCode, Json<ApiSuccessResponse<UserModel>>), ApiErrorResponse> {
+) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
     //destructure the HTTP request body
     let UserInformation {
         fullname,
@@ -85,13 +85,13 @@ pub async fn sign_up(
     match new_user {
         Ok(result) => {
             //build the response
-            let response: ApiSuccessResponse<UserModel> = ApiSuccessResponse::<UserModel> {
+            let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
                 success: true,
                 message: String::from("User account successfully created"),
-                data: Some(UserModel {
+                data: Some(json!(UserModel {
                     password: "".to_string(),
                     ..result // other fields
-                }),
+                })),
             };
             //return the response
             Ok((StatusCode::CREATED, Json(response)))
@@ -228,7 +228,7 @@ pub async fn user_profile(
     // fetch the user details from the database using...
     //the user id from the authenticated_user object
     let user_information =
-        sqlx::query_as::<_, UserInformation>("SELECT * FROM user_information WHERE email = $1")
+        sqlx::query_as::<_, UserModel>("SELECT * FROM user_information WHERE email = $1")
             .bind(Some(authenticated_user.email.trim()))
             .fetch_one(&database)
             .await;
@@ -242,7 +242,7 @@ pub async fn user_profile(
                 success: true,
                 message: "User information successfully fetched".to_string(),
                 data: Some(json!({
-                    "user":UserInformation {
+                    "user":UserModel {
                     password: "".to_string(),
                     ..user_object
                 }
