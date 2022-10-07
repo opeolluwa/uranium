@@ -26,14 +26,24 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.user_information (
     id uuid NOT NULL,
-    email character varying NOT NULL UNIQUE,
+    email character varying NOT NULL,
     username character varying NOT NULL,
     password character varying NOT NULL,
-    fullname character varying NOT NULL
+    fullname character varying NOT NULL,
+    last_login date DEFAULT now()
 );
 
 
 ALTER TABLE public.user_information OWNER TO opeolluwa;
+
+
+--
+-- Name: user_information user_information_email_key; Type: CONSTRAINT; Schema: public; Owner: opeolluwa
+--
+
+ALTER TABLE ONLY public.user_information
+    ADD CONSTRAINT user_information_email_key UNIQUE (email);
+
 
 --
 -- Name: user_information user_information_pkey; Type: CONSTRAINT; Schema: public; Owner: opeolluwa

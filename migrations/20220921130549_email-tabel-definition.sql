@@ -32,11 +32,16 @@ CREATE TABLE public.emails (
     email_body character varying,
     reply json[],
     star boolean DEFAULT false,
-    date_sent date
+    date_sent date,
+    fk_user_id uuid NOT NULL
 );
 
 
 ALTER TABLE public.emails OWNER TO opeolluwa;
+
+--
+-- Data for Name: emails; Type: TABLE DATA; Schema: public; Owner: opeolluwa
+
 
 --
 -- Name: emails emails_pkey; Type: CONSTRAINT; Schema: public; Owner: opeolluwa
@@ -44,6 +49,14 @@ ALTER TABLE public.emails OWNER TO opeolluwa;
 
 ALTER TABLE ONLY public.emails
     ADD CONSTRAINT emails_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: emails fk_user_emails; Type: FK CONSTRAINT; Schema: public; Owner: opeolluwa
+--
+
+ALTER TABLE ONLY public.emails
+    ADD CONSTRAINT fk_user_emails FOREIGN KEY (fk_user_id) REFERENCES public.user_information(id);
 
 
 --

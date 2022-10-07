@@ -11,7 +11,7 @@ use uuid::Uuid;
 /// - notesDescription - the notes description
 /// - repoUrl - the notes repository
 pub async fn add_notes(
-    _claims: JwtClaims,
+    authenticated_user: JwtClaims,
     Json(payload): Json<NotesInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<NotesModel>>), ApiErrorResponse> {
@@ -25,14 +25,6 @@ pub async fn add_notes(
         }
     }
 
-    // destructure the payload
-    let NotesInformation {
-        // the notes name
-        title: notes_title,
-        //the notes description
-        description: notes_description,
-    } = &payload;
-
     // save the new notes
     /*
      * generate a UUID and hash the user password,
@@ -41,11 +33,12 @@ pub async fn add_notes(
      */
     let notes_id = Uuid::new_v4();
     let new_notes =  sqlx::query_as::<_, NotesModel>(
-        "INSERT INTO notes (id, title , description) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING RETURNING *",
+        "INSERT INTO note_entries (id, title , description, fk_user_id ) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING RETURNING *",
     )
-    .bind(Some(notes_id))
-    .bind(Some(notes_title))
-    .bind(Some(notes_description))
+    .bind(notes_id)
+    .bind(payload.title)
+    .bind(payload.description)
+    .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
     .fetch_one(&database).await;
 
     //handle error
@@ -72,15 +65,17 @@ pub async fn add_notes(
 /// effect edits
 /// return updated notes object
 pub async fn edit_notes(
-    _claims: JwtClaims,
+    authenticated_user: JwtClaims,
     Path(notes_id): Path<Uuid>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<NotesModel>>), ApiErrorResponse> {
     //fetch the notes from the database  using the notes id
-    let fetched_notes = sqlx::query_as::<_, NotesModel>("SELECT * FROM notes WHERE id = $1")
-        .bind(notes_id)
-        .fetch_one(&database)
-        .await;
+    let fetched_notes =
+        sqlx::query_as::<_, NotesModel>("SELECT * FROM notes WHERE id = $1 AND fk_user_id = $2")
+            .bind(notes_id)
+            .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
+            .fetch_one(&database)
+            .await;
 
     //handle errors
     match fetched_notes {

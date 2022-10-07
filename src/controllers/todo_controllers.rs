@@ -36,14 +36,13 @@ pub async fn add_todo(
      */
     let todo_id = Uuid::new_v4();
     let new_todo =  sqlx::query_as::<_, TodoModel>(
-        "INSERT INTO todo (id, title, description, fk_user_id) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING RETURNING *",
+        "INSERT INTO todo_list (id, title, description, fk_user_id) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING RETURNING *",
     )
     .bind(todo_id)
     .bind(payload.title)
     .bind(payload.description)
-    .bind(authenticated_user.id)
+    .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
     .fetch_one(&database).await;
-
     //handle error
     match new_todo {
         Ok(todo) => {
@@ -71,23 +70,23 @@ pub async fn add_todo(
 /// return updated Todo object
 pub async fn edit_todo(
     _claims: JwtClaims,
-    Path(Todo_id): Path<Uuid>,
+    Path(todo_id): Path<Uuid>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<TodoModel>>), ApiErrorResponse> {
     //fetch the Todo from the database  using the Todo id
-    let fetched_Todo = sqlx::query_as::<_, TodoModel>("SELECT * FROM Todo WHERE id = $1")
-        .bind(Todo_id)
+    let fetched_todo = sqlx::query_as::<_, TodoModel>("SELECT * FROM Todo WHERE id = $1")
+        .bind(todo_id)
         .fetch_one(&database)
         .await;
 
     //handle errors
-    match fetched_Todo {
-        Ok(Todo) => {
+    match fetched_todo {
+        Ok(todo) => {
             //build the Todo body
             let response_body: ApiSuccessResponse<TodoModel> = ApiSuccessResponse {
                 success: true,
                 message: "Todo successfully retrieved".to_string(),
-                data: Some(Todo),
+                data: Some(todo),
             };
             //return the response with 200 status code
             Ok((StatusCode::OK, Json(response_body)))
@@ -108,19 +107,19 @@ pub async fn get_todo_by_id(
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<TodoModel>>), ApiErrorResponse> {
     //fetch the Todo from the database  using the Todo id
-    let fetched_Todo = sqlx::query_as::<_, TodoModel>("SELECT * FROM Todo WHERE id = $1")
+    let fetched_todo = sqlx::query_as::<_, TodoModel>("SELECT * FROM Todo WHERE id = $1")
         .bind(note_id)
         .fetch_one(&database)
         .await;
 
     //handle errors
-    match fetched_Todo {
-        Ok(Todo) => {
+    match fetched_todo {
+        Ok(todo) => {
             //build the Todo body
             let response_body: ApiSuccessResponse<TodoModel> = ApiSuccessResponse {
                 success: true,
                 message: "Todo successfully retrieved".to_string(),
-                data: Some(Todo),
+                data: Some(todo),
             };
             //return the response with 200 status code
             Ok((StatusCode::OK, Json(response_body)))
@@ -139,6 +138,6 @@ pub async fn get_all_todo(
 ) -> impl IntoResponse {
     //fetch all Todo ...
     //TODO: implement pagination logic
-    let _fetched_Todo = sqlx::query_as::<_, TodoModel>("SELECT * FROM Todo").fetch(&database);
+    let _fetched_todo = sqlx::query_as::<_, TodoModel>("SELECT * FROM Todo").fetch(&database);
     todo!()
 }

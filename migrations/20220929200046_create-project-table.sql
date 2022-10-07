@@ -16,8 +16,6 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
-ALTER TABLE ONLY public.project_information DROP CONSTRAINT project_infoormation_pkey;
-DROP TABLE public.project_information;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -39,20 +37,30 @@ CREATE TABLE public.project_information (
 
 ALTER TABLE public.project_information OWNER TO opeolluwa;
 
---
--- Data for Name: project_information; Type: TABLE DATA; Schema: public; Owner: opeolluwa
---
-
-COPY public.project_information (id, name, description, date_added, technologies_used, repo_url, live_url) FROM stdin;
-\.
 
 
 --
--- Name: project_information project_infoormation_pkey; Type: CONSTRAINT; Schema: public; Owner: opeolluwa
+-- Name: project_information unique_live_url; Type: CONSTRAINT; Schema: public; Owner: opeolluwa
 --
 
 ALTER TABLE ONLY public.project_information
-    ADD CONSTRAINT project_infoormation_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT unique_live_url UNIQUE (live_url);
+
+
+--
+-- Name: project_information unique_project_name; Type: CONSTRAINT; Schema: public; Owner: opeolluwa
+--
+
+ALTER TABLE ONLY public.project_information
+    ADD CONSTRAINT unique_project_name UNIQUE (name);
+
+
+--
+-- Name: project_information unique_repo_url; Type: CONSTRAINT; Schema: public; Owner: opeolluwa
+--
+
+ALTER TABLE ONLY public.project_information
+    ADD CONSTRAINT unique_repo_url UNIQUE (repo_url);
 
 
 --

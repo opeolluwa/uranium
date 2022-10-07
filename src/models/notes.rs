@@ -15,10 +15,9 @@ pub struct NotesModel {
     pub title: String,
     ///the note description
     pub description: String,
-    // the date the note was created at
-    // pub created_at : Date
-    // the last the note was updated
-    // pub updated_at :Date
+    /// the user_id of the note creator, do ne destructure it when converting this struct to json
+    #[serde(skip_serializing)]
+    pub fk_user_id: Uuid,
 }
 
 ///for working with input and output
