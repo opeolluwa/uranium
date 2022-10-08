@@ -426,9 +426,9 @@ pub async fn get_refresh_token(
 }
 
 
-/// logout controller 
-/// the logout controller will accept the bearer token via query params
-/// it will add the token to the auth_token table 
-pub async fn logout(){
+// /// logout controller 
+// /// the logout controller will accept the bearer token via query params
+// /// it will add the token to the auth_token table 
+// pub async fn logout(){
     
-}
+// }
