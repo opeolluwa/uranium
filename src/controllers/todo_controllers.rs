@@ -30,6 +30,8 @@ pub async fn add_todo(
         }
     }
 
+    println!("{:?}", &payload);
+
     // save the new Todo
     /*
      * generate a UUID and hash the user password,
@@ -159,10 +161,18 @@ pub async fn get_all_todo(
         no_of_rows,
     } = &pagination;
 
+    //TODO: REFINE THIS if the page is 1, don't use offset else do
+    let query :&str;
+    if current_page >&1i32{
+       query = "SELECT * FROM todo_list WHERE fk_user_id = $3 LIMIT $1 OFFSET $2 ";
+    }
+    else {
+        query = "SELECT * FROM todo_list WHERE fk_user_id = $3 LIMIT $1";
+    }
     // let current_page = &query_params.page.trim().parse().unwrap();
     //implement pagination logic
     let fetched_todo = sqlx::query_as::<_, TodoModel>(
-        "SELECT * FROM todo_list WHERE fk_user_id = $3 LIMIT $1 OFFSET $2 ",
+        query
     )
     .bind(no_of_rows)
     .bind(current_page * no_of_rows)

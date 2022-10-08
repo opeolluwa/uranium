@@ -21,7 +21,7 @@ static JWT_SECRET: Lazy<JwtEncryptionKeys> = Lazy::new(|| -> JwtEncryptionKeys {
 });
 
 /// the bearer token validity set to 1 hour
-const ACCESS_TOKEN_VALIDITY: u64 = 10;
+const ACCESS_TOKEN_VALIDITY: u64 = 100;
 /// refresh token set to 3 hours
 const REFRESH_TOKEN_VALIDITY: u64 = 25;
 
@@ -423,4 +423,12 @@ pub async fn get_refresh_token(
             error: error_message.to_string(),
         }),
     }
+}
+
+
+/// logout controller 
+/// the logout controller will accept the bearer token via query params
+/// it will add the token to the auth_token table 
+pub async fn logout(){
+    
 }
