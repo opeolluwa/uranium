@@ -125,3 +125,25 @@ impl IntoResponse for ApiErrorResponse {
 pub trait EnumerateFields {
     fn collect_as_strings(&self) -> std::collections::HashMap<String, String>;
 }
+
+/// a struct to extract query parameters
+/// the page field represent s the current page
+/// the no_of_rows will be converted to camelCase nd will be deserialized as noOfRows
+/// the no of rows represents the number of items to return for the query, defaults to 10
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Pagination {
+    pub page: i32,
+    pub no_of_rows: i32,
+}
+
+/// the default values of pagination
+/// the default page number is set to 1 and the default number of rows is set to 10
+impl Default for Pagination {
+    fn default() -> Self {
+        Self {
+            page: 1,
+            no_of_rows: 10,
+        }
+    }
+}

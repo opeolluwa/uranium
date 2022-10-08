@@ -16,6 +16,8 @@ pub struct TodoModel {
     /// the user_id of the todo creator, do ne destructure it when converting this struct to json
     #[serde(skip_serializing)]
     pub fk_user_id: Uuid,
+
+
 }
 
 ///for working with input and output

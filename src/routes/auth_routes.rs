@@ -14,4 +14,5 @@ pub fn routes() -> axum::Router {
         .route("/reset-password", put(auth_controllers::reset_password))
         .route("/me", get(auth_controllers::user_profile))
         .route("/me", put(auth_controllers::update_user_profile))
+        .route("/", get(auth_controllers::get_refresh_token))
 }

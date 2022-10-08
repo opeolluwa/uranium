@@ -20,6 +20,11 @@ static JWT_SECRET: Lazy<JwtEncryptionKeys> = Lazy::new(|| -> JwtEncryptionKeys {
     JwtEncryptionKeys::new(secret.as_bytes())
 });
 
+/// the bearer token validity set to 1 hour
+const ACCESS_TOKEN_VALIDITY: u64 = 10;
+/// refresh token set to 3 hours
+const REFRESH_TOKEN_VALIDITY: u64 = 25;
+
 ///create a new user
 /// accept the user credentials,
 /// check if user already exists
@@ -138,7 +143,7 @@ pub async fn login(
      */
     let user_information =
         sqlx::query_as::<_, UserModel>("SELECT * FROM user_information WHERE email = $1")
-            .bind(Some(email))
+            .bind(email)
             .fetch_one(&database)
             .await;
 
@@ -167,7 +172,7 @@ pub async fn login(
                         id: id.to_string(),
                         email: email.to_string(),
                         fullname: fullname.to_string(),
-                        exp: set_jtw_exp(4), //set expirations to 4 hours
+                        exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations 
                     };
                     //fetch the JWT secret
                     /*   let jwt_secret = crate::shared::jwt_schema::jwt_secret(); */
@@ -353,6 +358,65 @@ pub async fn update_user_profile(
                 data: Some(json!({"user": UserInformation { ..updated_user }})),
             };
             //return the response
+            Ok(Json(response_body))
+        }
+        Err(error_message) => Err(ApiErrorResponse::BadRequest {
+            error: error_message.to_string(),
+        }),
+    }
+}
+
+/// get refresh token
+pub async fn get_refresh_token(
+    authenticated_user: JwtClaims,
+    Extension(database): Extension<PgPool>,
+) -> Result<Json<ApiSuccessResponse<JwtPayload>>, ApiErrorResponse> {
+    // Send the protected data to the user
+    // fetch the user details from the database using...
+    //the user id from the authenticated_user object
+    let user_information =
+        sqlx::query_as::<_, UserModel>("SELECT * FROM user_information WHERE id = $1")
+            .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
+            .fetch_one(&database)
+            .await;
+
+    //handle errors
+    match user_information {
+        Ok(user_object) => {
+            // destructure the user if the password is correct
+            let UserModel {
+                id,
+                email,
+                fullname,
+                ..
+            } = &user_object;
+
+            //encrypt the user data
+            let jwt_payload = JwtClaims {
+                id: id.to_string(),
+                email: email.to_string(),
+                fullname: fullname.to_string(),
+                exp: set_jtw_exp(REFRESH_TOKEN_VALIDITY), //set expirations
+            };
+            //fetch the JWT secret
+            /*   let jwt_secret = crate::shared::jwt_schema::jwt_secret(); */
+            //use a custom header
+            let jwt_header = Header {
+                alg: Algorithm::HS512,
+                ..Default::default()
+            };
+
+            //build the user jwt token
+            let token = encode(&jwt_header, &jwt_payload, &JWT_SECRET.encoding);
+            //construct and return a response
+            let response_body: ApiSuccessResponse<JwtPayload> = ApiSuccessResponse::<JwtPayload> {
+                success: true,
+                message: String::from("user authorization token successfully updated"),
+                data: Some(JwtPayload {
+                    token: token.unwrap(),
+                    token_type: String::from("Refresh"),
+                }),
+            };
             Ok(Json(response_body))
         }
         Err(error_message) => Err(ApiErrorResponse::BadRequest {

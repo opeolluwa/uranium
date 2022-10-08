@@ -99,7 +99,8 @@ pub struct JwtPayload {
 }
 
 /// set the expiration of token
-pub fn set_jtw_exp(exp: u8) -> u64 {
+/// accept the exp as the minutes from now ehn the token will be  invalidated 
+pub fn set_jtw_exp(exp: u64) -> u64 {
     // the current time
     let now = SystemTime::now();
     // unix epoch elapsed time
@@ -107,10 +108,10 @@ pub fn set_jtw_exp(exp: u8) -> u64 {
         .duration_since(std::time::UNIX_EPOCH)
         .expect("something went wrong");
     //accept the exp, convert it to seconds
-    let exp_hours_to_second = (exp as u64) * 60 * 60;
+    let exp_minutes_to_second = (exp as u64) * 60;
     // return the token expiration as the summation of current unix epoch elapsed time
     let hours_from_now =
-        unix_epoch_elapsed_time + std::time::Duration::from_secs(exp_hours_to_second);
+        unix_epoch_elapsed_time + std::time::Duration::from_secs(exp_minutes_to_second);
 
     //return the result as seconds
     hours_from_now.as_secs()
