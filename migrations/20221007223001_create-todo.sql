@@ -1,4 +1,3 @@
--- Add migration script here
 --
 -- PostgreSQL database dump
 --
@@ -17,15 +16,13 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
-SET default_tablespace = '';
-
 SET default_table_access_method = heap;
 
 --
--- Name: notes; Type: TABLE; Schema: public; Owner: postgres
+-- Name: todo_list; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.notes (
+CREATE TABLE public.todo_list (
     id uuid NOT NULL,
     title character varying(300) NOT NULL,
     description text,
@@ -35,14 +32,21 @@ CREATE TABLE public.notes (
 );
 
 
-ALTER TABLE public.notes OWNER TO postgres;
+ALTER TABLE public.todo_list OWNER TO postgres;
 
 --
--- Data for Name: notes; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Name: todo_list todo_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-COPY public.notes (id, title, description, date_added, last_update, fk_user_id) FROM stdin;
-\.
+ALTER TABLE ONLY public.todo_list
+    ADD CONSTRAINT todo_id_key UNIQUE (id);
+
+
+--
+-- Name: TABLE todo_list; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT ALL ON TABLE public.todo_list TO opeolluwa;
 
 
 --
