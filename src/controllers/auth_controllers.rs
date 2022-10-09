@@ -209,9 +209,9 @@ pub async fn login(
 
 /// Get the user profile fom the database.
 /// To do this,
-/// 1. Get the jwt token fom the header,
-/// 2. Validate the token then get the user_id from the validated token
-/// 3. use the user_id to make request to the database
+///  Get the jwt token fom the header,
+///  Validate the token then get the user_id from the validated token
+/// - use the user_id to make request to the database
 /// return the user details if no error else return the appropriate error code and response
 pub async fn user_profile(
     authenticated_user: JwtClaims,
@@ -324,11 +324,11 @@ pub async fn reset_password(
 }
 
 /// Get the user profile fom the database.
-/// To do this,
-/// 1. Get the jwt token fom the header,
-/// 2. Validate the token then get the user_id from the validated token
-/// 3. go on to destructure the payload,
-/// 4.  use SQL COALESCE($1, a)  to update the fields  
+/// to do this
+///  Get the jwt token fom the header,
+///  Validate the token then get the user_id from the validated token
+///  go on to destructure the payload,
+///  use SQL COALESCE($1, a)  to update the fields  
 /// return the user details if no error else return the appropriate error code and response
 pub async fn update_user_profile(
     Json(payload): Json<UserInformation>,
