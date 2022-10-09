@@ -23,7 +23,7 @@ use uuid::Uuid;
 
 //the secrets
 /// the once_cell create all us to add types lazily to variables with const and static binding
-/// see documentation on https://docs.rs/once_cell/latest/once_cell/
+/// see documentation on <https://docs.rs/once_cell/latest/once_cell/>
 static SMTP_USERNAME: Lazy<String> =
     Lazy::new(|| env::var("SMTP_USERNAME").expect("SMTP username not provided"));
 static SMTP_PASSWORD: Lazy<String> =
