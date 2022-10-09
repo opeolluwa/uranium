@@ -16,8 +16,6 @@ pub struct TodoModel {
     /// the user_id of the todo creator, do ne destructure it when converting this struct to json
     #[serde(skip_serializing)]
     pub fk_user_id: Uuid,
-
-
 }
 
 ///for working with input and output
@@ -28,6 +26,19 @@ pub struct TodoInformation {
     pub description: String,
 }
 
+///implement default for TodoInformation
+/// this will set the fields to empty strings
+/// then the handler (controller) will check if values are empty strings or not,
+/// if empty string, the handlers will throw off bad request error
+
+impl Default for TodoInformation {
+    fn default() -> Self {
+        Self {
+            title: "".to_string(),
+            description: "".to_string(),
+        }
+    }
+}
 ///implement enumerate fields for the note schema
 impl EnumerateFields for TodoInformation {
     /* return a key value pair of the the entries

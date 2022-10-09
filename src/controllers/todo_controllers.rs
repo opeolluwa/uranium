@@ -30,9 +30,14 @@ pub async fn add_todo(
         }
     }
 
-    println!("{:?}", &payload);
+    //if the fields are missing
+    if bad_request_errors.len() >= 1 {
+        return Err(ApiErrorResponse::BadRequest {
+            error: bad_request_errors.join(", "),
+        });
+    }
 
-    // save the new Todo
+    //  if no error save the new Todo
     /*
      * generate a UUID and hash the user password,
      * go on to save the hashed password along side other details
@@ -161,24 +166,22 @@ pub async fn get_all_todo(
         no_of_rows,
     } = &pagination;
 
-    //TODO: REFINE THIS if the page is 1, don't use offset else do
-    let query :&str;
-    if current_page >&1i32{
-       query = "SELECT * FROM todo_list WHERE fk_user_id = $3 LIMIT $1 OFFSET $2 ";
-    }
-    else {
-        query = "SELECT * FROM todo_list WHERE fk_user_id = $3 LIMIT $1";
+    // REFINE THIS if the page is 1, don't use offset else do
+    // the base query is SELECT * FROM todo_list ORDER BY date_added  DESC LIMIT 2 OFFSET 0 ;
+    let query: &str;
+    if current_page > &1i32 {
+        query = "SELECT * FROM todo_list WHERE fk_user_id = $3 ORDER BY date_added DESC LIMIT $1 OFFSET $2 ";
+    } else {
+        query = "SELECT * FROM todo_list WHERE fk_user_id = $3 ORDER BY date_added DESC LIMIT $1";
     }
     // let current_page = &query_params.page.trim().parse().unwrap();
     //implement pagination logic
-    let fetched_todo = sqlx::query_as::<_, TodoModel>(
-        query
-    )
-    .bind(no_of_rows)
-    .bind(current_page * no_of_rows)
-    .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
-    .fetch_all(&database)
-    .await;
+    let fetched_todo = sqlx::query_as::<_, TodoModel>(query)
+        .bind(no_of_rows)
+        .bind(current_page * no_of_rows)
+        .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
+        .fetch_all(&database)
+        .await;
 
     // println!("{:#?}", fetched_todo);
     //error handling
@@ -190,6 +193,41 @@ pub async fn get_all_todo(
                 message: "Todo successfully updated".to_string(),
                 data: Some(json!({
                          "todo": todo_array, "currentPage" : &pagination.page.to_string(),  "noOfRows":&pagination.no_of_rows.to_string()})),
+            };
+            //return the response with 200 status code
+            Ok((StatusCode::OK, Json(response_body)))
+        }
+        Err(error_message) => Err(ApiErrorResponse::NotFound {
+            error: error_message.to_string(),
+        }),
+    }
+}
+
+/// delete todo
+/// accept the todo id from an authenticated user,
+/// check if the user is the owner of the todo
+/// delete the tod and return a respone
+pub async fn delete_todo(
+    authenticated_user: JwtClaims,
+    Path(todo_id): Path<Uuid>,
+    Extension(database): Extension<PgPool>,
+) -> Result<(StatusCode, Json<ApiSuccessResponse<()>>), ApiErrorResponse> {
+    //fetch the Todo from the database  using the Todo id
+    let fetched_todo =
+        sqlx::query_as::<_, TodoModel>("DELETE FROM todo_list WHERE id = $1 AND fk_user_id = $2 RETURNING *")
+            .bind(todo_id)
+            .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
+            .fetch_one(&database)
+            .await;
+
+    //handle errors
+    match fetched_todo {
+        Ok(_) => {
+            //build the Todo body
+            let response_body: ApiSuccessResponse<_> = ApiSuccessResponse {
+                success: true,
+                message: "Todo successfully deleted".to_string(),
+                data: None,
             };
             //return the response with 200 status code
             Ok((StatusCode::OK, Json(response_body)))
