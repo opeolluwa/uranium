@@ -20,9 +20,9 @@ static JWT_SECRET: Lazy<JwtEncryptionKeys> = Lazy::new(|| -> JwtEncryptionKeys {
     JwtEncryptionKeys::new(secret.as_bytes())
 });
 
-/// the bearer token validity set to 1 hour
-const ACCESS_TOKEN_VALIDITY: u64 = 100;
-/// refresh token set to 3 hours
+/// the bearer token validity set to 1o minutes
+const ACCESS_TOKEN_VALIDITY: u64 = 10;
+/// refresh token set to 25 minutes
 const REFRESH_TOKEN_VALIDITY: u64 = 25;
 
 ///create a new user
