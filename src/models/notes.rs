@@ -23,12 +23,16 @@ pub struct NotesModel {
 ///for working with input and output
 #[derive(Debug, Serialize, Deserialize)]
 pub struct NotesInformation {
+    /// the todo title
     pub title: String,
     ///the note description
     pub description: String,
 }
 
 ///implement enumerate fields for the note schema
+/// return a key value pair of the the entries
+/// to avoid borrow checker error and possible error from dereferencing,
+/// clone the values of the struct
 impl EnumerateFields for NotesInformation {
     /* return a key value pair of the the entries
      * to avoid borrow checker error and possible error from dereferencing,

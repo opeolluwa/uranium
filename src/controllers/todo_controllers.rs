@@ -150,9 +150,9 @@ pub async fn get_todo_by_id(
 ///get all Todo
 /// retrieve all Todo with pagination
 /// the response will contain a data object will will contain
-/// 1.  the current page,
-/// 2. number of rows per page
-/// 3. a vector of TodoModel which are essentially an array of fetched todo
+///  the current page,
+///  number of rows per page
+///  a vector of TodoModel which are essentially an array of fetched todo
 pub async fn get_all_todo(
     authenticated_user: JwtClaims,
     pagination: Option<Query<Pagination>>,
