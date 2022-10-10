@@ -20,5 +20,6 @@ See the UI source code [here](https://github.com/opeolluwa/nitride-ui).
 5. use `sqlx migrate add <migration_name>` to add a new migration
 
 
-## API Documentation 
-Checkout the [API Documentation](https://documenter.getpostman.com/view/22658417/2s83zgv5nW) here
+##  Documentation 
+- Checkout the [API Documentation](https://documenter.getpostman.com/view/22658417/2s83zgv5nW) here
+- Or the [Application Documentation](https://opeolluwa.github.io/nitride/) here

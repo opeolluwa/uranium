@@ -14,6 +14,7 @@ mod routes;
 mod shared;
 
 #[tokio::main]
+///the application entry point
 async fn main() {
     //logger
     tracing_subscriber::registry()
