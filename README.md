@@ -1,7 +1,7 @@
 # nitride
 An admin dashboard built on  [Vue.js](https://vuejs.org/), [TypeScript](https://www.typescriptlang.org/), [Rust](https://www.rust-lang.org/), and [PostgreSQL](https://www.postgresql.org/).
 
-See the UI source code [here](https://github.com/opeolluwa/nitride-ui).
+See the User Interface source code [here](https://github.com/opeolluwa/nitride-ui).
 
 
 ## Requirement
@@ -21,5 +21,13 @@ See the UI source code [here](https://github.com/opeolluwa/nitride-ui).
 
 
 ##  Documentation 
-- Checkout the [API Documentation](https://documenter.getpostman.com/view/22658417/2s83zgv5nW) here
-- Or the [Application Documentation](https://opeolluwa.github.io/nitride/) here
+-  [API Documentation](https://documenter.getpostman.com/view/22658417/2s83zgv5nW) 
+- [Application (logic) Documentation](https://opeolluwa.github.io/nitride/) 
+
+
+## Demo 
+The following credentials are set up for the [demo application](https://nitride.onrender.com/)
+- EMAIL:  `guest@mailer.com`
+- PASSWORD:  `guest`
+- FULLNAME:  `Guest Username`,
+- USERNAME:  `guest`

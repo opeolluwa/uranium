@@ -7,10 +7,13 @@ use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-//local modules
+/// the application route controllers/handlers 
 mod controllers;
+/// the application model definitions, eg: User model, Todo Model e.t.c
 mod models;
+/// the application routing logic 
 mod routes;
+///modules shared across the application, like API response patters, pagination logic e.t.c 
 mod shared;
 
 #[tokio::main]
