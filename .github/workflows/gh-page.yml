@@ -32,4 +32,4 @@ jobs:
         publish_branch: gh-pages
         publish_dir: ./target/doc
         force_orphan: true
-      run: mv ./target/doc/nitride ./target/doc/docs
+      # run: mv ./target/doc/nitride ./target/doc/docs
