@@ -22,3 +22,4 @@ nitride.conf
 #ignore binary files in the sandbox
 sandbox/*
 !sandbox/*.rs
+sandbox/calendar.html
