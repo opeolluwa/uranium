@@ -1,8 +1,15 @@
+// use axum::async_trait;
+// use axum::extract::rejection::FormRejection;
+// use axum::extract::FromRequest;
+// use axum::http::Request;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Response;
+// use axum::Form;
 use axum::Json;
+// use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+// use validator::Validate;
 /// the API response is supposed to be an enum of two variants
 /// ApiResponse::Success<D:Data> and ApiResponse::Error<E:Error>
 ///
@@ -142,7 +149,7 @@ pub trait EnumerateFields {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Pagination {
-    /// the page number. It maps to `current page number` on the user interface 
+    /// the page number. It maps to `current page number` on the user interface
     pub page: i32,
     /// the number of items to
     pub no_of_rows: i32,
@@ -161,8 +168,8 @@ pub struct Pagination {
 ///
 /// // try and get the quey params or deflect to default
 ///  let Query(pagination) = pagination.unwrap_or_default();
-/// 
-/// //destructure the values 
+///
+/// //destructure the values
 /// let Pagination {
 ///  page: current_page,
 ///no_of_rows,
@@ -179,3 +186,24 @@ impl Default for Pagination {
         }
     }
 }
+
+// /// use this to encapsulate fields that require validation
+// #[derive(Debug, Clone, Copy, Default)]
+// pub struct ValidateRequest<T>(pub T);
+
+// #[async_trait]
+// impl<T, S> FromRequest<S> for ValidateRequest<T>
+// where
+//     T: DeserializeOwned + Validate,
+//     S: Send  + Sync+ 'static,
+//     Form<T>: FromRequest<S, Rejection = FormRejection>,
+//     // B: Send + 'static,
+// {
+//     type Rejection = ApiErrorResponse;
+
+//     async fn from_request(req: Request<S>) -> Result<Self, Self::Rejection> {
+//         let Form(value) = Form::<T>::from_request(reqzz).await?;
+//         value.validate()?;
+//         Ok(ValidateRequest(value))
+//     }
+// }
