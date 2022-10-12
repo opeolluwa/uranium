@@ -45,12 +45,15 @@ pub async fn add_todo(
      */
     let todo_id = Uuid::new_v4();
     let new_todo =  sqlx::query_as::<_, TodoModel>(
-        "INSERT INTO todo_list (id, title, description, fk_user_id) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING RETURNING *",
+        "INSERT INTO todo_list (id, title, description, fk_user_id, priority) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING RETURNING *",
     )
     .bind(todo_id)
     .bind(payload.title)
     .bind(payload.description)
     .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
+    .bind(payload.priority)
+    // .bind("now()")
+
     .fetch_one(&database).await;
     //handle error
     match new_todo {
