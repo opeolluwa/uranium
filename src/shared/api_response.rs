@@ -1,15 +1,16 @@
-// use axum::async_trait;
-// use axum::extract::rejection::FormRejection;
-// use axum::extract::FromRequest;
-// use axum::http::Request;
+use async_trait::async_trait;
+use axum::extract::FromRequest;
+use axum::extract::RequestParts;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Response;
-// use axum::Form;
+use axum::BoxError;
+use axum::Form;
 use axum::Json;
-// use serde::de::DeserializeOwned;
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-// use validator::Validate;
+use thiserror::Error;
+use validator::Validate;
 /// the API response is supposed to be an enum of two variants
 /// ApiResponse::Success<D:Data> and ApiResponse::Error<E:Error>
 ///
@@ -85,7 +86,7 @@ impl IntoResponse for ApiErrorResponse {
                 error,
             ),
             ApiErrorResponse::InvalidToken { error } => (
-                StatusCode::BAD_REQUEST,
+                StatusCode::UNAUTHORIZED,
                 String::from("Invalid token or missing authorization token"),
                 error,
             ),
@@ -187,23 +188,44 @@ impl Default for Pagination {
     }
 }
 
-// /// use this to encapsulate fields that require validation
-// #[derive(Debug, Clone, Copy, Default)]
-// pub struct ValidateRequest<T>(pub T);
+/// use this to encapsulate fields that require validation
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ValidatedRequest<T>(pub T);
 
-// #[async_trait]
-// impl<T, S> FromRequest<S> for ValidateRequest<T>
-// where
-//     T: DeserializeOwned + Validate,
-//     S: Send  + Sync+ 'static,
-//     Form<T>: FromRequest<S, Rejection = FormRejection>,
-//     // B: Send + 'static,
-// {
-//     type Rejection = ApiErrorResponse;
+#[async_trait]
+impl<T, B> FromRequest<B> for ValidatedRequest<T>
+where
+    T: DeserializeOwned + Validate,
+    B: http_body::Body + Send,
+    B::Data: Send,
+    B::Error: Into<BoxError>,
+{
+    type Rejection = ServerError;
 
-//     async fn from_request(req: Request<S>) -> Result<Self, Self::Rejection> {
-//         let Form(value) = Form::<T>::from_request(reqzz).await?;
-//         value.validate()?;
-//         Ok(ValidateRequest(value))
-//     }
-// }
+    async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
+        let Json(value) = Json::<T>::from_request(req).await.expect("bad request");
+        value.validate()?;
+        Ok(ValidatedRequest(value))
+    }
+}
+#[derive(Debug, Error)]
+pub enum ServerError {
+    #[error(transparent)]
+    ValidationError(#[from] validator::ValidationErrors),
+
+    #[error(transparent)]
+    AxumFormRejection(#[from] axum::extract::rejection::FormRejection),
+}
+
+impl IntoResponse for ServerError {
+    fn into_response(self) -> Response {
+        match self {
+            ServerError::ValidationError(_) => {
+                let message = format!("Input validation error: [{}]", self).replace('\n', ", ");
+                (StatusCode::BAD_REQUEST, message)
+            }
+            ServerError::AxumFormRejection(_) => (StatusCode::BAD_REQUEST, self.to_string()),
+        }
+        .into_response()
+    }
+}

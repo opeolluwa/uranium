@@ -1,5 +1,5 @@
 use crate::models::todo::{TodoInformation, TodoModel};
-use crate::shared::api_response::Pagination;
+use crate::shared::api_response::{Pagination, ValidatedRequest};
 use crate::shared::{
     api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields},
     jwt_schema::JwtClaims,
@@ -17,7 +17,8 @@ use uuid::Uuid;
 /// - repoUrl - the Todo repository
 pub async fn add_todo(
     authenticated_user: JwtClaims,
-    Json(payload): Json<TodoInformation>,
+    ValidatedRequest(payload): ValidatedRequest<TodoInformation>,
+    // Json(payload): Json<TodoInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
     //check through the fields to see that no field was badly formatted
