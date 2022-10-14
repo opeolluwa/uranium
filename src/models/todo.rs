@@ -1,9 +1,9 @@
 use crate::shared::api_response::EnumerateFields;
-use chrono::Utc;
+// use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
-// use validator::Validate;
+use validator::Validate;
 
 /// the note model
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
@@ -25,20 +25,20 @@ pub struct TodoModel {
 }
 
 ///for working with input and output
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct TodoInformation {
     /// the todo title
-    // #[validate(length(min = 1, message = "Can not be empty"))]
+    #[validate(length(min = 1, message = "Can not be empty"))]
     pub title: String,
     ///the todo description
-    // #[validate(length(min = 1, message = "Can not be empty"))]
+    #[validate(length(min = 1, message = "Can not be empty"))]
     pub description: String,
     /// the todo due date
     // #[validate(length(min = 1, message = "Can not be empty"))]
     // pub due_date: chrono::DateTime<chrono::Utc>,
     /// the todo priority
-    // #[validate(length(min = 1, message = "Can not be empty"))]
+    #[validate(length(min = 1, message = "Can not be empty"))]
     pub priority: String,
 }
 
