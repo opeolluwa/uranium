@@ -203,7 +203,7 @@ where
     type Rejection = ServerError;
 
     async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
-        let Json(value) = Json::<T>::from_request(req).await.expect("bad request");
+        let Form(value) = Form::<T>::from_request(req).await?;
         value.validate()?;
         Ok(ValidatedRequest(value))
     }
