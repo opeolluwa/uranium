@@ -17,8 +17,8 @@ use uuid::Uuid;
 /// - repoUrl - the Todo repository
 pub async fn add_todo(
     authenticated_user: JwtClaims,
-    ValidatedRequest(payload): ValidatedRequest<TodoInformation>,
-    // Json(payload): Json<TodoInformation>,
+    // ValidatedRequest(payload): ValidatedRequest<TodoInformation>,
+    Json(payload): Json<TodoInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
     //check through the fields to see that no field was badly formatted
