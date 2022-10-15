@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use axum::extract::rejection::JsonRejection;
+// use axum::extract::rejection::JsonRejection;
 use axum::extract::FromRequest;
 use axum::extract::RequestParts;
 use axum::http::StatusCode;
@@ -29,11 +29,11 @@ use validator::Validate;
 /// let neither_data_nor_error : ApiResponse<_,_>
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ApiResponse<Data, Error> {
+pub struct ApiResponse<Data> {
     pub success: bool,
     pub message: String,
     pub data: Option<Data>,
-    pub error: Option<Error>,
+    // pub error: Option<Error>,
 }
 
 ///Api success response
@@ -51,64 +51,41 @@ pub struct ApiSuccessResponse<Data> {
 #[allow(dead_code)]
 pub enum ApiErrorResponse {
     /// wrong authorization payload e.g incorrect username and password
-    WrongCredentials { error: String },
+    WrongCredentials { message: String },
     /// missing or wrong fields in API request
-    BadRequest { error: String },
+    BadRequest { message: String },
     ///internal server error
-    ServerError { error: String },
+    ServerError { message: String },
     ///conflict error
-    ConflictError { error: String },
+    ConflictError { message: String },
     /// invalid Authorization token
-    InvalidToken { error: String },
+    InvalidToken { message: String },
     ///missing or undefined resource e.g user information
-    NotFound { error: String },
+    NotFound { message: String },
 }
 
 ///implement into response trait for API error
 impl IntoResponse for ApiErrorResponse {
     fn into_response(self) -> Response {
-        let (status_code, error_message, error_details) = match self {
-            ApiErrorResponse::WrongCredentials { error } => {
+        let (status_code, error_message) = match self {
+            ApiErrorResponse::WrongCredentials { message } => {
                 //missing Authorization credentials
-                (
-                    StatusCode::UNAUTHORIZED,
-                    String::from("Wrong or missing authorization credentials"),
-                    error,
-                )
+                (StatusCode::UNAUTHORIZED, message)
             }
-            ApiErrorResponse::BadRequest { error } => (
-                StatusCode::BAD_REQUEST,
-                String::from("Badly formatted or missing credentials"),
-                error,
-            ),
-            ApiErrorResponse::ServerError { error } => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                String::from("Internal Server Response"),
-                error,
-            ),
-            ApiErrorResponse::InvalidToken { error } => (
-                StatusCode::UNAUTHORIZED,
-                String::from("Invalid token or missing authorization token"),
-                error,
-            ),
-            ApiErrorResponse::ConflictError { error } => (
-                StatusCode::CONFLICT,
-                String::from("The record you are trying to create already exists"),
-                error,
-            ),
+            ApiErrorResponse::BadRequest { message } => (StatusCode::BAD_REQUEST, message),
+            ApiErrorResponse::ServerError { message } => {
+                (StatusCode::INTERNAL_SERVER_ERROR, message)
+            }
+            ApiErrorResponse::InvalidToken { message } => (StatusCode::UNAUTHORIZED, message),
+            ApiErrorResponse::ConflictError { message } => (StatusCode::CONFLICT, message),
             //not found error
-            ApiErrorResponse::NotFound { error } => (
-                StatusCode::NOT_FOUND,
-                String::from("The requested Resource was not found"),
-                error,
-            ),
+            ApiErrorResponse::NotFound { message } => (StatusCode::NOT_FOUND, message),
         };
         //build the response body using the ApiResponse struct
-        let response_body: ApiResponse<_, String> = ApiResponse::<_, String> {
+        let response_body: ApiResponse<String> = ApiResponse::<String> {
             success: false,
             message: error_message,
-            data: None::<String>,
-            error: Some(error_details),
+            data: None,
         };
 
         //build up the response status code and the response content
@@ -190,6 +167,28 @@ impl Default for Pagination {
 }
 
 /// use this to encapsulate fields that require validation
+///
+/// # Example
+/// an example implementation in a todo controller
+///
+/// ```rust
+/// pub async fn add_todo(
+///    authenticated_user: JwtClaims,
+///   ValidatedRequest(payload): ValidatedRequest<TodoInformation>,
+/// Extension(database): Extension<PgPool>,
+///) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> { ...}
+/// ```
+///
+/// Originally, the request body could have been extracted like
+/// ```rust
+/// pub async fn add_todo(
+///    authenticated_user: JwtClaims,
+///  Json(payload): Json<TodoInformation>,
+/// Extension(database): Extension<PgPool>,
+///) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> { ...}
+/// ```
+/// However, `ValidatedRequest(payload): ValidatedRequest<TodoInformation>` was is used in place of `Json(payload): Json<TodoInformation>,`
+///
 #[derive(Debug, Clone, Copy, Default)]
 pub struct ValidatedRequest<T>(pub T);
 
@@ -201,7 +200,7 @@ where
     B::Data: Send,
     B::Error: Into<BoxError>,
 {
-    type Rejection = ServerError;
+    type Rejection = RequestError;
 
     async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
         let Json(value) = Json::<T>::from_request(req).await?;
@@ -209,32 +208,29 @@ where
         Ok(ValidatedRequest(value))
     }
 }
+
+///intercept HTTP request Body and validate them
 #[derive(Debug, Error)]
-pub enum ServerError {
+pub enum RequestError {
+    ///derived from validate crate
     #[error(transparent)]
     ValidationError(#[from] validator::ValidationErrors),
 
     #[error(transparent)]
-    AxumFormRejection(#[from] axum::extract::rejection::FormRejection),
+    AxumFormRejection(#[from] axum::extract::rejection::JsonRejection),
 }
 
-impl IntoResponse for ServerError {
+///implement axum response for Request error
+impl IntoResponse for RequestError {
     fn into_response(self) -> Response {
         match self {
-            ServerError::ValidationError(_) => {
-                let message = format!("Input validation error: [{}]", self).replace('\n', ", ");
-                (StatusCode::BAD_REQUEST, message)
-            }
-            ServerError::AxumFormRejection(_) => (StatusCode::BAD_REQUEST, self.to_string()),
+            RequestError::ValidationError(_) => ApiErrorResponse::BadRequest {
+                message: format!("Input validation error: [{}]", self).replace('\n', ", "),
+            },
+            RequestError::AxumFormRejection(_) => ApiErrorResponse::BadRequest {
+                message: self.to_string(),
+            },
         }
         .into_response()
-    }
-}
-
-impl std::convert::From<JsonRejection> for ServerError {
-    fn from(error: JsonRejection) -> Self {
-        println!("{:#?}", error);
-        // Self::ValidationError(error)
-        todo!()
     }
 }

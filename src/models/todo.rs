@@ -47,16 +47,16 @@ pub struct TodoInformation {
 /// then the handler (controller) will check if values are empty strings or not,
 /// if empty string, the handlers will throw off bad request error
 
-// impl Default for TodoInformation {
-//     fn default() -> Self {
-//         Self {
-//             title: "".to_string(),
-//             description: "".to_string(),
-//             // due_date: Utc::now(),
-//             priority: "unset".to_string(),
-//         }
-//     }
-// }
+impl Default for TodoInformation {
+    fn default() -> Self {
+        Self {
+            title: "".to_string(),
+            description: "".to_string(),
+            // due_date: Utc::now(),
+            priority: "unset".to_string(),
+        }
+    }
+}
 ///implement enumerate fields for the note schema
 impl EnumerateFields for TodoInformation {
     /* return a key value pair of the the entries

@@ -17,8 +17,8 @@ use uuid::Uuid;
 /// - repoUrl - the Todo repository
 pub async fn add_todo(
     authenticated_user: JwtClaims,
-    // ValidatedRequest(payload): ValidatedRequest<TodoInformation>,
-    Json(payload): Json<TodoInformation>,
+    ValidatedRequest(payload): ValidatedRequest<TodoInformation>,
+    // Json(payload): Json<TodoInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
     //check through the fields to see that no field was badly formatted
@@ -34,7 +34,7 @@ pub async fn add_todo(
     //if the fields are missing
     if bad_request_errors.len() >= 1 {
         return Err(ApiErrorResponse::BadRequest {
-            error: bad_request_errors.join(", "),
+            message: bad_request_errors.join(", "),
         });
     }
 
@@ -71,7 +71,7 @@ pub async fn add_todo(
             Ok((StatusCode::CREATED, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::ServerError {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -111,7 +111,7 @@ pub async fn edit_todo(
             Ok((StatusCode::OK, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::NotFound {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -146,7 +146,7 @@ pub async fn get_todo_by_id(
             Ok((StatusCode::OK, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::NotFound {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -202,7 +202,7 @@ pub async fn get_all_todo(
             Ok((StatusCode::OK, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::NotFound {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -217,12 +217,13 @@ pub async fn delete_todo(
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<()>>), ApiErrorResponse> {
     //fetch the Todo from the database  using the Todo id
-    let fetched_todo =
-        sqlx::query_as::<_, TodoModel>("DELETE FROM todo_list WHERE id = $1 AND fk_user_id = $2 RETURNING *")
-            .bind(todo_id)
-            .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
-            .fetch_one(&database)
-            .await;
+    let fetched_todo = sqlx::query_as::<_, TodoModel>(
+        "DELETE FROM todo_list WHERE id = $1 AND fk_user_id = $2 RETURNING *",
+    )
+    .bind(todo_id)
+    .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
+    .fetch_one(&database)
+    .await;
 
     //handle errors
     match fetched_todo {
@@ -237,7 +238,7 @@ pub async fn delete_todo(
             Ok((StatusCode::OK, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::NotFound {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
