@@ -93,65 +93,65 @@ define(['./workbox-3589c0c5'], (function (workbox) { 'use strict';
     "url": "assets/AppEmptyState.8f6b4102.css",
     "revision": null
   }, {
-    "url": "assets/AppEmptyState.ff82c506.js",
+    "url": "assets/AppEmptyState.a8a7c31d.js",
     "revision": null
   }, {
-    "url": "assets/AppNetworkError.64895517.js",
+    "url": "assets/AppNetworkError.228aeec1.css",
     "revision": null
   }, {
-    "url": "assets/AppNetworkError.95c3f28a.css",
+    "url": "assets/AppNetworkError.cc097bf9.js",
     "revision": null
   }, {
     "url": "assets/CreateEmailView.632b2cbb.css",
     "revision": null
   }, {
-    "url": "assets/CreateEmailView.d9ff2910.js",
+    "url": "assets/CreateEmailView.eae1a311.js",
     "revision": null
   }, {
-    "url": "assets/EmailIndexView.6452bded.js",
+    "url": "assets/EmailIndexView.2593c348.js",
     "revision": null
   }, {
-    "url": "assets/EmailView.beb67597.js",
+    "url": "assets/EmailView.bde3c73a.js",
     "revision": null
   }, {
     "url": "assets/EmailView.f015e947.css",
     "revision": null
   }, {
-    "url": "assets/index.2bf7f622.js",
+    "url": "assets/index.16203f2c.js",
     "revision": null
   }, {
-    "url": "assets/index.559100f2.css",
+    "url": "assets/index.d79d214c.css",
     "revision": null
   }, {
     "url": "assets/NotFoundView.6ff6b9d3.css",
     "revision": null
   }, {
-    "url": "assets/NotFoundView.8b65d83c.js",
+    "url": "assets/NotFoundView.fd6ba504.js",
     "revision": null
   }, {
-    "url": "assets/NotificationView.af16030f.js",
-    "revision": null
-  }, {
-    "url": "assets/ProjectsView.38176ac2.js",
+    "url": "assets/NotificationView.ad16654c.js",
     "revision": null
   }, {
     "url": "assets/ProjectsView.3eb714f5.css",
     "revision": null
   }, {
-    "url": "assets/SettingsView.4c43b22b.js",
+    "url": "assets/ProjectsView.fa0c7005.js",
+    "revision": null
+  }, {
+    "url": "assets/SettingsView.1d778cb6.js",
     "revision": null
   }, {
     "url": "assets/SettingsView.7a4b5527.css",
     "revision": null
   }, {
-    "url": "assets/TodoView.7064e336.js",
+    "url": "assets/TodoView.d0931f7f.js",
     "revision": null
   }, {
     "url": "assets/TodoView.e99b67a7.css",
     "revision": null
   }, {
     "url": "index.html",
-    "revision": "e1f33a66416ce7d79e36e21dc7162c21"
+    "revision": "611b88b1f6e9317eab02b6513bfbe2f9"
   }, {
     "url": "registerSW.js",
     "revision": "1872c500de691dce40960bb85481de07"
