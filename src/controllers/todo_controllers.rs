@@ -34,7 +34,7 @@ pub async fn add_todo(
     //if the fields are missing
     if bad_request_errors.len() >= 1 {
         return Err(ApiErrorResponse::BadRequest {
-            error: bad_request_errors.join(", "),
+            message: bad_request_errors.join(", "),
         });
     }
 
@@ -71,7 +71,7 @@ pub async fn add_todo(
             Ok((StatusCode::CREATED, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::ServerError {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -111,7 +111,7 @@ pub async fn edit_todo(
             Ok((StatusCode::OK, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::NotFound {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -146,7 +146,7 @@ pub async fn get_todo_by_id(
             Ok((StatusCode::OK, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::NotFound {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -202,7 +202,7 @@ pub async fn get_all_todo(
             Ok((StatusCode::OK, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::NotFound {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -238,7 +238,7 @@ pub async fn delete_todo(
             Ok((StatusCode::OK, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::NotFound {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }

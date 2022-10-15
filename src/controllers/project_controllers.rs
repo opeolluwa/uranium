@@ -74,7 +74,7 @@ pub async fn add_project(
             Ok((StatusCode::CREATED, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::ConflictError {
-            error: vec![
+            message: vec![
                 error_message.to_string(),
                 "data most likely exists".to_string(),
             ]
@@ -113,7 +113,7 @@ pub async fn edit_project(
             Ok((StatusCode::OK, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::NotFound {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -147,7 +147,7 @@ pub async fn get_project_by_id(
             Ok((StatusCode::OK, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::NotFound {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }

@@ -38,7 +38,7 @@ where
             TypedHeader::<Authorization<Bearer>>::from_request(req)
                 .await
                 .map_err(|err| AuthError::InvalidToken {
-                    error: err.to_string(),
+                    message: err.to_string(),
                 })?;
 
         /*
@@ -57,7 +57,7 @@ where
         let validation = Validation::new(Algorithm::HS512);
         let token_data = decode::<JwtClaims>(bearer.token(), &JWT_SECRET.decoding, &validation)
             .map_err(|err| AuthError::InvalidToken {
-                error: err.to_string(),
+                message: err.to_string(),
             })?;
         Ok(token_data.claims)
     }

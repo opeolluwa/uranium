@@ -55,7 +55,7 @@ pub async fn sign_up(
     //if we have empty fields return error to client
     if !bad_request_errors.is_empty() {
         return Err(ApiErrorResponse::BadRequest {
-            error: bad_request_errors.join(", "),
+            message: bad_request_errors.join(", "),
         });
     }
 
@@ -91,7 +91,7 @@ pub async fn sign_up(
             Ok((StatusCode::CREATED, Json(response)))
         }
         Err(err) => Err(ApiErrorResponse::ConflictError {
-            error: vec![
+            message: vec![
                 err.to_string(),
                 format!("an account with {email} already exists"),
             ]
@@ -131,7 +131,7 @@ pub async fn login(
     //if we have empty fields return error to client
     if !bad_request_errors.is_empty() {
         return Err(ApiErrorResponse::BadRequest {
-            error: bad_request_errors.join(", "),
+            message: bad_request_errors.join(", "),
         });
     }
 
@@ -155,7 +155,7 @@ pub async fn login(
                     //send error if the password is not correct
                     if !is_correct_password {
                         return Err(ApiErrorResponse::WrongCredentials {
-                            error: String::from("incorrect password"),
+                            message: String::from("incorrect password"),
                         });
                     }
 
@@ -172,7 +172,7 @@ pub async fn login(
                         id: id.to_string(),
                         email: email.to_string(),
                         fullname: fullname.to_string(),
-                        exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations 
+                        exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
                     };
                     //fetch the JWT secret
                     /*   let jwt_secret = crate::shared::jwt_schema::jwt_secret(); */
@@ -197,12 +197,12 @@ pub async fn login(
                     Ok((StatusCode::OK, Json(response)))
                 }
                 Err(error_message) => Err(ApiErrorResponse::BadRequest {
-                    error: error_message.to_string(),
+                    message: error_message.to_string(),
                 }),
             }
         }
         Err(error_message) => Err(ApiErrorResponse::ServerError {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -245,7 +245,7 @@ pub async fn user_profile(
             Ok(Json(response_body))
         }
         Err(error_message) => Err(ApiErrorResponse::BadRequest {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -281,7 +281,7 @@ pub async fn reset_password(
     //if we have empty fields return error to client
     if !bad_request_errors.is_empty() {
         return Err(ApiErrorResponse::BadRequest {
-            error: bad_request_errors.join(", "),
+            message: bad_request_errors.join(", "),
         });
     }
 
@@ -318,7 +318,7 @@ pub async fn reset_password(
             Ok(Json(response_body))
         }
         Err(error_message) => Err(ApiErrorResponse::BadRequest {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -361,7 +361,7 @@ pub async fn update_user_profile(
             Ok(Json(response_body))
         }
         Err(error_message) => Err(ApiErrorResponse::BadRequest {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -420,15 +420,14 @@ pub async fn get_refresh_token(
             Ok(Json(response_body))
         }
         Err(error_message) => Err(ApiErrorResponse::BadRequest {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
 
-
-// /// logout controller 
+// /// logout controller
 // /// the logout controller will accept the bearer token via query params
-// /// it will add the token to the auth_token table 
+// /// it will add the token to the auth_token table
 // pub async fn logout(){
-    
+
 // }

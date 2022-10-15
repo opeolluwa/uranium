@@ -54,7 +54,7 @@ pub async fn add_notes(
             Ok((StatusCode::CREATED, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::ServerError {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -90,7 +90,7 @@ pub async fn edit_notes(
             Ok((StatusCode::OK, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::NotFound {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -123,7 +123,7 @@ pub async fn get_notes_by_id(
             Ok((StatusCode::OK, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::NotFound {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }

@@ -97,7 +97,7 @@ pub async fn send_email(
 pub async fn receive_email(
     Json(payload): Json<EmailContext>,
     Extension(database): Extension<PgPool>,
-) -> Result<(StatusCode, Json<ApiResponse<(), ()>>), ApiErrorResponse> {
+) -> Result<(StatusCode, Json<ApiResponse<()>>), ApiErrorResponse> {
     //destructure the email fields from the payload
     let EmailContext {
         fullname: sender_name,
@@ -179,17 +179,16 @@ pub async fn receive_email(
             // Send the email, if the mail is successful save it
             match mailer.send(&email) {
                 Ok(_) => {
-                    let response_body: ApiResponse<(), ()> = ApiResponse::<(), ()> {
+                    let response_body: ApiResponse<()> = ApiResponse::<()> {
                         success: true,
                         message: String::from("Message successfully sent"),
                         data: None,
-                        error: None,
                     };
                     //the response with ok status code and response body
                     Ok((StatusCode::OK, Json(response_body)))
                 }
                 Err(error_message) => Err(ApiErrorResponse::ConflictError {
-                    error: error_message.to_string(),
+                    message: error_message.to_string(),
                 }),
             }
             //send the response back to the client application
@@ -198,7 +197,7 @@ pub async fn receive_email(
             // response
         }
         Err(error_message) => Err(ApiErrorResponse::ServerError {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -232,7 +231,7 @@ pub async fn reply_email(
         }
         //return a not found error
         Err(error_message) => Err(ApiErrorResponse::NotFound {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -266,7 +265,7 @@ pub async fn delete_email(
         }
         //return a not found error
         Err(error_message) => Err(ApiErrorResponse::NotFound {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -301,7 +300,7 @@ pub async fn fetch_email(
         }
         //return a not found error
         Err(error_message) => Err(ApiErrorResponse::NotFound {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
@@ -334,7 +333,7 @@ pub async fn star_email(
         }
         //return a not found error
         Err(error_message) => Err(ApiErrorResponse::NotFound {
-            error: error_message.to_string(),
+            message: error_message.to_string(),
         }),
     }
 }
