@@ -70,45 +70,22 @@ impl IntoResponse for ApiErrorResponse {
         let (status_code, error_message) = match self {
             ApiErrorResponse::WrongCredentials { message } => {
                 //missing Authorization credentials
-                (
-                    StatusCode::UNAUTHORIZED,
-                    // String::from("Wrong or missing authorization credentials"),
-                    message,
-                )
+                (StatusCode::UNAUTHORIZED, message)
             }
-            ApiErrorResponse::BadRequest { message } => (
-                StatusCode::BAD_REQUEST,
-                // String::from("Badly formatted or missing credentials"),
-                message,
-            ),
-            ApiErrorResponse::ServerError { message } => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                // String::from("Internal Server Response"),
-                message,
-            ),
-            ApiErrorResponse::InvalidToken { message } => (
-                StatusCode::UNAUTHORIZED,
-                // String::from("Invalid token or missing authorization token"),
-                message,
-            ),
-            ApiErrorResponse::ConflictError { message } => (
-                StatusCode::CONFLICT,
-                // String::from("The record you are trying to create already exists"),
-                message,
-            ),
+            ApiErrorResponse::BadRequest { message } => (StatusCode::BAD_REQUEST, message),
+            ApiErrorResponse::ServerError { message } => {
+                (StatusCode::INTERNAL_SERVER_ERROR, message)
+            }
+            ApiErrorResponse::InvalidToken { message } => (StatusCode::UNAUTHORIZED, message),
+            ApiErrorResponse::ConflictError { message } => (StatusCode::CONFLICT, message),
             //not found error
-            ApiErrorResponse::NotFound { message } => (
-                StatusCode::NOT_FOUND,
-                // String::from("The requested Resource was not found"),
-                message,
-            ),
+            ApiErrorResponse::NotFound { message } => (StatusCode::NOT_FOUND, message),
         };
         //build the response body using the ApiResponse struct
         let response_body: ApiResponse<String> = ApiResponse::<String> {
             success: false,
             message: error_message,
             data: None,
-            // error: Some(error_details),
         };
 
         //build up the response status code and the response content
