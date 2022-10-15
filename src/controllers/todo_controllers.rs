@@ -17,8 +17,8 @@ use uuid::Uuid;
 /// - repoUrl - the Todo repository
 pub async fn add_todo(
     authenticated_user: JwtClaims,
-    // ValidatedRequest(payload): ValidatedRequest<TodoInformation>,
-    Json(payload): Json<TodoInformation>,
+    ValidatedRequest(payload): ValidatedRequest<TodoInformation>,
+    // Json(payload): Json<TodoInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
     //check through the fields to see that no field was badly formatted
@@ -217,12 +217,13 @@ pub async fn delete_todo(
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<()>>), ApiErrorResponse> {
     //fetch the Todo from the database  using the Todo id
-    let fetched_todo =
-        sqlx::query_as::<_, TodoModel>("DELETE FROM todo_list WHERE id = $1 AND fk_user_id = $2 RETURNING *")
-            .bind(todo_id)
-            .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
-            .fetch_one(&database)
-            .await;
+    let fetched_todo = sqlx::query_as::<_, TodoModel>(
+        "DELETE FROM todo_list WHERE id = $1 AND fk_user_id = $2 RETURNING *",
+    )
+    .bind(todo_id)
+    .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
+    .fetch_one(&database)
+    .await;
 
     //handle errors
     match fetched_todo {

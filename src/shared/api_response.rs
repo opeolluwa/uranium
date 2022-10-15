@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use axum::extract::rejection::JsonRejection;
+// use axum::extract::rejection::JsonRejection;
 use axum::extract::FromRequest;
 use axum::extract::RequestParts;
 use axum::http::StatusCode;
@@ -190,6 +190,28 @@ impl Default for Pagination {
 }
 
 /// use this to encapsulate fields that require validation
+///
+/// # Example
+/// an example implementation in a todo controller
+/// 
+/// ```rust
+/// pub async fn add_todo(
+///    authenticated_user: JwtClaims,
+///   ValidatedRequest(payload): ValidatedRequest<TodoInformation>,
+/// Extension(database): Extension<PgPool>,
+///) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> { ...}
+/// ```
+/// 
+/// Originally, the request body could have been extracted like 
+/// ```rust
+/// pub async fn add_todo(
+///    authenticated_user: JwtClaims,
+///  Json(payload): Json<TodoInformation>,
+/// Extension(database): Extension<PgPool>,
+///) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> { ...}
+/// ```
+/// However, `ValidatedRequest(payload): ValidatedRequest<TodoInformation>` was is used in place of `Json(payload): Json<TodoInformation>,`
+/// 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct ValidatedRequest<T>(pub T);
 
@@ -201,7 +223,7 @@ where
     B::Data: Send,
     B::Error: Into<BoxError>,
 {
-    type Rejection = ServerError;
+    type Rejection = RequestError;
 
     async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
         let Json(value) = Json::<T>::from_request(req).await?;
@@ -209,32 +231,30 @@ where
         Ok(ValidatedRequest(value))
     }
 }
+
+///intercept HTTP request Body and validate them
 #[derive(Debug, Error)]
-pub enum ServerError {
+pub enum RequestError {
+    ///derived from validate crate 
     #[error(transparent)]
     ValidationError(#[from] validator::ValidationErrors),
 
     #[error(transparent)]
-    AxumFormRejection(#[from] axum::extract::rejection::FormRejection),
+    AxumFormRejection(#[from] axum::extract::rejection::JsonRejection),
 }
 
-impl IntoResponse for ServerError {
+
+///implement axum response for Request error
+impl IntoResponse for RequestError {
     fn into_response(self) -> Response {
         match self {
-            ServerError::ValidationError(_) => {
-                let message = format!("Input validation error: [{}]", self).replace('\n', ", ");
-                (StatusCode::BAD_REQUEST, message)
-            }
-            ServerError::AxumFormRejection(_) => (StatusCode::BAD_REQUEST, self.to_string()),
+            RequestError::ValidationError(_) => ApiErrorResponse::BadRequest {
+                error: format!("Input validation error: [{}]", self).replace('\n', ", "),
+            },
+            RequestError::AxumFormRejection(_) => ApiErrorResponse::BadRequest {
+                error: self.to_string(),
+            },
         }
         .into_response()
-    }
-}
-
-impl std::convert::From<JsonRejection> for ServerError {
-    fn from(error: JsonRejection) -> Self {
-        println!("{:#?}", error);
-        // Self::ValidationError(error)
-        todo!()
     }
 }
