@@ -1,11 +1,12 @@
 use async_trait::async_trait;
+use axum::extract::rejection::JsonRejection;
 use axum::extract::FromRequest;
 use axum::extract::RequestParts;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Response;
 use axum::BoxError;
-use axum::Form;
+// use axum::Form;
 use axum::Json;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -203,7 +204,7 @@ where
     type Rejection = ServerError;
 
     async fn from_request(req: &mut RequestParts<B>) -> Result<Self, Self::Rejection> {
-        let Form(value) = Form::<T>::from_request(req).await?;
+        let Json(value) = Json::<T>::from_request(req).await?;
         value.validate()?;
         Ok(ValidatedRequest(value))
     }
@@ -227,5 +228,13 @@ impl IntoResponse for ServerError {
             ServerError::AxumFormRejection(_) => (StatusCode::BAD_REQUEST, self.to_string()),
         }
         .into_response()
+    }
+}
+
+impl std::convert::From<JsonRejection> for ServerError {
+    fn from(error: JsonRejection) -> Self {
+        println!("{:#?}", error);
+        // Self::ValidationError(error)
+        todo!()
     }
 }
