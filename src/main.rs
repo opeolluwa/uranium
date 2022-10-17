@@ -86,7 +86,7 @@ async fn main() {
      * try the parse the value to determine of the environment is development or production
      * else, assign the localhost ip address to catch error an fall through
      */
-
+    
     let ip_address = match env::var("ENVIRONMENT") {
         /*
          * if the environment is production, use the derived port and the placeholder address
@@ -95,7 +95,7 @@ async fn main() {
         Ok(env) => {
             if env == String::from("production").trim() {
                 //return the placeholder address and the computed port
-                SocketAddr::from(([127, 0, 0, 1], port))
+                SocketAddr::from(([0, 0, 0, 0], port))
             } else {
                 //return localhost IP address
                 SocketAddr::from(([127, 0, 0, 1], port))
@@ -108,7 +108,7 @@ async fn main() {
          * if the address cannot be found, or badly constructed
          */
         {
-            SocketAddr::from(([0, 0, 0, 0], port))
+            SocketAddr::from(([127, 0, 0, 1], port))
         }
     };
     println!("Ignition started on http://{}", &ip_address);
