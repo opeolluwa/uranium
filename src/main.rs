@@ -95,7 +95,7 @@ async fn main() {
         Ok(env) => {
             if env == String::from("production").trim() {
                 //return the placeholder address and the computed port
-                SocketAddr::from(([127, 0, 0, 1], port))
+                SocketAddr::from(([0, 0, 0, 0], port))
             } else {
                 //return localhost IP address
                 SocketAddr::from(([127, 0, 0, 1], port))
