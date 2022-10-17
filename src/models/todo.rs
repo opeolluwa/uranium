@@ -19,9 +19,9 @@ pub struct TodoModel {
     #[serde(skip_serializing)]
     pub fk_user_id: Uuid,
     /// the todo due date
-    // pub due_date: chrono::DateTime<chrono::Utc>,
+    pub date_added: sqlx::types::chrono::NaiveDateTime,
     /// the todo priority
-    pub priority: String,
+    pub priority: Option<String>,
 }
 
 ///for working with input and output
@@ -36,7 +36,7 @@ pub struct TodoInformation {
     pub description: String,
     /// the todo due date
     // #[validate(length(min = 1, message = "Can not be empty"))]
-    // pub due_date: chrono::DateTime<chrono::Utc>,
+    // pub date_added: sqlx::types::chrono::NaiveDateTime,
     /// the todo priority
     #[validate(length(min = 1, message = "Can not be empty"))]
     pub priority: String,
@@ -52,7 +52,7 @@ impl Default for TodoInformation {
         Self {
             title: "".to_string(),
             description: "".to_string(),
-            // due_date: Utc::now(),
+            // date_added: chrono::Utc::now(),
             priority: "unset".to_string(),
         }
     }
