@@ -1,6 +1,6 @@
 [package]
 authors = ["Adeoye Adefemi <adefemiadeoye@yahoo.com>"]
-description = "acompound of nitrogen  https://github.com/opeolluwa/nirogen"
+description = "a compound of nitrogen  https://github.com/opeolluwa/nirogen"
 edition = "2021"
 name = "nitride"
 version = "0.1.0"
@@ -8,7 +8,7 @@ version = "0.1.0"
 
 [dependencies]
 anyhow = "1.0.65"
-axum = { version = "0.5.16", features = ["headers", "json"] }
+axum = { version = "0.5.16", features = ["headers", "json", "ws"] }
 bcrypt = "0.13.0"
 chrono = { version = "0.4.22", features = ["serde"] }
 dotenv = "0.15.0"
