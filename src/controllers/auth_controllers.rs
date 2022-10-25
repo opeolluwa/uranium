@@ -3,6 +3,7 @@ use crate::{
     shared::{
         api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest},
         jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload},
+        mailer::{send_email, EmailPayload},
         otp_handler::generate_otp,
     },
 };
@@ -69,16 +70,34 @@ pub async fn sign_up(
     match new_user {
         Ok(result) => {
             //generate a new otp and send email to the user
-            let new_account_otp = generate_otp();
+            let otp = generate_otp();
+            let email_content = format!(
+                r#"
+             <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
+                            
+            Your account activation token is  <strong><em>{otp}<em></Strong>. <em style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box;">This
+            Token is only valid for the next 5 minutes.</em>
+            </p>
+            "#,
+            );
 
+            let email_payload: EmailPayload = EmailPayload {
+                recipient_name: "adefemi",
+                recipient_address: "adefemiadeoye@yahoo.com",
+                email_content,
+                email_subject: "new account",
+            };
+            let sent_otp_to_user = send_email(email_payload);
             //build the response
             let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
                 success: true,
                 message: String::from("User account successfully created, please verify OTP send to your email to continue"),
-                data: Some(json!({"user":UserModel {
-                    ..result // other fields
-                }})),
-            };
+                data: Some(
+                    json!({
+                        "user":UserModel { ..result },
+                        "sentEmail":sent_otp_to_user
+                    })
+            )};
             //return the response
             Ok((StatusCode::CREATED, Json(response)))
         }
@@ -157,11 +176,7 @@ pub async fn _old_sign_up(
             Ok((StatusCode::CREATED, Json(response)))
         }
         Err(err) => Err(ApiErrorResponse::ConflictError {
-            message: vec![
-                err.to_string(),
-                format!("an account with {email} already exists"),
-            ]
-            .join(", "),
+            message: err.to_string(),
         }),
     }
 }

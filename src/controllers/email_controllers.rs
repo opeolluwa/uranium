@@ -1,22 +1,15 @@
-use crate::models::emails::EmailContext;
-use crate::models::emails::EmailModel;
-use crate::shared::api_response::ApiErrorResponse;
-use crate::shared::api_response::ApiResponse;
-use crate::shared::api_response::ApiSuccessResponse;
-use crate::shared::mailer::parse_email_template;
-use axum::extract::Path;
-use axum::http::StatusCode;
-use axum::response::IntoResponse;
-use axum::Extension;
-use axum::Json;
-use lettre::message::header;
-use lettre::message::MultiPart;
-use lettre::message::SinglePart;
-use lettre::transport::smtp::authentication::Credentials;
-use lettre::Message;
-use lettre::SmtpTransport;
-use lettre::Transport;
-use once_cell::sync::Lazy;
+use crate::models::emails::{EmailContext, EmailModel};
+use crate::shared::api_response::{ApiErrorResponse, ApiResponse, ApiSuccessResponse};
+use crate::shared::mailer::{
+    mailer_config::{FRONTEND_URL, SMTP_HOST, SMTP_PASSWORD, SMTP_USERNAME},
+    parse_email_template,
+};
+use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
+use lettre::message::{header, MultiPart, SinglePart};
+use lettre::{
+    transport::smtp::authentication::Credentials,
+    {Message, SmtpTransport, Transport},
+};
 use sqlx::PgPool;
 use std::env;
 use uuid::Uuid;
@@ -24,19 +17,6 @@ use uuid::Uuid;
 //the secrets
 /// the once_cell create all us to add types lazily to variables with const and static binding
 /// see documentation on <https://docs.rs/once_cell/latest/once_cell/>
-static SMTP_USERNAME: Lazy<String> =
-    Lazy::new(|| env::var("SMTP_USERNAME").expect("SMTP username not provided"));
-static SMTP_PASSWORD: Lazy<String> =
-    Lazy::new(|| env::var("SMTP_PASSWORD").expect("SMTP password not provided"));
-static SMTP_HOST: Lazy<String> =
-    Lazy::new(|| env::var("SMTP_HOST").expect("SMTP host not provided"));
-static _SMTP_REPLY_TO_ADDRESS: Lazy<String> =
-    Lazy::new(|| env::var("SMTP_PASSWORD").expect("SMTP reply-to-address not specified"));
-static _SMTP_REPLY_TO_NAME: Lazy<String> =
-    Lazy::new(|| env::var("SMTP_REPLY_TO_NAME").expect("SMTP reply-to-name not provided"));
-static FRONTEND_URL: Lazy<String> = Lazy::new(|| {
-    env::var("FRONTEND_URL").unwrap_or_else(|_| String::from("https://opeolluwa.verce.app"))
-});
 
 ///send email handler
 /// receive the user email, subject, fullname and message
