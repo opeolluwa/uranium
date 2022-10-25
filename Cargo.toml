@@ -30,3 +30,4 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 async-trait = "0.1.57"
 http-body = "0.4.5"
 thiserror = "1.0.29"
+otp-rs = "0.1.1"
