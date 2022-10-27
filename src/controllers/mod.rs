@@ -1,5 +1,5 @@
-///authentication controllers 
-/// it contain the following endpoints 
+///authentication controllers
+/// it contain the following endpoints
 /// POST `/auth/sign-up` - sign up a user
 /// POST `/auth/login` - login a user
 /// GET `/auth/me` - get user profile

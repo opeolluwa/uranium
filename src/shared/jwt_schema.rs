@@ -99,7 +99,7 @@ pub struct JwtPayload {
 }
 
 /// set the expiration of token
-/// accept the exp as the minutes from now ehn the token will be  invalidated 
+/// accept the exp as the minutes from now ehn the token will be  invalidated
 pub fn set_jtw_exp(exp: u64) -> u64 {
     // the current time
     let now = SystemTime::now();

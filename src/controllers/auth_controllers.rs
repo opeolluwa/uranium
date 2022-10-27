@@ -1,8 +1,10 @@
 use crate::{
     models::users::{ResetUserPassword, UserAuthCredentials, UserInformation, UserModel},
     shared::{
-        api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields},
+        api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest},
         jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload},
+        mailer::{send_email, EmailPayload},
+        otp_handler::generate_otp,
     },
 };
 use axum::{http::StatusCode, Extension, Json};
@@ -25,12 +27,95 @@ const ACCESS_TOKEN_VALIDITY: u64 = 100;
 /// refresh token set to 25 minutes
 const REFRESH_TOKEN_VALIDITY: u64 = 25;
 
+/// basic auth sign_up
+// create new user account
+pub async fn sign_up(
+    ValidatedRequest(payload): ValidatedRequest<UserAuthCredentials>,
+    Extension(database): Extension<PgPool>,
+) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
+    //check through the fields to see that no field was badly formatted
+    let entries = &payload.collect_as_strings();
+    let UserAuthCredentials { email, .. } = &payload;
+    let mut bad_request_errors: Vec<String> = Vec::new();
+    for (key, value) in entries {
+        if value.is_empty() {
+            let error = format!("{key} is empty");
+            bad_request_errors.push(error);
+        }
+    }
+
+    //if we have empty fields return error to client
+    if !bad_request_errors.is_empty() {
+        return Err(ApiErrorResponse::BadRequest {
+            message: bad_request_errors.join(", "),
+        });
+    }
+
+    /*
+     * generate a UUID and hash the user password,
+     * go on to save the hashed password along side other details
+     * cat any error along the way
+     */
+    let id = Uuid::new_v4();
+    let hashed_password = bcrypt::hash(&payload.password, DEFAULT_COST).unwrap();
+    let new_user =  sqlx::query_as::<_, UserModel>(
+        "INSERT INTO user_information (id, password, email) VALUES ($1, $2, $3) ON CONFLICT (email) DO NOTHING RETURNING *",
+    )
+    .bind(id)
+    .bind(hashed_password)
+    .bind(&email)
+    .fetch_one(&database).await;
+
+    // error handling
+    match new_user {
+        Ok(result) => {
+            //generate a new otp and send email to the user
+            let otp = generate_otp();
+            let email_content = format!(
+                r#"
+             <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
+                            
+            Your account activation token is  <strong><em>{otp}<em></Strong>. <em style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box;">This
+            Token is only valid for the next 5 minutes.</em>
+            </p>
+            "#,
+            );
+
+            let email_payload: EmailPayload = EmailPayload {
+                recipient_name: "adefemi",
+                recipient_address: "adefemiadeoye@yahoo.com",
+                email_content,
+                email_subject: "new account",
+            };
+            let sent_otp_to_user = send_email(email_payload);
+            //build the response
+            let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
+                success: true,
+                message: String::from("User account successfully created, please verify OTP send to your email to continue"),
+                data: Some(
+                    json!({
+                        "user":UserModel { ..result },
+                        "sentEmail":sent_otp_to_user
+                    })
+            )};
+            //return the response
+            Ok((StatusCode::CREATED, Json(response)))
+        }
+        Err(err) => Err(ApiErrorResponse::ConflictError {
+            message: vec![
+                err.to_string(),
+                format!("an account with {email} already exists"),
+            ]
+            .join(", "),
+        }),
+    }
+}
 ///create a new user
 /// accept the user credentials,
 /// check if user already exists
 /// if not save the user
 /// return success or error response
-pub async fn sign_up(
+pub async fn _old_sign_up(
     Json(payload): Json<UserInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
@@ -91,11 +176,7 @@ pub async fn sign_up(
             Ok((StatusCode::CREATED, Json(response)))
         }
         Err(err) => Err(ApiErrorResponse::ConflictError {
-            message: vec![
-                err.to_string(),
-                format!("an account with {email} already exists"),
-            ]
-            .join(", "),
+            message: err.to_string(),
         }),
     }
 }
@@ -149,7 +230,8 @@ pub async fn login(
 
     match user_information {
         Ok(user) => {
-            let verify_password = verify(password, &user.password);
+            let stored_password = &user.password.as_ref().unwrap();
+            let verify_password = verify(password, &stored_password);
             match verify_password {
                 Ok(is_correct_password) => {
                     //send error if the password is not correct
@@ -170,8 +252,8 @@ pub async fn login(
                     //encrypt the user data
                     let jwt_payload = JwtClaims {
                         id: id.to_string(),
-                        email: email.to_string(),
-                        fullname: fullname.to_string(),
+                        email: email.as_ref().unwrap().to_string(),
+                        fullname: fullname.as_ref().unwrap_or(&"default".to_string()).to_string(),
                         exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
                     };
                     //fetch the JWT secret
@@ -236,7 +318,7 @@ pub async fn user_profile(
                 message: "User information successfully fetched".to_string(),
                 data: Some(json!({
                     "user":UserModel {
-                    password: "".to_string(),
+                    password: Some("".to_string()),
                     ..user_object
                 }
                 })),
@@ -392,10 +474,11 @@ pub async fn get_refresh_token(
             } = &user_object;
 
             //encrypt the user data
+            //TODO: remove unwrap
             let jwt_payload = JwtClaims {
                 id: id.to_string(),
-                email: email.to_string(),
-                fullname: fullname.to_string(),
+                email: email.as_ref().unwrap().to_string(),
+                fullname: fullname.as_ref().unwrap().to_string(),
                 exp: set_jtw_exp(REFRESH_TOKEN_VALIDITY), //set expirations
             };
             //fetch the JWT secret
