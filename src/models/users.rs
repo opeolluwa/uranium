@@ -6,6 +6,20 @@ use validator::Validate;
 
 use super::emails::EmailModel;
 
+/// the user account status
+/// an enum station the user current account status
+/// the variants are active and inactive
+// #[derive(sqlx::Type, Debug)]
+// #[sqlx(type_name = "account_status")] // only for PostgreSQL to match a type definition
+// #[sqlx(rename_all = "lowercase")]
+// #[derive(Debug)]
+
+// #[derive(sqlx::Type)]
+// // #[repr(i32)]
+// pub enum AccountStatus {
+//     Active = "active",
+//     Inactive = "inactive",
+// }
 /// define the user data structure that shall serve as the basis of serial
 /// implement debug, serialize, deserializing and #[derive(sqlx::FromRow
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
@@ -22,8 +36,12 @@ pub struct UserModel {
     pub password: Option<String>,
     /// the user username
     pub username: Option<String>,
-    // pub account_status: Option<String>,
+    /// the user account status
+    // pub account_status: Option<AccountStatus>,
+    /// avatar
+    pub avatar: Option<String>,
 }
+
 
 ///user authorization information
 /// to be used for making login and sign up requests

@@ -1,0 +1,6 @@
+This favicon was generated using the following font:
+
+- Font Title: Bakbak One
+- Font Author: Copyright 2021 The Bakbak One Project Authors (https://github.com/googlefonts/bakbak)
+- Font Source: http://fonts.gstatic.com/s/bakbakone/v6/zOL54pXAl6RI-p_ardnuycRuv-hHkOs.ttf
+- Font License: SIL Open Font License, 1.1 (http://scripts.sil.org/OFL))

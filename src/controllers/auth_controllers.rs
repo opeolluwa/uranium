@@ -253,7 +253,7 @@ pub async fn login(
                     let jwt_payload = JwtClaims {
                         id: id.to_string(),
                         email: email.as_ref().unwrap().to_string(),
-                        fullname: fullname.as_ref().unwrap().to_string(),
+                        fullname: fullname.as_ref().unwrap_or(&"default".to_string()).to_string(),
                         exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
                     };
                     //fetch the JWT secret

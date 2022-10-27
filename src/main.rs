@@ -115,10 +115,10 @@ async fn main() {
         }
     };
     println!("Ignition started on http://{}", &ip_address);
-   /*  let otp = shared::otp_handler::generate_otp();
-    let is_valid_otp = shared::otp_handler::validate_otp(&500256);
-    println!("{otp}, is valid otp {is_valid_otp}");
- */
+    /*  let otp = shared::otp_handler::generate_otp();
+       let is_valid_otp = shared::otp_handler::validate_otp(&500256);
+       println!("{otp}, is valid otp {is_valid_otp}");
+    */
     //launch the server
     axum::Server::bind(&ip_address)
         .serve(app.into_make_service())
