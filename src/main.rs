@@ -44,11 +44,11 @@ async fn main() {
     //execute migration
     // This embeds database migrations in the application binary so we can ensure the database
     // is migrated correctly on startup
-    sqlx::migrate!()
+  /*   sqlx::migrate!()
         .run(&database)
         .await
         .expect("already exec db migrations");
-
+ */
     //static file mounting
     let assets_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("views");
     let static_files_service = get_service(
