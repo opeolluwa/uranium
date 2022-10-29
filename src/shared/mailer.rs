@@ -59,8 +59,8 @@ pub fn send_email(payload: EmailPayload) -> bool {
     //TODO_ use this
     let _sender_address = format!(
         "{name}<{address}>",
-        name = SMTP_REPLY_TO_NAME.to_string(),
-        address = SMTP_REPLY_TO_ADDRESS.to_string()
+        name = *SMTP_REPLY_TO_NAME,
+        address = *SMTP_REPLY_TO_ADDRESS
     );
 
     //the emil service builder

@@ -1,4 +1,5 @@
 -- Add migration script here
+-- Add migration script here
 CREATE TYPE account_status AS ENUM('active', 'inactive', 'deactivated');
 CREATE TABLE public.user_information (
     id UUID UNIQUE NOT NULL,

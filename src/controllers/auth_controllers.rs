@@ -101,12 +101,8 @@ pub async fn sign_up(
             //return the response
             Ok((StatusCode::CREATED, Json(response)))
         }
-        Err(err) => Err(ApiErrorResponse::ConflictError {
-            message: vec![
-                err.to_string(),
-                format!("an account with {email} already exists"),
-            ]
-            .join(", "),
+        Err(_) => Err(ApiErrorResponse::ConflictError {
+            message: String::from("an account with the provided email already exists"),
         }),
     }
 }
@@ -231,7 +227,7 @@ pub async fn login(
     match user_information {
         Ok(user) => {
             let stored_password = &user.password.as_ref().unwrap();
-            let verify_password = verify(password, &stored_password);
+            let verify_password = verify(password, stored_password);
             match verify_password {
                 Ok(is_correct_password) => {
                     //send error if the password is not correct
@@ -253,7 +249,10 @@ pub async fn login(
                     let jwt_payload = JwtClaims {
                         id: id.to_string(),
                         email: email.as_ref().unwrap().to_string(),
-                        fullname: fullname.as_ref().unwrap_or(&"default".to_string()).to_string(),
+                        fullname: fullname
+                            .as_ref()
+                            .unwrap_or(&"default".to_string())
+                            .to_string(),
                         exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
                     };
                     //fetch the JWT secret

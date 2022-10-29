@@ -1,7 +1,7 @@
 use crate::models::todo::{TodoInformation, TodoModel};
 use crate::shared::api_response::{Pagination, ValidatedRequest};
 use crate::shared::{
-    api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields},
+    api_response::{ApiErrorResponse, ApiSuccessResponse},
     jwt_schema::JwtClaims,
 };
 use axum::extract::Query;
@@ -21,23 +21,6 @@ pub async fn add_todo(
     // Json(payload): Json<TodoInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
-    //check through the fields to see that no field was badly formatted
-    let entries = &payload.collect_as_strings();
-    let mut bad_request_errors: Vec<String> = Vec::new();
-    for (key, value) in entries {
-        if value.is_empty() {
-            let error = format!("{key} is empty");
-            bad_request_errors.push(error);
-        }
-    }
-
-    //if the fields are missing
-    if bad_request_errors.len() >= 1 {
-        return Err(ApiErrorResponse::BadRequest {
-            message: bad_request_errors.join(", "),
-        });
-    }
-
     //  if no error save the new Todo
     /*
      * generate a UUID and hash the user password,
@@ -172,12 +155,11 @@ pub async fn get_all_todo(
 
     // REFINE THIS if the page is 1, don't use offset else do
     // the base query is SELECT * FROM todo_list ORDER BY date_added  DESC LIMIT 2 OFFSET 0 ;
-    let query: &str;
-    if current_page > &1i32 {
-        query = "SELECT * FROM todo_list WHERE fk_user_id = $3 ORDER BY date_added DESC LIMIT $1 OFFSET $2 ";
+    let query: &str = if current_page > &1i32 {
+        "SELECT * FROM todo_list WHERE user_id = $3 ORDER BY date_added DESC LIMIT $1 OFFSET $2 "
     } else {
-        query = "SELECT * FROM todo_list WHERE fk_user_id = $3 ORDER BY date_added DESC LIMIT $1";
-    }
+        "SELECT * FROM todo_list WHERE user_id = $3 ORDER BY date_added DESC LIMIT $1"
+    };
     // let current_page = &query_params.page.trim().parse().unwrap();
     //implement pagination logic
     let fetched_todo = sqlx::query_as::<_, TodoModel>(query)
