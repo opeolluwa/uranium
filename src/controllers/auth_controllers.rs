@@ -1,5 +1,5 @@
 use crate::{
-    models::users::{ResetUserPassword, UserAuthCredentials, UserInformation, UserModel},
+    models::users::{ResetUserPassword, UserInformation, UserModel},
     shared::{
         api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest},
         jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload},
@@ -30,27 +30,9 @@ const REFRESH_TOKEN_VALIDITY: u64 = 25;
 /// basic auth sign_up
 // create new user account
 pub async fn sign_up(
-    ValidatedRequest(payload): ValidatedRequest<UserAuthCredentials>,
+    ValidatedRequest(payload): ValidatedRequest<UserInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
-    //check through the fields to see that no field was badly formatted
-    let entries = &payload.collect_as_strings();
-    let UserAuthCredentials { email, .. } = &payload;
-    let mut bad_request_errors: Vec<String> = Vec::new();
-    for (key, value) in entries {
-        if value.is_empty() {
-            let error = format!("{key} is empty");
-            bad_request_errors.push(error);
-        }
-    }
-
-    //if we have empty fields return error to client
-    if !bad_request_errors.is_empty() {
-        return Err(ApiErrorResponse::BadRequest {
-            message: bad_request_errors.join(", "),
-        });
-    }
-
     /*
      * generate a UUID and hash the user password,
      * go on to save the hashed password along side other details
@@ -59,18 +41,19 @@ pub async fn sign_up(
     let id = Uuid::new_v4();
     let hashed_password = bcrypt::hash(&payload.password, DEFAULT_COST).unwrap();
     let new_user =  sqlx::query_as::<_, UserModel>(
-        "INSERT INTO user_information (id, password, email) VALUES ($1, $2, $3) ON CONFLICT (email) DO NOTHING RETURNING *",
+        "INSERT INTO user_information (id, password, email, fullname) VALUES ($1, $2, $3, $4) ON CONFLICT (email) DO NOTHING RETURNING *",
     )
     .bind(id)
     .bind(hashed_password)
-    .bind(&email)
+    .bind(payload.email)
+    .bind(payload.fullname.unwrap_or_default())
     .fetch_one(&database).await;
 
     // error handling
     match new_user {
         Ok(result) => {
-            //generate a new otp and send email to the user
-            let otp = generate_otp();
+            //TODO: generate a new otp and send email to the user
+         /*    let otp = generate_otp();
             let email_content = format!(
                 r#"
              <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
@@ -86,8 +69,8 @@ pub async fn sign_up(
                 recipient_address: "adefemiadeoye@yahoo.com",
                 email_content,
                 email_subject: "new account",
-            };
-            let sent_otp_to_user = send_email(email_payload);
+            }; */
+            // let sent_otp_to_user = send_email(email_payload);
             //build the response
             let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
                 success: true,
@@ -95,7 +78,7 @@ pub async fn sign_up(
                 data: Some(
                     json!({
                         "user":UserModel { ..result },
-                        "sentEmail":sent_otp_to_user
+    
                     })
             )};
             //return the response
@@ -106,112 +89,15 @@ pub async fn sign_up(
         }),
     }
 }
-///create a new user
-/// accept the user credentials,
-/// check if user already exists
-/// if not save the user
-/// return success or error response
-pub async fn _old_sign_up(
-    Json(payload): Json<UserInformation>,
-    Extension(database): Extension<PgPool>,
-) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
-    //destructure the HTTP request body
-    let UserInformation {
-        fullname,
-        password,
-        username,
-        email,
-    } = &payload;
-
-    //check through the fields to see that no field was badly formatted
-    let entries = &payload.collect_as_strings();
-    let mut bad_request_errors: Vec<String> = Vec::new();
-    for (key, value) in entries {
-        if value.is_empty() {
-            let error = format!("{key} is empty");
-            bad_request_errors.push(error);
-        }
-    }
-
-    //if we have empty fields return error to client
-    if !bad_request_errors.is_empty() {
-        return Err(ApiErrorResponse::BadRequest {
-            message: bad_request_errors.join(", "),
-        });
-    }
-
-    /*
-     * generate a UUID and hash the user password,
-     * go on to save the hashed password along side other details
-     * cat any error along the way
-     */
-    let id = Uuid::new_v4();
-    let hashed_password = bcrypt::hash(&password, DEFAULT_COST).unwrap();
-    let new_user =  sqlx::query_as::<_, UserModel>(
-        "INSERT INTO user_information (id, fullname, username, password, email) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (email) DO NOTHING RETURNING *",
-    )
-    .bind(Some(id))
-    .bind(Some(fullname))
-    .bind(Some(username))
-    .bind(Some(hashed_password))
-    .bind(Some(email))
-    .fetch_one(&database).await;
-
-    // error handling
-    match new_user {
-        Ok(result) => {
-            //build the response
-            let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
-                success: true,
-                message: String::from("User account successfully created"),
-                data: Some(json!({"user":UserModel {
-                    ..result // other fields
-                }})),
-            };
-            //return the response
-            Ok((StatusCode::CREATED, Json(response)))
-        }
-        Err(err) => Err(ApiErrorResponse::ConflictError {
-            message: err.to_string(),
-        }),
-    }
-}
 
 ///Login a New User :
 /// to login a user, fetch the request body and the database pool
 /// use the pool to query the database for the user details in the request body
 /// return result or error
 pub async fn login(
-    Json(payload): Json<UserAuthCredentials>,
+    ValidatedRequest(payload): ValidatedRequest<UserInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<JwtPayload>>), ApiErrorResponse> {
-    //destructure the payload to fetch user details
-    let UserAuthCredentials {
-        email, password, ..
-    } = &payload;
-
-    /*
-     * validate the password and the email
-     * if either is missing send error response
-     */
-
-    //check through the fields to see that no field was badly formatted
-    let entries = &payload.collect_as_strings();
-    let mut bad_request_errors: Vec<String> = Vec::new();
-    for (key, value) in entries {
-        if value.is_empty() {
-            let error = format!("{key} is empty");
-            bad_request_errors.push(error);
-        }
-    }
-
-    //if we have empty fields return error to client
-    if !bad_request_errors.is_empty() {
-        return Err(ApiErrorResponse::BadRequest {
-            message: bad_request_errors.join(", "),
-        });
-    }
-
     /*
      * if both email and password is provided ,
      * fetch the user information
@@ -220,14 +106,14 @@ pub async fn login(
      */
     let user_information =
         sqlx::query_as::<_, UserModel>("SELECT * FROM user_information WHERE email = $1")
-            .bind(email)
+            .bind(payload.email)
             .fetch_one(&database)
             .await;
 
     match user_information {
         Ok(user) => {
             let stored_password = &user.password.as_ref().unwrap();
-            let verify_password = verify(password, stored_password);
+            let verify_password = verify(payload.password, stored_password);
             match verify_password {
                 Ok(is_correct_password) => {
                     //send error if the password is not correct

@@ -30,7 +30,7 @@ pub async fn add_notes(
         "INSERT INTO note_entries (id, title , content, category, user_id ) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING RETURNING *",
     )
     .bind(notes_id)
-    .bind(payload.title)
+    .bind(payload.title.unwrap_or_default())
     .bind(payload.content.unwrap_or_default())
     .bind(payload.category.unwrap_or_default())
     .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
@@ -83,10 +83,11 @@ pub async fn edit_note(
 
     // update the note here then send the response
     let updated_note = sqlx::query_as::<_, NotesModel>(
-            "UPDATE note_entries SET title = COALESCE($1, title), content = COALESCE($2, content), last_updated = NOW() WHERE id = $3 AND user_id = $4 RETURNING *",
+            "UPDATE note_entries SET title = COALESCE($1, title), content = COALESCE($2, content), category = COALESCE($3, category), last_updated = NOW() WHERE id = $4 AND user_id = $5 RETURNING *",
         )
-        .bind(payload.title)
-        .bind(payload.content)
+       .bind(payload.title.unwrap_or_default())
+    .bind(payload.content.unwrap_or_default())
+    .bind(payload.category.unwrap_or_default())
         .bind(notes_id)
         .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
         .fetch_one(&database)
