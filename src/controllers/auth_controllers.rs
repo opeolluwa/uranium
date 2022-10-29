@@ -3,8 +3,6 @@ use crate::{
     shared::{
         api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest},
         jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload},
-        mailer::{send_email, EmailPayload},
-        otp_handler::generate_otp,
     },
 };
 use axum::{http::StatusCode, Extension, Json};
