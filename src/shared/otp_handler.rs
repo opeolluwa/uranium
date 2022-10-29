@@ -5,7 +5,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 static OTP: Lazy<TOTP> = Lazy::new(|| -> TOTP {
     TOTP::new(
-        &env::var("SECRET").unwrap_or(String::from(
+        &env::var("SECRET").unwrap_or_else(|_|String::from(
             "zlsAAnVChDQJEZDW9pAq7ks98gjolpfASBHAi8BJ3Y9TeUDHcX9HovV5BzrS4hUKX5tBmB4acfQ",
         )), /* .expect("TOPT secret missing") */
     )
@@ -21,7 +21,7 @@ const CURRENT_TIMESTAMP: Lazy<u64> = Lazy::new(|| {
 });
 
 ///generate otp
-pub fn generate_otp() -> u32 {
+pub fn _generate_otp() -> u32 {
     // Generate code with period and current timestamp
     OTP.generate(OTP_VALIDITY, *CURRENT_TIMESTAMP).unwrap()
 }
@@ -29,6 +29,6 @@ pub fn generate_otp() -> u32 {
 /// validate otp
 /// accept the otp as function params,
 /// verify the
-pub fn validate_otp(otp: &u32) -> bool {
+pub fn _validate_otp(otp: &u32) -> bool {
     OTP.verify(*otp, OTP_VALIDITY, *CURRENT_TIMESTAMP)
 }
