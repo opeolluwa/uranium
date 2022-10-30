@@ -3,6 +3,7 @@ use crate::{
     shared::{
         api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest},
         jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload},
+        mailer::EmailPayload, otp_handler::generate_otp
     },
 };
 use axum::{http::StatusCode, Extension, Json};
@@ -51,7 +52,7 @@ pub async fn sign_up(
     match new_user {
         Ok(result) => {
             //TODO: generate a new otp and send email to the user
-         /*    let otp = generate_otp();
+            let otp = generate_otp();
             let email_content = format!(
                 r#"
              <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
@@ -67,7 +68,7 @@ pub async fn sign_up(
                 recipient_address: "adefemiadeoye@yahoo.com",
                 email_content,
                 email_subject: "new account",
-            }; */
+            }; 
             // let sent_otp_to_user = send_email(email_payload);
             //build the response
             let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
@@ -296,7 +297,7 @@ pub async fn reset_password(
 ///  use SQL COALESCE($1, a)  to update the fields  
 /// return the user details if no error else return the appropriate error code and response
 pub async fn update_user_profile(
-    Json(payload): Json<UserInformation>,
+    ValidatedRequest(payload): ValidatedRequest<UserInformation>,
     authenticated_user: JwtClaims,
     Extension(database): Extension<PgPool>,
 ) -> Result<Json<ApiSuccessResponse<Value>>, ApiErrorResponse> {

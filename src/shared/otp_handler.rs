@@ -21,7 +21,7 @@ const CURRENT_TIMESTAMP: Lazy<u64> = Lazy::new(|| {
 });
 
 ///generate otp
-pub fn _generate_otp() -> u32 {
+pub fn generate_otp() -> u32 {
     // Generate code with period and current timestamp
     OTP.generate(OTP_VALIDITY, *CURRENT_TIMESTAMP).unwrap()
 }
