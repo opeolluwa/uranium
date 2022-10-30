@@ -90,116 +90,113 @@ define(['./workbox-3589c0c5'], (function (workbox) { 'use strict';
    */
 
   workbox.precacheAndRoute([{
-    "url": "assets/AllNotesEntry.3fb8db3a.js",
+    "url": "assets/AllEmailView.652b4d9a.js",
     "revision": null
   }, {
-    "url": "assets/AllNotesEntry.f1695b86.css",
+    "url": "assets/AllEmailView.98c87d8e.css",
     "revision": null
   }, {
-    "url": "assets/AppEmptyState.662d6249.js",
+    "url": "assets/AllNotesEntry.3e6c00cf.css",
+    "revision": null
+  }, {
+    "url": "assets/AllNotesEntry.f2ca5949.js",
+    "revision": null
+  }, {
+    "url": "assets/AppEmptyState.1b4a90a1.js",
     "revision": null
   }, {
     "url": "assets/AppEmptyState.73cc1daf.css",
     "revision": null
   }, {
+    "url": "assets/BaseTextarea.50b59f7e.js",
+    "revision": null
+  }, {
     "url": "assets/BaseTextarea.5e69e4dc.css",
     "revision": null
   }, {
-    "url": "assets/BaseTextarea.6f47c3dd.js",
+    "url": "assets/ConfirmOtpView.2a9a12b9.css",
     "revision": null
   }, {
-    "url": "assets/ConfirmOtpView.1302dfd4.js",
+    "url": "assets/ConfirmOtpView.fbac1e4d.js",
     "revision": null
   }, {
-    "url": "assets/ConfirmOtpView.5ff683c7.css",
-    "revision": null
-  }, {
-    "url": "assets/CreateEmailView.5aa3ce32.js",
+    "url": "assets/CreateEmailView.3a71041d.js",
     "revision": null
   }, {
     "url": "assets/CreateEmailView.be01e759.css",
     "revision": null
   }, {
-    "url": "assets/CreateNoteView.5a2017ef.css",
+    "url": "assets/CreateNoteView.7db0d8aa.js",
     "revision": null
   }, {
-    "url": "assets/CreateNoteView.e1921a2a.js",
+    "url": "assets/CreateNoteView.c4bc323b.css",
     "revision": null
   }, {
-    "url": "assets/default.23cd77fe.js",
+    "url": "assets/EmailIndexView.9d2f7b64.js",
     "revision": null
   }, {
-    "url": "assets/default.c6fbe4cf.css",
+    "url": "assets/ImportantEmailView.8f768f3e.js",
     "revision": null
   }, {
-    "url": "assets/EmailIndexView.a11fe8a2.js",
+    "url": "assets/index.8ea2249f.js",
     "revision": null
   }, {
-    "url": "assets/EmailView.98c87d8e.css",
+    "url": "assets/index.a1b827e2.css",
     "revision": null
   }, {
-    "url": "assets/EmailView.9b766df7.js",
+    "url": "assets/NotesIndexView.410d3f2d.js",
     "revision": null
   }, {
-    "url": "assets/index.102cc026.js",
-    "revision": null
-  }, {
-    "url": "assets/index.3ccb1885.css",
-    "revision": null
-  }, {
-    "url": "assets/NotesIndexView.f6c9a3eb.js",
-    "revision": null
-  }, {
-    "url": "assets/NotFoundView.34450ada.js",
+    "url": "assets/NotFoundView.36a18879.js",
     "revision": null
   }, {
     "url": "assets/NotFoundView.c49cc0d1.css",
     "revision": null
   }, {
-    "url": "assets/NotificationView.0c910482.js",
+    "url": "assets/NotificationView.dbf9e3de.js",
     "revision": null
   }, {
-    "url": "assets/PasswordResetView.39a2db76.css",
+    "url": "assets/PasswordResetView.75b8ccb1.js",
     "revision": null
   }, {
-    "url": "assets/PasswordResetView.6c32d881.js",
+    "url": "assets/PasswordResetView.a4eda510.css",
     "revision": null
   }, {
-    "url": "assets/ProfileView.03818a98.js",
+    "url": "assets/ProfileView.a41e1fb1.js",
     "revision": null
   }, {
-    "url": "assets/ProfileView.22165116.css",
+    "url": "assets/ProfileView.c73f6505.css",
     "revision": null
   }, {
-    "url": "assets/ProjectsView.1cdab3cc.js",
+    "url": "assets/ProjectsView.2caded8d.js",
     "revision": null
   }, {
     "url": "assets/ProjectsView.973ac42e.css",
     "revision": null
   }, {
-    "url": "assets/SettingsView.cf9a8124.js",
+    "url": "assets/SettingsView.76557c5a.js",
     "revision": null
   }, {
-    "url": "assets/SettingsView.e33a7e8e.css",
+    "url": "assets/SignupView.2d2a5f95.css",
     "revision": null
   }, {
-    "url": "assets/SignupView.355844d1.js",
+    "url": "assets/SignupView.d97c9cb2.js",
     "revision": null
   }, {
-    "url": "assets/SignupView.def4e36e.css",
+    "url": "assets/StarredEmailView.f2755a0d.js",
+    "revision": null
+  }, {
+    "url": "assets/TodoIndexView.5b8ca049.js",
     "revision": null
   }, {
     "url": "assets/TodoIndexView.644c76ed.css",
     "revision": null
   }, {
-    "url": "assets/TodoIndexView.bd4a7d38.js",
-    "revision": null
-  }, {
-    "url": "assets/web.2673c607.js",
+    "url": "assets/web.65cafaa3.js",
     "revision": null
   }, {
     "url": "index.html",
-    "revision": "01ecc5f3f1ce49a4ac1f5c7bee88bfd6"
+    "revision": "94f7a1a438977d60867b2790247873c1"
   }, {
     "url": "registerSW.js",
     "revision": "1872c500de691dce40960bb85481de07"
