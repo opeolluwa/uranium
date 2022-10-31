@@ -180,9 +180,9 @@ pub async fn get_all_notes(
                 success: true,
                 message: String::from("notes successfully fetched"),
                 data: Some(json!({
-                 "todo": note_array,
-                  "currentPage" : &pagination.page.to_string(),
-                   "noOfRows":&pagination.no_of_rows.to_string()
+                "notes": note_array,
+                "currentPage" : &pagination.page.to_string(),
+                "noOfRows":&pagination.no_of_rows.to_string()
                 })),
             };
             //return the response with 200 status code
