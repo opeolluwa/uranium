@@ -29,7 +29,7 @@ pub async fn add_todo(
      */
     let todo_id = Uuid::new_v4();
     let new_todo =  sqlx::query_as::<_, TodoModel>(
-        "INSERT INTO todo_list (id, title, description, fk_user_id, priority) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING RETURNING *",
+        "INSERT INTO todo_list (id, title, description, user_id, priority) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING RETURNING *",
     )
     .bind(todo_id)
     .bind(payload.title)
@@ -71,7 +71,7 @@ pub async fn edit_todo(
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
     //fetch the Todo from the database  using the Todo id
-    let updated_todo = sqlx::query_as::<_, TodoModel>("UPDATE todo_list SET title = COALESCE($1, title), description = COALESCE($2 , description), last_update = NOW() WHERE fk_user_id = $3 AND id = $4")
+    let updated_todo = sqlx::query_as::<_, TodoModel>("UPDATE todo_list SET title = COALESCE($1, title), description = COALESCE($2 , description), last_update = NOW() WHERE user_id = $3 AND id = $4")
         .bind(payload.title)
         .bind(payload.description)
         .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
@@ -110,7 +110,7 @@ pub async fn get_todo_by_id(
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<TodoModel>>), ApiErrorResponse> {
     //fetch the Todo from the database  using the Todo id
     let fetched_todo =
-        sqlx::query_as::<_, TodoModel>("SELECT * FROM Todo WHERE id = $1 AND fk_user_id = $2")
+        sqlx::query_as::<_, TodoModel>("SELECT * FROM Todo WHERE id = $1 AND user_id = $2")
             .bind(note_id)
             .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
             .fetch_one(&database)
@@ -200,7 +200,7 @@ pub async fn delete_todo(
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<()>>), ApiErrorResponse> {
     //fetch the Todo from the database  using the Todo id
     let fetched_todo = sqlx::query_as::<_, TodoModel>(
-        "DELETE FROM todo_list WHERE id = $1 AND fk_user_id = $2 RETURNING *",
+        "DELETE FROM todo_list WHERE id = $1 AND user_id = $2 RETURNING *",
     )
     .bind(todo_id)
     .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())

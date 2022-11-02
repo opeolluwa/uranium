@@ -17,7 +17,7 @@ pub struct NotesModel {
     ///the note description
     pub content: String,
     /// the user_id of the note creator, do ne destructure it when converting this struct to json
-    // #[serde(skip_serializing)]
+    #[serde(skip_serializing)]
     pub user_id: Option<Uuid>,
     /// the date the note entry was made
     pub date_added: Option<NaiveDateTime>,

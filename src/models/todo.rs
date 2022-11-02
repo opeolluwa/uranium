@@ -17,7 +17,7 @@ pub struct TodoModel {
     pub description: String,
     /// the user_id of the todo creator, do ne destructure it when converting this struct to json
     #[serde(skip_serializing)]
-    pub fk_user_id: Uuid,
+    pub user_id: Uuid,
     /// the todo due date
     pub date_added: sqlx::types::chrono::NaiveDateTime,
     /// the todo priority
