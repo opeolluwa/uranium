@@ -1,1 +1,0 @@
-import{d as o,_ as n,r as t,o as r,l as s}from"./index.1e245a18.js";const c=o({name:"TotoIndexView"});function a(p,_,d,i,f,m){const e=t("RouterView");return r(),s(e)}const l=n(c,[["render",a]]);export{l as default};
