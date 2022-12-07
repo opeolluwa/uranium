@@ -167,8 +167,8 @@ pub async fn login(
                 }),
             }
         }
-        Err(error_message) => Err(ApiErrorResponse::ServerError {
-            message: error_message.to_string(),
+        Err(_) => Err(ApiErrorResponse::ServerError {
+           message: String::from("an account with the provided email does not exist"),
         }),
     }
 }
