@@ -1,5 +1,5 @@
 use crate::{
-    models::users::{ResetUserPassword, UserInformation, UserModel},
+    models::users::{AccountStatus, ResetUserPassword, UserInformation, UserModel},
     shared::{
         api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest},
         jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload},
@@ -39,20 +39,20 @@ pub async fn sign_up(
      * cat any error along the way
      */
     let id = Uuid::new_v4();
-    let hashed_password = bcrypt::hash(&payload.password, DEFAULT_COST).unwrap();
+    let hashed_password = bcrypt::hash(&payload.password.trim(), DEFAULT_COST).unwrap();
     let new_user =  sqlx::query_as::<_, UserModel>(
         "INSERT INTO user_information (id, password, email, fullname) VALUES ($1, $2, $3, $4) ON CONFLICT (email) DO NOTHING RETURNING *",
     )
     .bind(id)
     .bind(hashed_password)
-    .bind(payload.email)
-    .bind(payload.fullname.unwrap_or_default())
+    .bind(payload.email.trim())
+    .bind(payload.fullname.unwrap().trim())
     .fetch_one(&database).await;
 
     // error handling
     match new_user {
         Ok(result) => {
-            //TODO: generate a new otp and send email to the user
+        
             let otp = generate_otp();
             let email_content = format!(
                 r#"
@@ -80,17 +80,16 @@ pub async fn sign_up(
             //build the response
             let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
                 success: true,
-                message: String::from("User account successfully created, please verify OTP send to your email to continue"),
-                data: Some(
-                    json!({
-                        "user":UserModel { ..result },
-                    })
-            )};
+                message: String::from("Please verify OTP send to your email to continue"),
+                data: Some(json!({
+                    "user":UserModel { ..result },
+                })),
+            };
             //return the response
             Ok((StatusCode::CREATED, Json(response)))
         }
         Err(_) => Err(ApiErrorResponse::ConflictError {
-            message: String::from("an account with the provided email already exists"),
+            message: String::from("Email already exists"),
         }),
     }
 }
@@ -117,6 +116,23 @@ pub async fn login(
 
     match user_information {
         Ok(user) => {
+            // if account has not been activated
+            let user_account_status = user.account_status.unwrap();
+        /*     if user_account_status == AccountStatus::Inactive {
+                return Err(ApiErrorResponse::Unauthorized {
+                    message: String::from("Please verify your email to continue"),
+                });
+            } */
+
+            // if user account has been deactivated
+            if user_account_status == AccountStatus::Deactivated {
+                return Err(ApiErrorResponse::Unauthorized {
+                    message: String::from(
+                        "Account ahs been suspended, please contact administrator",
+                    ),
+                });
+            }
+
             let stored_password = &user.password.as_ref().unwrap();
             let verify_password = verify(payload.password, stored_password);
             match verify_password {
@@ -173,8 +189,8 @@ pub async fn login(
                 }),
             }
         }
-        Err(_) => Err(ApiErrorResponse::ServerError {
-            message: String::from("an account with the provided email does not exist"),
+        Err(message) => Err(ApiErrorResponse::ServerError {
+            message: message.to_string(), // message: String::from("an account with the provided email does not exist"),
         }),
     }
 }
