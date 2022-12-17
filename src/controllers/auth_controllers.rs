@@ -3,7 +3,8 @@ use crate::{
     shared::{
         api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest},
         jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload},
-        mailer::EmailPayload, otp_handler::generate_otp
+        mailer::{send_email, EmailPayload},
+        otp_handler::generate_otp,
     },
 };
 use axum::{http::StatusCode, Extension, Json};
@@ -21,8 +22,8 @@ static JWT_SECRET: Lazy<JwtEncryptionKeys> = Lazy::new(|| -> JwtEncryptionKeys {
     JwtEncryptionKeys::new(secret.as_bytes())
 });
 
-/// the bearer token validity set to 1o minutes
-const ACCESS_TOKEN_VALIDITY: u64 = 100;
+/// the bearer token validity set to 10 minutes
+const ACCESS_TOKEN_VALIDITY: u64 = 10;
 /// refresh token set to 25 minutes
 const REFRESH_TOKEN_VALIDITY: u64 = 25;
 
@@ -57,19 +58,25 @@ pub async fn sign_up(
                 r#"
              <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
                             
-            Your account activation token is  <strong><em>{otp}<em></Strong>. <em style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box;">This
-            Token is only valid for the next 5 minutes.</em>
+           
+            We are glad to have you on board with us. To complete your account set up, please use the OTP
+           
+           <h1 style="text-align:center">{otp}</h1>
+           
+           <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box;">This OTP is only valid for the next 5 minutes. If you did not request this OTP, please ignore this message.</p>
             </p>
             "#,
             );
 
+            // send email to user
             let email_payload: EmailPayload = EmailPayload {
                 recipient_name: "adefemi",
                 recipient_address: "adefemiadeoye@yahoo.com",
                 email_content,
                 email_subject: "new account",
-            }; 
-            // let sent_otp_to_user = send_email(email_payload);
+            };
+            send_email(email_payload);
+
             //build the response
             let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
                 success: true,
@@ -77,7 +84,6 @@ pub async fn sign_up(
                 data: Some(
                     json!({
                         "user":UserModel { ..result },
-    
                     })
             )};
             //return the response
@@ -168,7 +174,7 @@ pub async fn login(
             }
         }
         Err(_) => Err(ApiErrorResponse::ServerError {
-           message: String::from("an account with the provided email does not exist"),
+            message: String::from("an account with the provided email does not exist"),
         }),
     }
 }

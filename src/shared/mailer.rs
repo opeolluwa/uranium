@@ -25,7 +25,7 @@ pub mod mailer_config {
     pub static SMTP_HOST: Lazy<String> =
         Lazy::new(|| env::var("SMTP_HOST").expect("SMTP host not provided"));
     pub static SMTP_REPLY_TO_ADDRESS: Lazy<String> =
-        Lazy::new(|| env::var("SMTP_PASSWORD").expect("SMTP reply-to-address not specified"));
+        Lazy::new(|| env::var("SMTP_REPLY_TO_ADDRESS").expect("SMTP reply-to-address not specified"));
     pub static SMTP_REPLY_TO_NAME: Lazy<String> =
         Lazy::new(|| env::var("SMTP_REPLY_TO_NAME").expect("SMTP reply-to-name not provided"));
     pub static FRONTEND_URL: Lazy<String> = Lazy::new(|| {
@@ -55,18 +55,21 @@ pub fn send_email(payload: EmailPayload) -> bool {
         name = &payload.recipient_name.to_string(),
         address = &payload.recipient_address.to_string()
     );
+
     // the sender address from the SMTP configuration
-    //TODO_ use this
-    let _sender_address = format!(
-        "{name}<{address}>",
+    let sender_address = format!(
+        "{name} <{address}>",
         name = *SMTP_REPLY_TO_NAME,
         address = *SMTP_REPLY_TO_ADDRESS
-    );
+    )
+    ;
 
-    //the emil service builder
+    // println!("{}", &sender_address);
+    // let sender_address = "Drizzles <no-reply@nitride.com>";
+    //the email service builder
     let email = Message::builder()
-        .from("360 Devs <360-devs@mailer.com>".parse().unwrap())
-        .reply_to("Yuin <opeolluwa@gmail.com>".parse().unwrap())
+        .from(sender_address.parse().unwrap())
+        .reply_to("Drizzles <no-reply@nitride.com>".parse().unwrap())
         .to(recipient_address.parse().unwrap())
         .subject(payload.email_subject.to_string())
         .multipart(
@@ -122,7 +125,7 @@ pub fn parse_email_template(email_content: String, recipient_name: String) -> St
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 </head>
 
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; background-color: #f8fafc; color: #74787e; height: 100%; hyphens: auto; line-height: 1.4; margin: 0; -moz-hyphens: auto; -ms-word-break: break-all; width: 100% !important; -webkit-hyphens: auto; -webkit-text-size-adjust: none; word-break: break-word;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; background-color: #f8fafc; color: #74787e; height: 100%; hyphens: auto; line-height: 1.4; margin: 0; -moz-hyphens: auto; -ms-word-break: break-all; width: 100% !important; -webkit-hyphens: auto; -webkit-text-size-adjust: none; word-break: break-word; font-size:16px">
   <table class="wrapper" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; background-color: #f8fafc; margin: 0; padding: 0; width: 100%; -premailer-cellpadding: 0; -premailer-cellspacing: 0; -premailer-width: 100%;" role="presentation" width="100%" cellspacing="0" cellpadding="0">
     <tbody>
       <tr>
@@ -150,7 +153,7 @@ pub fn parse_email_template(email_content: String, recipient_name: String) -> St
                             Hi <strong style="text-transform:capitalize">{recipient_name}</strong>
                           </p>
 
-                          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
+                          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 18px; line-height: 1.5em; margin-top: 0; text-align: left;">
                             <!------------------inject email content here=-------------------->
                             {email_content}
                           </div>
@@ -184,7 +187,7 @@ pub fn parse_email_template(email_content: String, recipient_name: String) -> St
                           <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
                             &nbsp;</p>
                           <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 14px; line-height: 1.5em; margin-top: 0; text-align: left;">
-                            Best Regards,<br />Adeoye Adefemi</p>
+                            Best Regards,<br />nitride team</p>
                           <hr style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box;" />
                           <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
                             <small style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box;">If
@@ -206,7 +209,7 @@ pub fn parse_email_template(email_content: String, recipient_name: String) -> St
                       <tr>
                         <td class="content-cell" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; padding: 35px;" align="center">
                           <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; line-height: 1.5em; margin-top: 0; color: #aeaeae; font-size: 12px; text-align: center;">
-                            &copy; {current_year} <a href="https://www.linkedin.com/in/adefemi-adeoye">ADEOYE Adefemi</a>.
+                            &copy; {current_year} <a href="https://github.com/opeolluwa/nitride">nitride</a>.
                             All rights reserved.</p>
                         </td>
                       </tr>

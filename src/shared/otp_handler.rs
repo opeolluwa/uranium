@@ -5,9 +5,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 static OTP: Lazy<TOTP> = Lazy::new(|| -> TOTP {
     TOTP::new(
-        &env::var("SECRET").unwrap_or_else(|_|String::from(
-            "zlsAAnVChDQJEZDW9pAq7ks98gjolpfASBHAi8BJ3Y9TeUDHcX9HovV5BzrS4hUKX5tBmB4acfQ",
-        )), /* .expect("TOPT secret missing") */
+        &env::var("SECRET").unwrap_or_else(|_| {
+            String::from(
+                "zlsAAnVChDQJEZDW9pAq7ks98gjolpfASBHAi8BJ3Y9TeUDHcX9HovV5BzrS4hUKX5tBmB4acfQ",
+            )
+        }), /* .expect("TOPT secret missing") */
     )
 });
 /// set otp validity period to 5 minutes
