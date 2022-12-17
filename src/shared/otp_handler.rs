@@ -31,6 +31,6 @@ pub fn generate_otp() -> u32 {
 /// validate otp
 /// accept the otp as function params,
 /// verify the
-pub fn _validate_otp(otp: &u32) -> bool {
+pub fn validate_otp(otp: &u32) -> bool {
     OTP.verify(*otp, OTP_VALIDITY, *CURRENT_TIMESTAMP)
 }

@@ -1,10 +1,13 @@
 use crate::{
-    models::users::{AccountStatus, ResetUserPassword, UserInformation, UserModel},
+    models::{
+        common::OneTimePswd,
+        users::{AccountStatus, ResetUserPassword, UserInformation, UserModel},
+    },
     shared::{
         api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest},
         jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload},
         mailer::{send_email, EmailPayload},
-        otp_handler::generate_otp,
+        otp_handler::{generate_otp, validate_otp},
     },
 };
 use axum::{http::StatusCode, Extension, Json};
@@ -52,7 +55,6 @@ pub async fn sign_up(
     // error handling
     match new_user {
         Ok(result) => {
-        
             let otp = generate_otp();
             let email_content = format!(
                 r#"
@@ -93,6 +95,72 @@ pub async fn sign_up(
         }),
     }
 }
+///verify email
+/// to verify email
+/// retrieve the bearer token fo=rom the auth header,
+/// retrieve the otp from request body
+/// validate token and updates account status
+/// return error or success response
+pub async fn verify_email(
+    authenticated_user: JwtClaims,
+    ValidatedRequest(payload): ValidatedRequest<OneTimePswd>,
+    Extension(database): Extension<PgPool>,
+) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
+    let user_information =
+        sqlx::query_as::<_, UserModel>("SELECT * FROM user_information WHERE email = $1")
+            .bind(&authenticated_user.email)
+            .fetch_one(&database)
+            .await;
+
+    //handle errors
+    match user_information {
+        Ok(user) => {
+            // if account has not been activated
+            let user_account_status = user.account_status.unwrap();
+            if user_account_status == AccountStatus::Active {
+                return Err(ApiErrorResponse::ConflictError {
+                    message: String::from("Email has already been verified"),
+                });
+            }
+
+            // update the account status if the token is valid
+            let is_valid_otp = validate_otp(&payload.token);
+            if is_valid_otp != true {
+                return Err(ApiErrorResponse::BadRequest {
+                    message: "invalid token".to_string(),
+                });
+            }
+
+            //update th e user information
+            sqlx::query_as::<_, UserInformation>(
+                "UPDATE user_information SET account_status = $1 WHERE email = $2 RETURNING *",
+            )
+            .bind(AccountStatus::Active)
+            .bind(Some(&authenticated_user.email.trim()))
+            .fetch_one(&database)
+            .await
+            .unwrap();
+
+            // build the response
+            let response_body = ApiSuccessResponse {
+                success: true,
+                message: "User account successfully activated ".to_string(),
+                data: Some(json!({
+                    "user":UserModel {
+                    password: Some("".to_string()),
+                    account_status:Some(AccountStatus::Active),
+                ..user
+                }
+                })),
+            };
+
+            Ok((StatusCode::OK, Json(response_body)))
+        }
+        Err(error_message) => Err(ApiErrorResponse::BadRequest {
+            message: error_message.to_string(),
+        }),
+    }
+}
 
 ///Login a New User :
 /// to login a user, fetch the request body and the database pool
@@ -118,11 +186,11 @@ pub async fn login(
         Ok(user) => {
             // if account has not been activated
             let user_account_status = user.account_status.unwrap();
-        /*     if user_account_status == AccountStatus::Inactive {
+            if user_account_status == AccountStatus::Inactive {
                 return Err(ApiErrorResponse::Unauthorized {
                     message: String::from("Please verify your email to continue"),
                 });
-            } */
+            }
 
             // if user account has been deactivated
             if user_account_status == AccountStatus::Deactivated {
