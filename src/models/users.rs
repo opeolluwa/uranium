@@ -9,20 +9,17 @@ use super::emails::EmailModel;
 /// the user account status
 /// an enum station the user current account status
 /// the variants are active and inactive
-// #[derive(sqlx::Type, Debug)]
-// #[sqlx(type_name = "account_status")] // only for PostgreSQL to match a type definition
-// #[sqlx(rename_all = "lowercase")]
-// #[derive(Debug)]
-
-// #[derive(sqlx::Type)]
-// // #[repr(i32)]
-// pub enum AccountStatus {
-//     Active = "active",
-//     Inactive = "inactive",
-// }
+#[derive(sqlx::Type, Debug, Serialize, Deserialize, PartialEq, Clone, Copy)]
+#[sqlx(type_name = "account_status")] // only for PostgreSQL to match a type definition
+#[sqlx(rename_all = "lowercase")]
+pub enum AccountStatus {
+    Active,
+    Inactive,
+    Deactivated,
+}
 /// define the user data structure that shall serve as the basis of serial
 /// implement debug, serialize, deserializing and #[derive(sqlx::FromRow
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow,  Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct UserModel {
     ///the user uniques identifier
@@ -37,7 +34,7 @@ pub struct UserModel {
     /// the user username
     pub username: Option<String>,
     /// the user account status
-    // pub account_status: Option<AccountStatus>,
+    pub account_status: Option<AccountStatus>,
     /// avatar
     pub avatar: Option<String>,
 }

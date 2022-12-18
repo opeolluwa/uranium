@@ -62,6 +62,8 @@ pub enum ApiErrorResponse {
     InvalidToken { message: String },
     ///missing or undefined resource e.g user information
     NotFound { message: String },
+    /// authorization error
+    Unauthorized { message: String },
 }
 
 ///implement into response trait for API error
@@ -69,6 +71,10 @@ impl IntoResponse for ApiErrorResponse {
     fn into_response(self) -> Response {
         let (status_code, error_message) = match self {
             ApiErrorResponse::WrongCredentials { message } => {
+                //missing Authorization credentials
+                (StatusCode::UNAUTHORIZED, message)
+            }
+            ApiErrorResponse::Unauthorized { message } => {
                 //missing Authorization credentials
                 (StatusCode::UNAUTHORIZED, message)
             }

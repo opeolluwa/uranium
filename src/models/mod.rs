@@ -8,3 +8,6 @@ pub mod projects;
 pub mod todo;
 /// the user request models, trait implementations and related
 pub mod users;
+
+/// contain shared model/entities
+pub mod common;

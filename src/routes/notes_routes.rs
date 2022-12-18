@@ -2,7 +2,7 @@
 // import the user controllers
 use crate::controllers::notes_controllers;
 use axum::{
-    routing::{get, post, put, delete},
+    routing::{delete, get, post, put},
     Router,
 };
 

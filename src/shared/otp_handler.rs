@@ -5,9 +5,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 static OTP: Lazy<TOTP> = Lazy::new(|| -> TOTP {
     TOTP::new(
-        &env::var("SECRET").unwrap_or_else(|_|String::from(
-            "zlsAAnVChDQJEZDW9pAq7ks98gjolpfASBHAi8BJ3Y9TeUDHcX9HovV5BzrS4hUKX5tBmB4acfQ",
-        )), /* .expect("TOPT secret missing") */
+        &env::var("SECRET").unwrap_or_else(|_| {
+            String::from(
+                "zlsAAnVChDQJEZDW9pAq7ks98gjolpfASBHAi8BJ3Y9TeUDHcX9HovV5BzrS4hUKX5tBmB4acfQ",
+            )
+        }), /* .expect("TOPT secret missing") */
     )
 });
 /// set otp validity period to 5 minutes
@@ -23,12 +25,14 @@ const CURRENT_TIMESTAMP: Lazy<u64> = Lazy::new(|| {
 ///generate otp
 pub fn generate_otp() -> u32 {
     // Generate code with period and current timestamp
-    OTP.generate(OTP_VALIDITY, *CURRENT_TIMESTAMP).unwrap()
+    let generated_otp = OTP.generate(OTP_VALIDITY, *CURRENT_TIMESTAMP).unwrap();
+    println!("the generated OPT is :{}", &generated_otp);
+    generated_otp
 }
 
 /// validate otp
 /// accept the otp as function params,
 /// verify the
-pub fn _validate_otp(otp: &u32) -> bool {
+pub fn validate_otp(otp: &u32) -> bool {
     OTP.verify(*otp, OTP_VALIDITY, *CURRENT_TIMESTAMP)
 }
