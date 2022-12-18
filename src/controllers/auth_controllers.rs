@@ -70,6 +70,37 @@ pub async fn sign_up(
             "#,
             );
 
+            /*
+            destructure the user object,
+            encrypt the data as JWt, send email to the user
+            send the token back to the user as success response
+            if error send the error response
+            */
+            let UserModel {
+                id,
+                email,
+                fullname,
+                ..
+            } = &result;
+            // let fullname = &new_user.fullname.unwrap();
+
+            let jwt_payload = JwtClaims {
+                id: id.to_string(),
+                email: email.as_ref().unwrap().to_string(),
+                fullname: fullname.as_ref().unwrap().to_string(),
+                exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
+            };
+            //fetch the JWT secret
+            /*   let jwt_secret = crate::shared::jwt_schema::jwt_secret(); */
+            //use a custom header
+            let jwt_header = Header {
+                alg: Algorithm::HS512,
+                ..Default::default()
+            };
+
+            //build the user jwt token
+            let token = encode(&jwt_header, &jwt_payload, &JWT_SECRET.encoding).ok();
+
             // send email to user
             let email_payload: EmailPayload = EmailPayload {
                 recipient_name: "adefemi",
@@ -85,6 +116,8 @@ pub async fn sign_up(
                 message: String::from("Please verify OTP send to your email to continue"),
                 data: Some(json!({
                     "user":UserModel { ..result },
+                    "token":token,
+                    "tokenType":"Bearer".to_string()
                 })),
             };
             //return the response
@@ -100,7 +133,7 @@ pub async fn sign_up(
 /// retrieve the bearer token fo=rom the auth header,
 /// retrieve the otp from request body
 /// validate token and updates account status
-/// return error or success response 
+/// return error or success response
 pub async fn verify_email(
     ValidatedRequest(payload): ValidatedRequest<OneTimePassword>,
     // Json(payload): Json<OneTimePassword>,
