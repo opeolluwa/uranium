@@ -1,6 +1,6 @@
 use crate::{
     models::{
-        common::OneTimePswd,
+        common::OneTimePassword,
         users::{AccountStatus, ResetUserPassword, UserInformation, UserModel},
     },
     shared::{
@@ -100,10 +100,11 @@ pub async fn sign_up(
 /// retrieve the bearer token fo=rom the auth header,
 /// retrieve the otp from request body
 /// validate token and updates account status
-/// return error or success response
+/// return error or success response 
 pub async fn verify_email(
+    ValidatedRequest(payload): ValidatedRequest<OneTimePassword>,
+    // Json(payload): Json<OneTimePassword>,
     authenticated_user: JwtClaims,
-    ValidatedRequest(payload): ValidatedRequest<OneTimePswd>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
     let user_information =
