@@ -63,7 +63,7 @@ pub async fn sign_up(
            
             We are glad to have you on board with us. To complete your account set up, please use the OTP
            
-           <h1 style="text-align:center">{otp}</h1>
+           <h3 style="text-align:center">{otp}</h3>
            
            <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box;">This OTP is only valid for the next 5 minutes. If you did not request this OTP, please ignore this message.</p>
             </p>

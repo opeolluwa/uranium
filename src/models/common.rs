@@ -5,5 +5,5 @@ use validator::Validate;
 #[derive(Debug, Serialize, Deserialize, Validate)]
 pub struct OneTimePassword {
     /// the token itself
-    pub token: u32,
+    pub token: String,
 }

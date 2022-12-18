@@ -19,7 +19,7 @@ pub enum AccountStatus {
 }
 /// define the user data structure that shall serve as the basis of serial
 /// implement debug, serialize, deserializing and #[derive(sqlx::FromRow
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow,  Clone)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct UserModel {
     ///the user uniques identifier

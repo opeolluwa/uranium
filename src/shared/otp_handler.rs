@@ -26,13 +26,14 @@ const CURRENT_TIMESTAMP: Lazy<u64> = Lazy::new(|| {
 pub fn generate_otp() -> u32 {
     // Generate code with period and current timestamp
     let generated_otp = OTP.generate(OTP_VALIDITY, *CURRENT_TIMESTAMP).unwrap();
-    println!("the generated OPT is :{}", &generated_otp);
+    super::api_response::debug_print("the generated OPT is", &generated_otp);
     generated_otp
 }
 
 /// validate otp
 /// accept the otp as function params,
 /// verify the
-pub fn validate_otp(otp: &u32) -> bool {
-    OTP.verify(*otp, OTP_VALIDITY, *CURRENT_TIMESTAMP)
+pub fn validate_otp(otp: &str) -> bool {
+    let otp = otp.trim().parse::<u32>().unwrap();
+    OTP.verify(otp, OTP_VALIDITY, *CURRENT_TIMESTAMP)
 }
