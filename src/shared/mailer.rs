@@ -24,8 +24,9 @@ pub mod mailer_config {
         Lazy::new(|| env::var("SMTP_PASSWORD").expect("SMTP password not provided"));
     pub static SMTP_HOST: Lazy<String> =
         Lazy::new(|| env::var("SMTP_HOST").expect("SMTP host not provided"));
-    pub static SMTP_REPLY_TO_ADDRESS: Lazy<String> =
-        Lazy::new(|| env::var("SMTP_REPLY_TO_ADDRESS").expect("SMTP reply-to-address not specified"));
+    pub static SMTP_REPLY_TO_ADDRESS: Lazy<String> = Lazy::new(|| {
+        env::var("SMTP_REPLY_TO_ADDRESS").expect("SMTP reply-to-address not specified")
+    });
     pub static SMTP_REPLY_TO_NAME: Lazy<String> =
         Lazy::new(|| env::var("SMTP_REPLY_TO_NAME").expect("SMTP reply-to-name not provided"));
     pub static FRONTEND_URL: Lazy<String> = Lazy::new(|| {
@@ -61,8 +62,7 @@ pub fn send_email(payload: EmailPayload) -> bool {
         "{name} <{address}>",
         name = *SMTP_REPLY_TO_NAME,
         address = *SMTP_REPLY_TO_ADDRESS
-    )
-    ;
+    );
 
     // println!("{}", &sender_address);
     // let sender_address = "Drizzles <no-reply@nitride.com>";

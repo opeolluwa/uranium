@@ -240,3 +240,11 @@ impl IntoResponse for RequestError {
         .into_response()
     }
 }
+
+/// debug print
+/// check if the environment is development or production
+/// if development, print some stuff for easy development else dont print them
+
+pub fn debug_print<T: std::fmt::Debug>(message: &str, data: T) {
+    println!("{message}: {:#?}", data);
+}
