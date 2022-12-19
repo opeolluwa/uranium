@@ -1,10 +1,13 @@
 # nitride
-An admin dashboard built on  [Vue.js](https://vuejs.org/), [TypeScript](https://www.typescriptlang.org/), [Rust](https://www.rust-lang.org/), and [PostgreSQL](https://www.postgresql.org/).
+![nitride](./nitride.png)
 
-See the User Interface source code [here](https://github.com/opeolluwa/nitride-ui).
+An authentication server and Admin Dashboard  [Vue.js](https://vuejs.org/), [TypeScript](https://www.typescriptlang.org/), [Rust](https://www.rust-lang.org/), and [PostgreSQL](https://www.postgresql.org/).
+
+Visit [this Repository](https://github.com/opeolluwa/nitride-ui) to See the User Interface source code.
 
 
 ## Requirement
+The following are required to run the application in development or in production environment
 - [Rust](https://www.rust-lang.org/tools/install) v1.63 or greater 
 - [PostgreSQL](https://www.postgresql.org/download/) PostgreSQL server v14.5 or greater
 - [sqlx](https://crates.io/crates/sqlx) for interacting with the database,
@@ -12,7 +15,7 @@ See the User Interface source code [here](https://github.com/opeolluwa/nitride-u
 - [cargo watch](https://crates.io/crates/cargo-watch), a tool for watching the project files and recompiling when they change,
 
 ## Installation (development)
-
+To run the application in development mode, follow the steps below
 1. clone Repository
 2. copy and populate .env.example to .env `cp .env.example .env`, paying attention to the `SECRET` and `DATABASE_URL` variables
 3. Run `sqlx database create` to create the database from the specified `DATABASE_URL` Use `sqlx database drop` to revert the change
