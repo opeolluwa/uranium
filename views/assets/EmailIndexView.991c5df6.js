@@ -1,1 +1,0 @@
-import{d as o,_ as n,r as t,o as r,q as s}from"./index.49986925.js";const a=o({name:"IndexEmailView"});function c(i,p,_,m,d,f){const e=t("RouterView");return r(),s(e)}const u=n(a,[["render",c]]);export{u as default};

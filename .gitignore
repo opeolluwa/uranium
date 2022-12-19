@@ -23,3 +23,4 @@ nitride.conf
 sandbox/*
 !sandbox/*.rs
 sandbox/calendar.html
+/*.html
