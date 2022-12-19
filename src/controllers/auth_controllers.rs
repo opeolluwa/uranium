@@ -58,7 +58,7 @@ pub async fn sign_up(
             let otp = generate_otp();
             let email_content = format!(
                 r#"
-             <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
+             <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; line-height: 1.5em; margin-top: 0; text-align: left;">
                             
            
             We are glad to have you on board with us. To complete your account set up, please use the OTP
@@ -159,7 +159,7 @@ pub async fn verify_email(
 
             // update the account status if the token is valid
             let is_valid_otp = validate_otp(&payload.token);
-            if is_valid_otp != true {
+            if !is_valid_otp{
                 return Err(ApiErrorResponse::BadRequest {
                     message: "invalid token".to_string(),
                 });
