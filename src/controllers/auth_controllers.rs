@@ -159,7 +159,7 @@ pub async fn verify_email(
 
             // update the account status if the token is valid
             let is_valid_otp = validate_otp(&payload.token);
-            if !is_valid_otp{
+            if !is_valid_otp {
                 return Err(ApiErrorResponse::BadRequest {
                     message: "invalid token".to_string(),
                 });
@@ -194,6 +194,17 @@ pub async fn verify_email(
             message: error_message.to_string(),
         }),
     }
+}
+
+/// request new token (OTP)
+/// to request new OTP, it must be that the user account has not been confirmed
+/// or in the case of password reset
+/// at any rate, the token will accept email to return a JWT token to the user
+/// the returned JWT will contain the required information needed by the server for further processing
+/// the server will also send new token to the user's email if the email as found
+
+pub async fn _request_new_token() {
+    todo!()
 }
 
 ///Login a New User :
