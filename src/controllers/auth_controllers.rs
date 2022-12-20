@@ -1,8 +1,13 @@
 use crate::{
-    models::users::{ResetUserPassword, UserAuthCredentials, UserInformation, UserModel},
+    models::{
+        common::OneTimePassword,
+        users::{AccountStatus, ResetUserPassword, UserInformation, UserModel},
+    },
     shared::{
-        api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields},
+        api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest},
         jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload},
+        mailer::{send_email, EmailPayload},
+        otp_handler::{generate_otp, validate_otp},
     },
 };
 use axum::{http::StatusCode, Extension, Json};
@@ -20,84 +25,186 @@ static JWT_SECRET: Lazy<JwtEncryptionKeys> = Lazy::new(|| -> JwtEncryptionKeys {
     JwtEncryptionKeys::new(secret.as_bytes())
 });
 
-/// the bearer token validity set to 1o minutes
-const ACCESS_TOKEN_VALIDITY: u64 = 100;
+/// the bearer token validity set to 10 minutes
+const ACCESS_TOKEN_VALIDITY: u64 = 10;
 /// refresh token set to 25 minutes
 const REFRESH_TOKEN_VALIDITY: u64 = 25;
 
-///create a new user
-/// accept the user credentials,
-/// check if user already exists
-/// if not save the user
-/// return success or error response
+/// basic auth sign_up
+// create new user account
 pub async fn sign_up(
-    Json(payload): Json<UserInformation>,
+    ValidatedRequest(payload): ValidatedRequest<UserInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
-    //destructure the HTTP request body
-    let UserInformation {
-        fullname,
-        password,
-        username,
-        email,
-    } = &payload;
-
-    //check through the fields to see that no field was badly formatted
-    let entries = &payload.collect_as_strings();
-    let mut bad_request_errors: Vec<String> = Vec::new();
-    for (key, value) in entries {
-        if value.is_empty() {
-            let error = format!("{key} is empty");
-            bad_request_errors.push(error);
-        }
-    }
-
-    //if we have empty fields return error to client
-    if !bad_request_errors.is_empty() {
-        return Err(ApiErrorResponse::BadRequest {
-            message: bad_request_errors.join(", "),
-        });
-    }
-
     /*
      * generate a UUID and hash the user password,
      * go on to save the hashed password along side other details
      * cat any error along the way
      */
     let id = Uuid::new_v4();
-    let hashed_password = bcrypt::hash(&password, DEFAULT_COST).unwrap();
+    let hashed_password = bcrypt::hash(&payload.password.trim(), DEFAULT_COST).unwrap();
     let new_user =  sqlx::query_as::<_, UserModel>(
-        "INSERT INTO user_information (id, fullname, username, password, email) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (email) DO NOTHING RETURNING *",
+        "INSERT INTO user_information (id, password, email, fullname) VALUES ($1, $2, $3, $4) ON CONFLICT (email) DO NOTHING RETURNING *",
     )
-    .bind(Some(id))
-    .bind(Some(fullname))
-    .bind(Some(username))
-    .bind(Some(hashed_password))
-    .bind(Some(email))
+    .bind(id)
+    .bind(hashed_password)
+    .bind(payload.email.trim())
+    .bind(payload.fullname.unwrap().trim())
     .fetch_one(&database).await;
 
     // error handling
     match new_user {
         Ok(result) => {
+            let otp = generate_otp();
+            let email_content = format!(
+                r#"
+             <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; line-height: 1.5em; margin-top: 0; text-align: left;">
+                            
+           
+            We are glad to have you on board with us. To complete your account set up, please use the OTP
+           
+           <h3 style="text-align:center">{otp}</h3>
+           
+           <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box;">This OTP is only valid for the next 5 minutes. If you did not request this OTP, please ignore this message.</p>
+            </p>
+            "#,
+            );
+
+            /*
+            destructure the user object,
+            encrypt the data as JWt, send email to the user
+            send the token back to the user as success response
+            if error send the error response
+            */
+            let UserModel {
+                id,
+                email,
+                fullname,
+                ..
+            } = &result;
+            // let fullname = &new_user.fullname.unwrap();
+
+            let jwt_payload = JwtClaims {
+                id: id.to_string(),
+                email: email.as_ref().unwrap().to_string(),
+                fullname: fullname.as_ref().unwrap().to_string(),
+                exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
+            };
+            //fetch the JWT secret
+            /*   let jwt_secret = crate::shared::jwt_schema::jwt_secret(); */
+            //use a custom header
+            let jwt_header = Header {
+                alg: Algorithm::HS512,
+                ..Default::default()
+            };
+
+            //build the user jwt token
+            let token = encode(&jwt_header, &jwt_payload, &JWT_SECRET.encoding).ok();
+
+            // send email to user
+            let email_payload: EmailPayload = EmailPayload {
+                recipient_name: "adefemi",
+                recipient_address: "adefemiadeoye@yahoo.com",
+                email_content,
+                email_subject: "new account",
+            };
+            send_email(email_payload);
+
             //build the response
             let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
                 success: true,
-                message: String::from("User account successfully created"),
-                data: Some(json!({"user":UserModel {
-                    ..result // other fields
-                }})),
+                message: String::from("Please verify OTP send to your email to continue"),
+                data: Some(json!({
+                    "user":UserModel { ..result },
+                    "token":token,
+                    "tokenType":"Bearer".to_string()
+                })),
             };
             //return the response
             Ok((StatusCode::CREATED, Json(response)))
         }
-        Err(err) => Err(ApiErrorResponse::ConflictError {
-            message: vec![
-                err.to_string(),
-                format!("an account with {email} already exists"),
-            ]
-            .join(", "),
+        Err(_) => Err(ApiErrorResponse::ConflictError {
+            message: String::from("Email already exists"),
         }),
     }
+}
+///verify email
+/// to verify email
+/// retrieve the bearer token fo=rom the auth header,
+/// retrieve the otp from request body
+/// validate token and updates account status
+/// return error or success response
+pub async fn verify_email(
+    ValidatedRequest(payload): ValidatedRequest<OneTimePassword>,
+    // Json(payload): Json<OneTimePassword>,
+    authenticated_user: JwtClaims,
+    Extension(database): Extension<PgPool>,
+) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
+    let user_information =
+        sqlx::query_as::<_, UserModel>("SELECT * FROM user_information WHERE email = $1")
+            .bind(&authenticated_user.email)
+            .fetch_one(&database)
+            .await;
+
+    //handle errors
+    match user_information {
+        Ok(user) => {
+            // if account has not been activated
+            let user_account_status = user.account_status.unwrap();
+            if user_account_status == AccountStatus::Active {
+                return Err(ApiErrorResponse::ConflictError {
+                    message: String::from("Email has already been verified"),
+                });
+            }
+
+            // update the account status if the token is valid
+            let is_valid_otp = validate_otp(&payload.token);
+            if !is_valid_otp {
+                return Err(ApiErrorResponse::BadRequest {
+                    message: "invalid token".to_string(),
+                });
+            }
+
+            //update th e user information
+            sqlx::query_as::<_, UserInformation>(
+                "UPDATE user_information SET account_status = $1 WHERE email = $2 RETURNING *",
+            )
+            .bind(AccountStatus::Active)
+            .bind(Some(&authenticated_user.email.trim()))
+            .fetch_one(&database)
+            .await
+            .unwrap();
+
+            // build the response
+            let response_body = ApiSuccessResponse {
+                success: true,
+                message: "User account successfully activated ".to_string(),
+                data: Some(json!({
+                    "user":UserModel {
+                    password: Some("".to_string()),
+                    account_status:Some(AccountStatus::Active),
+                ..user
+                }
+                })),
+            };
+
+            Ok((StatusCode::OK, Json(response_body)))
+        }
+        Err(error_message) => Err(ApiErrorResponse::BadRequest {
+            message: error_message.to_string(),
+        }),
+    }
+}
+
+/// request new token (OTP)
+/// to request new OTP, it must be that the user account has not been confirmed
+/// or in the case of password reset
+/// at any rate, the token will accept email to return a JWT token to the user
+/// the returned JWT will contain the required information needed by the server for further processing
+/// the server will also send new token to the user's email if the email as found
+
+pub async fn _request_new_token() {
+    todo!()
 }
 
 ///Login a New User :
@@ -105,36 +212,9 @@ pub async fn sign_up(
 /// use the pool to query the database for the user details in the request body
 /// return result or error
 pub async fn login(
-    Json(payload): Json<UserAuthCredentials>,
+    ValidatedRequest(payload): ValidatedRequest<UserInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<JwtPayload>>), ApiErrorResponse> {
-    //destructure the payload to fetch user details
-    let UserAuthCredentials {
-        email, password, ..
-    } = &payload;
-
-    /*
-     * validate the password and the email
-     * if either is missing send error response
-     */
-
-    //check through the fields to see that no field was badly formatted
-    let entries = &payload.collect_as_strings();
-    let mut bad_request_errors: Vec<String> = Vec::new();
-    for (key, value) in entries {
-        if value.is_empty() {
-            let error = format!("{key} is empty");
-            bad_request_errors.push(error);
-        }
-    }
-
-    //if we have empty fields return error to client
-    if !bad_request_errors.is_empty() {
-        return Err(ApiErrorResponse::BadRequest {
-            message: bad_request_errors.join(", "),
-        });
-    }
-
     /*
      * if both email and password is provided ,
      * fetch the user information
@@ -143,13 +223,31 @@ pub async fn login(
      */
     let user_information =
         sqlx::query_as::<_, UserModel>("SELECT * FROM user_information WHERE email = $1")
-            .bind(email)
+            .bind(payload.email)
             .fetch_one(&database)
             .await;
 
     match user_information {
         Ok(user) => {
-            let verify_password = verify(password, &user.password);
+            // if account has not been activated
+            let user_account_status = user.account_status.unwrap();
+            if user_account_status == AccountStatus::Inactive {
+                return Err(ApiErrorResponse::Unauthorized {
+                    message: String::from("Please verify your email to continue"),
+                });
+            }
+
+            // if user account has been deactivated
+            if user_account_status == AccountStatus::Deactivated {
+                return Err(ApiErrorResponse::Unauthorized {
+                    message: String::from(
+                        "Account ahs been suspended, please contact administrator",
+                    ),
+                });
+            }
+
+            let stored_password = &user.password.as_ref().unwrap();
+            let verify_password = verify(payload.password, stored_password);
             match verify_password {
                 Ok(is_correct_password) => {
                     //send error if the password is not correct
@@ -170,8 +268,11 @@ pub async fn login(
                     //encrypt the user data
                     let jwt_payload = JwtClaims {
                         id: id.to_string(),
-                        email: email.to_string(),
-                        fullname: fullname.to_string(),
+                        email: email.as_ref().unwrap().to_string(),
+                        fullname: fullname
+                            .as_ref()
+                            .unwrap_or(&"default".to_string())
+                            .to_string(),
                         exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
                     };
                     //fetch the JWT secret
@@ -201,8 +302,8 @@ pub async fn login(
                 }),
             }
         }
-        Err(error_message) => Err(ApiErrorResponse::ServerError {
-            message: error_message.to_string(),
+        Err(message) => Err(ApiErrorResponse::ServerError {
+            message: message.to_string(), // message: String::from("an account with the provided email does not exist"),
         }),
     }
 }
@@ -236,7 +337,7 @@ pub async fn user_profile(
                 message: "User information successfully fetched".to_string(),
                 data: Some(json!({
                     "user":UserModel {
-                    password: "".to_string(),
+                    password: Some("".to_string()),
                     ..user_object
                 }
                 })),
@@ -331,7 +432,7 @@ pub async fn reset_password(
 ///  use SQL COALESCE($1, a)  to update the fields  
 /// return the user details if no error else return the appropriate error code and response
 pub async fn update_user_profile(
-    Json(payload): Json<UserInformation>,
+    ValidatedRequest(payload): ValidatedRequest<UserInformation>,
     authenticated_user: JwtClaims,
     Extension(database): Extension<PgPool>,
 ) -> Result<Json<ApiSuccessResponse<Value>>, ApiErrorResponse> {
@@ -392,10 +493,11 @@ pub async fn get_refresh_token(
             } = &user_object;
 
             //encrypt the user data
+            //TODO: remove unwrap
             let jwt_payload = JwtClaims {
                 id: id.to_string(),
-                email: email.to_string(),
-                fullname: fullname.to_string(),
+                email: email.as_ref().unwrap().to_string(),
+                fullname: fullname.as_ref().unwrap().to_string(),
                 exp: set_jtw_exp(REFRESH_TOKEN_VALIDITY), //set expirations
             };
             //fetch the JWT secret

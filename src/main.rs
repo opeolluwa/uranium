@@ -7,13 +7,13 @@ use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-/// the application route controllers/handlers 
+/// the application route controllers/handlers
 mod controllers;
 /// the application model definitions, eg: User model, Todo Model e.t.c
 mod models;
-/// the application routing logic 
+/// the application routing logic
 mod routes;
-///modules shared across the application, like API response patters, pagination logic e.t.c 
+///modules shared across the application, like API response patters, pagination logic e.t.c
 mod shared;
 
 #[tokio::main]
@@ -44,8 +44,11 @@ async fn main() {
     //execute migration
     // This embeds database migrations in the application binary so we can ensure the database
     // is migrated correctly on startup
-    // sqlx::migrate!().run(&database).await.expect("already exec db migrations");
-
+    /*   sqlx::migrate!()
+           .run(&database)
+           .await
+           .expect("already exec db migrations");
+    */
     //static file mounting
     let assets_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("views");
     let static_files_service = get_service(
@@ -86,7 +89,7 @@ async fn main() {
      * try the parse the value to determine of the environment is development or production
      * else, assign the localhost ip address to catch error an fall through
      */
-    
+
     let ip_address = match env::var("ENVIRONMENT") {
         /*
          * if the environment is production, use the derived port and the placeholder address
@@ -112,7 +115,10 @@ async fn main() {
         }
     };
     println!("Ignition started on http://{}", &ip_address);
-
+    /*  let otp = shared::otp_handler::generate_otp();
+       let is_valid_otp = shared::otp_handler::validate_otp(&500256);
+       println!("{otp}, is valid otp {is_valid_otp}");
+    */
     //launch the server
     axum::Server::bind(&ip_address)
         .serve(app.into_make_service())

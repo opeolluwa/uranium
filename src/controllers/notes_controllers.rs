@@ -1,7 +1,11 @@
 use crate::models::notes::{NotesInformation, NotesModel};
-use crate::shared::api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields};
+use crate::shared::api_response::{
+    ApiErrorResponse, ApiSuccessResponse, Pagination, ValidatedRequest,
+};
 use crate::shared::jwt_schema::JwtClaims;
-use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
+use axum::extract::Query;
+use axum::{extract::Path, http::StatusCode, Extension, Json};
+use serde_json::{json, Value};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -12,45 +16,36 @@ use uuid::Uuid;
 /// - repoUrl - the notes repository
 pub async fn add_notes(
     authenticated_user: JwtClaims,
-    Json(payload): Json<NotesInformation>,
+    ValidatedRequest(payload): ValidatedRequest<NotesInformation>,
     Extension(database): Extension<PgPool>,
-) -> Result<(StatusCode, Json<ApiSuccessResponse<NotesModel>>), ApiErrorResponse> {
-    //check through the fields to see that no field was badly formatted
-    let entries = &payload.collect_as_strings();
-    let mut bad_request_errors: Vec<String> = Vec::new();
-    for (key, value) in entries {
-        if value.is_empty() {
-            let error = format!("{key} is empty");
-            bad_request_errors.push(error);
-        }
-    }
-
-    // save the new notes
+) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
     /*
+    save the note
      * generate a UUID and hash the user password,
      * go on to save the hashed password along side other details
      * cat any error along the way
      */
     let notes_id = Uuid::new_v4();
     let new_notes =  sqlx::query_as::<_, NotesModel>(
-        "INSERT INTO note_entries (id, title , description, fk_user_id ) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING RETURNING *",
+        "INSERT INTO note_entries (id, title , content, category, user_id ) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING RETURNING *",
     )
     .bind(notes_id)
-    .bind(payload.title)
-    .bind(payload.description)
+    .bind(payload.title.unwrap_or_default())
+    .bind(payload.content.unwrap_or_default())
+    .bind(payload.category.unwrap_or_default())
     .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
     .fetch_one(&database).await;
 
     //handle error
     match new_notes {
-        Ok(notes) => {
+        Ok(note) => {
             //build the response body
-            let response_body: ApiSuccessResponse<NotesModel> = ApiSuccessResponse {
+            let response_body: ApiSuccessResponse<Value> = ApiSuccessResponse {
                 success: true,
-                message: "notes successfully added ".to_string(),
-                data: Some(notes),
+                message: String::from("notes successfully added "),
+                data: Some(json!({ "note": note })),
             };
-            //send the response
+            //send the response back to the clien
             Ok((StatusCode::CREATED, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::ServerError {
@@ -64,27 +59,48 @@ pub async fn add_notes(
 /// find the notes
 /// effect edits
 /// return updated notes object
-pub async fn edit_notes(
+pub async fn edit_note(
     authenticated_user: JwtClaims,
     Path(notes_id): Path<Uuid>,
+    ValidatedRequest(payload): ValidatedRequest<NotesInformation>,
     Extension(database): Extension<PgPool>,
-) -> Result<(StatusCode, Json<ApiSuccessResponse<NotesModel>>), ApiErrorResponse> {
+) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
     //fetch the notes from the database  using the notes id
-    let fetched_notes =
-        sqlx::query_as::<_, NotesModel>("SELECT * FROM notes WHERE id = $1 AND fk_user_id = $2")
-            .bind(notes_id)
-            .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
-            .fetch_one(&database)
-            .await;
+    let fetched_note = sqlx::query_as::<_, NotesModel>(
+        "SELECT * FROM note_entries WHERE id = $1 AND user_id = $2",
+    )
+    .bind(notes_id)
+    .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
+    .fetch_one(&database)
+    .await;
+
+    //check if there is a match from the database
+    if fetched_note.ok().is_none() {
+        return Err(ApiErrorResponse::NotFound {
+            message: String::from("note not found"),
+        });
+    }
+
+    // update the note here then send the response
+    let updated_note = sqlx::query_as::<_, NotesModel>(
+            "UPDATE note_entries SET title = COALESCE($1, title), content = COALESCE($2, content), category = COALESCE($3, category), last_updated = NOW() WHERE id = $4 AND user_id = $5 RETURNING *",
+        )
+       .bind(payload.title.unwrap_or_default())
+    .bind(payload.content.unwrap_or_default())
+    .bind(payload.category.unwrap_or_default())
+        .bind(notes_id)
+        .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
+        .fetch_one(&database)
+        .await;
 
     //handle errors
-    match fetched_notes {
-        Ok(notes) => {
-            //build the notes body
-            let response_body: ApiSuccessResponse<NotesModel> = ApiSuccessResponse {
+    match updated_note {
+        Ok(note) => {
+            //build the response body body
+            let response_body: ApiSuccessResponse<Value> = ApiSuccessResponse {
                 success: true,
-                message: "notes successfully retrieved".to_string(),
-                data: Some(notes),
+                message: "notes successfully updated".to_string(),
+                data: Some(json!({ "note": note })),
             };
             //return the response with 200 status code
             Ok((StatusCode::OK, Json(response_body)))
@@ -100,24 +116,74 @@ pub async fn edit_notes(
 /// search the database for the notes
 /// return success and response or 404 error
 pub async fn get_notes_by_id(
-    _claims: JwtClaims,
+    authenticated_user: JwtClaims,
     Path(note_id): Path<Uuid>,
     Extension(database): Extension<PgPool>,
-) -> Result<(StatusCode, Json<ApiSuccessResponse<NotesModel>>), ApiErrorResponse> {
+) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
     //fetch the notes from the database  using the notes id
-    let fetched_notes = sqlx::query_as::<_, NotesModel>("SELECT * FROM notes WHERE id = $1")
-        .bind(note_id)
-        .fetch_one(&database)
-        .await;
+    let fetched_note = sqlx::query_as::<_, NotesModel>(
+        "SELECT * FROM note_entries WHERE id = $1 AND user_id = $2",
+    )
+    .bind(note_id)
+    .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
+    .fetch_one(&database)
+    .await;
 
     //handle errors
-    match fetched_notes {
-        Ok(notes) => {
+    match fetched_note {
+        Ok(note) => {
             //build the notes body
-            let response_body: ApiSuccessResponse<NotesModel> = ApiSuccessResponse {
+            let response_body: ApiSuccessResponse<Value> = ApiSuccessResponse {
                 success: true,
-                message: "notes successfully retrieved".to_string(),
-                data: Some(notes),
+                message: String::from("notes successfully retrieved"),
+                data: Some(json!({ "note": note })),
+            };
+            //return the response with 200 status code
+            Ok((StatusCode::OK, Json(response_body)))
+        }
+        Err(_) => Err(ApiErrorResponse::NotFound {
+            message: String::from("note could not be found"),
+        }),
+    }
+}
+
+///get all notes
+/// retrieve all notes with pagination
+pub async fn get_all_notes(
+    authenticated_user: JwtClaims,
+    pagination: Option<Query<Pagination>>,
+    Extension(database): Extension<PgPool>,
+) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
+    // try and get the quey params or deflect to default
+    // let pagination_params = query_params;
+    let Query(pagination) = pagination.unwrap_or_default();
+    let Pagination {
+        page: current_page,
+        no_of_rows,
+    } = &pagination;
+    let limit = (current_page - 1) * no_of_rows;
+
+    //fetch all notes  by pagination
+    let fetched_notes = sqlx::query_as::<_, NotesModel>(
+        "SELECT * FROM note_entries WHERE user_id = $1 ORDER BY date_added DESC LIMIT $2 OFFSET $3",
+    )
+    .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
+    .bind(no_of_rows)
+    .bind(limit)
+    .fetch_all(&database)
+    .await;
+
+    match fetched_notes {
+        Ok(note_array) => {
+            //build the Todo body
+            let response_body: ApiSuccessResponse<Value> = ApiSuccessResponse {
+                success: true,
+                message: String::from("notes successfully fetched"),
+                data: Some(json!({
+                "notes": note_array,
+                "currentPage" : &pagination.page.to_string(),
+                "noOfRows":&pagination.no_of_rows.to_string()
+                })),
             };
             //return the response with 200 status code
             Ok((StatusCode::OK, Json(response_body)))
@@ -128,14 +194,47 @@ pub async fn get_notes_by_id(
     }
 }
 
-///get all notes
-/// retrieve all notes with pagination
-pub async fn get_all_notes(
-    _claims: JwtClaims,
+///delete note
+/// accept the notes id as route parameter
+/// find the notes
+/// effect edits
+/// return updated notes object
+pub async fn delete_note(
+    authenticated_user: JwtClaims,
+    Path(notes_id): Path<Uuid>,
     Extension(database): Extension<PgPool>,
-) -> impl IntoResponse {
-    //fetch all notes ...
-    //TODO: implement pagination logic
-    let _fetched_notes = sqlx::query_as::<_, NotesModel>("SELECT * FROM notes").fetch(&database);
-    todo!()
+) -> Result<(StatusCode, Json<ApiSuccessResponse<()>>), ApiErrorResponse> {
+    //fetch the notes from the database  using the notes id
+    let fetched_note = sqlx::query_as::<_, NotesModel>(
+        "SELECT * FROM note_entries WHERE id = $1 AND user_id = $2",
+    )
+    .bind(notes_id)
+    .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
+    .fetch_one(&database)
+    .await;
+
+    //check if there is a match from the database
+    if fetched_note.ok().is_none() {
+        return Err(ApiErrorResponse::NotFound {
+            message: String::from("note not found"),
+        });
+    }
+
+    // update the note here then send the response
+    let _delete_note =
+        sqlx::query_as::<_, NotesModel>("DELETE FROM note_entries WHERE id = $1 AND user_id = $2")
+            .bind(notes_id)
+            .bind(sqlx::types::Uuid::parse_str(&authenticated_user.id).unwrap())
+            .fetch_one(&database)
+            .await;
+
+    //handle errors
+    //build the response body body
+    let response_body: ApiSuccessResponse<()> = ApiSuccessResponse {
+        success: true,
+        message: "notes successfully deleted".to_string(),
+        data: Some(()),
+    };
+    //return the response with 200 status code
+    Ok((StatusCode::OK, Json(response_body)))
 }

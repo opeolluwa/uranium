@@ -1,13 +1,12 @@
 use async_trait::async_trait;
-// use axum::extract::rejection::JsonRejection;
 use axum::extract::FromRequest;
 use axum::extract::RequestParts;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Response;
 use axum::BoxError;
-// use axum::Form;
 use axum::Json;
+use console::Style;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -62,6 +61,8 @@ pub enum ApiErrorResponse {
     InvalidToken { message: String },
     ///missing or undefined resource e.g user information
     NotFound { message: String },
+    /// authorization error
+    Unauthorized { message: String },
 }
 
 ///implement into response trait for API error
@@ -69,6 +70,10 @@ impl IntoResponse for ApiErrorResponse {
     fn into_response(self) -> Response {
         let (status_code, error_message) = match self {
             ApiErrorResponse::WrongCredentials { message } => {
+                //missing Authorization credentials
+                (StatusCode::UNAUTHORIZED, message)
+            }
+            ApiErrorResponse::Unauthorized { message } => {
                 //missing Authorization credentials
                 (StatusCode::UNAUTHORIZED, message)
             }
@@ -233,4 +238,13 @@ impl IntoResponse for RequestError {
         }
         .into_response()
     }
+}
+
+/// debug print
+/// check if the environment is development or production
+/// if development, print some stuff for easy development else dont print them
+
+pub fn debug_print<T: std::fmt::Debug>(message: &str, data: T) {
+    let cyan = Style::new().cyan();
+    println!(" {}:: {message}: {:#?}", cyan.apply_to("DEBUG PRINT"), data);
 }
