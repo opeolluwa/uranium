@@ -1,8 +1,9 @@
 use crate::models::emails::{EmailContext, EmailModel};
 use crate::shared::api_response::{ApiErrorResponse, ApiResponse, ApiSuccessResponse};
+use crate::shared::mailer::EmailPayload;
 use crate::shared::mailer::{
     mailer_config::{FRONTEND_URL, SMTP_HOST, SMTP_PASSWORD, SMTP_USERNAME},
-    parse_email_template,
+    parse_email_template, send_email as mail_dispatcher,
 };
 use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
 use lettre::message::{header, MultiPart, SinglePart};
@@ -11,7 +12,6 @@ use lettre::{
     {Message, SmtpTransport, Transport},
 };
 use sqlx::PgPool;
-use std::env;
 use uuid::Uuid;
 
 //the secrets
@@ -78,7 +78,7 @@ pub async fn receive_email(
     Json(payload): Json<EmailContext>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiResponse<()>>), ApiErrorResponse> {
-    //destructure the email fields from the payload
+    //destructure the email fields from the  request payload
     let EmailContext {
         fullname: sender_name,
         email: sender_email,
@@ -92,12 +92,60 @@ pub async fn receive_email(
     let new_email =  sqlx::query_as::<_, EmailModel>(
         "INSERT INTO emails (id, sender_name, sender_email, email_subject, email_body) VALUES ($1, $2, $3, $4, $5)  RETURNING *",
     )
+
     .bind(Some(id))
-    .bind(Some(sender_name))
-    .bind(Some(sender_email))
-    .bind(Some(email_subject))
-    .bind(Some(email_body))
+    .bind(&sender_name)
+    .bind(sender_email)
+    .bind(&email_subject)
+    .bind(&email_body)
     .fetch_one(&database).await;
+
+    //the auto response email content
+    let sender_email_content = format!(
+        r#"
+    <!--email content ---->
+     <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;margin-top:15px;margin-bottom:15px">
+     Thanks for reaching out, </br>
+     Your email sent on <a href="{frontend_url}">{frontend_url}</a> has been received and will be attended to shortly.                
+    </p>
+    "#,
+        frontend_url = FRONTEND_URL.to_lowercase()
+    );
+    // dispatch the email
+    let sender_email_payload: EmailPayload = EmailPayload {
+        recipient_name: &sender_name,
+        recipient_address: &sender_email,
+        email_content: sender_email_content,
+        email_subject: &email_subject,
+    };
+
+    // the receiver email
+    //the auto response email content
+    let receiver_email_content = format!(
+        r#"
+    <!--email content ---->
+     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;margin-top:15px;margin-bottom:15px">
+     A new email was sent from <a href="{frontend_url}">{frontend_url}</a> by <strong>{sender_name}<{sender_email}></strong>                
+    </div>
+
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;margin-top:15px;margin-bottom:15px">
+    {email_body}        
+    </div>
+
+    "#,
+        frontend_url = FRONTEND_URL.to_lowercase()
+    );
+
+    // dispatch the email
+    let frontend_url: &str = &std::env::var("FRONTEND_URL")
+        .unwrap_or_else(|_| String::from("https://opeolluwa.verce.app"));
+    let receiver_email_subject = format!(" new email from {}", frontend_url);
+    let receiver_email_payload: EmailPayload = EmailPayload {
+        recipient_name: "Opeoluwa",
+        recipient_address: "adefemiadeoye@yahoo.com",
+        email_content: receiver_email_content,
+        email_subject: &receiver_email_subject,
+    };
 
     /*
      * get the status of the received email
@@ -106,75 +154,23 @@ pub async fn receive_email(
      */
     match new_email {
         Ok(_) => {
-            //send an auto response on success
-            //TODO : dynamically get reply to email
-            let from_email = format!("{sender_name} <{sender_email}>");
-            let _reply_to = format!("{:?} <{:?}>", "adeoye", "adefemiadeoye@yahoo.com");
-            let receiver_address = format!("{sender_name} <{sender_email}>");
+            //handle exception
+            let sent_client_response: bool = mail_dispatcher(sender_email_payload);
+            let sent_owner_response: bool = mail_dispatcher(receiver_email_payload);
 
-            println!("{:#?}", &receiver_address);
-
-            // todo!()
-            //the auto response email content
-            let email_content = format!(
-                r#"
-   
-    
-    
-    <!--email content ---->
-     <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;margin-top:15px;margin-bottom:15px">
-     Thanks for reaching out, </br>
-     Your email sent on <a href="{frontend_url}">{frontend_url}</a> has been received and will be attended to shortly.                
-    </p>
-    "#,
-                frontend_url = FRONTEND_URL.to_lowercase()
-            );
-
-            //call on the template parser
-            let message_content = parse_email_template(email_content, sender_name.to_string());
-            let email = Message::builder()
-                .from(from_email.parse().unwrap())
-                .reply_to("adeoye <adefemiadeoye@yahoo.com>".parse().unwrap())
-                .to(receiver_address.parse().unwrap())
-                .subject(email_subject)
-                .multipart(
-                    MultiPart::alternative() // This is composed of two parts.
-                        .singlepart(
-                            SinglePart::builder()
-                                .header(header::ContentType::TEXT_HTML)
-                                .body(message_content),
-                        ),
-                )
-                .unwrap();
-            let credentials =
-                Credentials::new(SMTP_USERNAME.to_string(), SMTP_PASSWORD.to_string());
-
-            // Open a remote connection to the smtp sever
-            let mailer =
-                SmtpTransport::relay(&env::var("SMTP_HOST").expect("SMTP host not provided"))
-                    .unwrap()
-                    .credentials(credentials)
-                    .build();
-
-            // Send the email, if the mail is successful save it
-            match mailer.send(&email) {
-                Ok(_) => {
-                    let response_body: ApiResponse<()> = ApiResponse::<()> {
-                        success: true,
-                        message: String::from("Message successfully sent"),
-                        data: None,
-                    };
-                    //the response with ok status code and response body
-                    Ok((StatusCode::OK, Json(response_body)))
-                }
-                Err(error_message) => Err(ApiErrorResponse::ConflictError {
-                    message: error_message.to_string(),
-                }),
+            if !sent_client_response && !sent_owner_response {
+                return Err(ApiErrorResponse::ServerError {
+                    message: "An unexpected error was encountered, please try again later"
+                        .to_string(),
+                });
             }
-            //send the response back to the client application
-
-            // todo!()
-            // response
+            let response_body: ApiResponse<()> = ApiResponse::<()> {
+                success: true,
+                message: String::from("Message successfully sent"),
+                data: None,
+            };
+            //the response with ok status code and response body
+            Ok((StatusCode::OK, Json(response_body)))
         }
         Err(error_message) => Err(ApiErrorResponse::ServerError {
             message: error_message.to_string(),

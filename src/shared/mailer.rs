@@ -40,11 +40,11 @@ pub mod mailer_config {
 /// the email recipient name
 /// the email recipient address
 #[derive(Debug, Serialize, Deserialize)]
-pub struct EmailPayload {
-    pub recipient_name: &'static str,
-    pub recipient_address: &'static str,
+pub struct EmailPayload<'a> {
+    pub recipient_name: &'a str,
+    pub recipient_address: &'a str,
     pub email_content: String,
-    pub email_subject: &'static str,
+    pub email_subject: &'a str,
 }
 /// send email, accept the email body
 /// dispatch the emil
