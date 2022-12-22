@@ -1,2 +1,3 @@
 -- Add migration script here
-ALTER TABEL public.emails RENAME COLUMN folder email_folder;
+ALTER TABLE  public.emails
+RENAME folder TO email_folder;
