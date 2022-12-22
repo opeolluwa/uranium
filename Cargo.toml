@@ -3,7 +3,7 @@ authors = ["Adeoye Adefemi <adefemiadeoye@yahoo.com>"]
 description = "a compound of nitrogen  https://github.com/opeolluwa/nirogen"
 edition = "2021"
 name = "nitride"
-version = "0.1.0"
+version = "0.1.10"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
