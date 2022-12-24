@@ -297,13 +297,14 @@ pub async fn login(
                     // response
                     Ok((StatusCode::OK, Json(response)))
                 }
-                Err(error_message) => Err(ApiErrorResponse::BadRequest {
-                    message: error_message.to_string(),
+                Err(_) => Err(ApiErrorResponse::BadRequest {
+                    message: "Invalid username or password".to_string(),
                 }),
             }
         }
-        Err(message) => Err(ApiErrorResponse::ServerError {
-            message: message.to_string(), // message: String::from("an account with the provided email does not exist"),
+        Err(_) => Err(ApiErrorResponse::ServerError {
+            /* message: message.to_string(), */
+            message: "account does not exist".to_string(),
         }),
     }
 }
