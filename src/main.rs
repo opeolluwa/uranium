@@ -31,7 +31,7 @@ async fn main() {
     dotenv().ok();
     //try parsing database connection string
     let database_connection_string =
-        env::var("DATABASE_URL").expect("database ulr env is not provided");
+        env::var("DATABASE_URL").expect("database URL env variable is not provided");
 
     //database connection pool
     let database = PgPoolOptions::new()

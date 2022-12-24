@@ -26,7 +26,7 @@ static CURRENT_TIMESTAMP: Lazy<u64> = Lazy::new(|| {
 pub fn generate_otp() -> u32 {
     // Generate code with period and current timestamp
     let generated_otp = OTP.generate(OTP_VALIDITY, *CURRENT_TIMESTAMP).unwrap();
-    super::api_response::debug_print("the generated OPT is", &generated_otp);
+    super::api_response::debug_print("the generated OPT is", generated_otp);
     generated_otp
 }
 

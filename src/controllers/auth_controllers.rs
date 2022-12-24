@@ -42,7 +42,7 @@ pub async fn sign_up(
      * cat any error along the way
      */
     let id = Uuid::new_v4();
-    let hashed_password = bcrypt::hash(&payload.password.trim(), DEFAULT_COST).unwrap();
+    let hashed_password = bcrypt::hash(payload.password.trim(), DEFAULT_COST).unwrap();
     let new_user =  sqlx::query_as::<_, UserModel>(
         "INSERT INTO user_information (id, password, email, fullname) VALUES ($1, $2, $3, $4) ON CONFLICT (email) DO NOTHING RETURNING *",
     )

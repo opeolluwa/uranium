@@ -1,16 +1,12 @@
 use crate::models::emails::{EmailContext, EmailModel};
-use crate::shared::api_response::{ApiErrorResponse, ApiResponse, ApiSuccessResponse};
+use crate::shared::api_response::{
+    ApiErrorResponse, ApiResponse, ApiSuccessResponse, Pagination, ValidatedRequest,
+};
 use crate::shared::mailer::EmailPayload;
-use crate::shared::mailer::{
-    mailer_config::{FRONTEND_URL, SMTP_HOST, SMTP_PASSWORD, SMTP_USERNAME},
-    parse_email_template, send_email as mail_dispatcher,
-};
-use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
-use lettre::message::{header, MultiPart, SinglePart};
-use lettre::{
-    transport::smtp::authentication::Credentials,
-    {Message, SmtpTransport, Transport},
-};
+use crate::shared::mailer::{mailer_config::FRONTEND_URL, send_email as mail_dispatcher};
+use axum::extract::Query;
+use axum::{extract::Path, http::StatusCode, Extension, Json};
+use serde_json::{json, Value};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -22,54 +18,80 @@ use uuid::Uuid;
 /// receive the user email, subject, fullname and message
 /// call on lettre to dispatch the mail to the user
 pub async fn send_email(
-    Json(_payload): Json<EmailContext>,
-    Extension(_database): Extension<PgPool>,
-) -> impl IntoResponse {
-    let content = r#"
-    <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;">
-                            You recently requested to reset your password for your
-                            {{$data['product']}} account. Use the button below to
-                            reset it. <strong style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box;">This
-                              password reset is only valid for the next 24
-                              hours.</strong>
-                          </p>
-    "#;
-    let recipient_name = String::from("Adefemi");
-    let email = Message::builder()
-        .from("Nitride <opeolluwa@nitride.tld>".parse().unwrap())
-        .reply_to("Yuin <opeolluwa@gmail.com>".parse().unwrap())
-        .to("Hei <adefemiadeoye@yahoo.com>".parse().unwrap())
-        .subject("Happy new year")
-        .multipart(
-            MultiPart::alternative() // This is composed of two parts.
-                .singlepart(
-                    SinglePart::builder()
-                        .header(header::ContentType::TEXT_PLAIN)
-                        .body(String::from("Hello from Lettre! A mailer library for Rust")), // Every message should have a plain text fallback.
-                )
-                .singlepart(
-                    SinglePart::builder()
-                        .header(header::ContentType::TEXT_HTML)
-                        .body(parse_email_template(content.to_string(), recipient_name)),
-                ),
-        )
-        .unwrap();
+    Json(payload): Json<EmailContext>,
+    Extension(database): Extension<PgPool>,
+) -> Result<(StatusCode, Json<ApiResponse<()>>), ApiErrorResponse> {
+    //destructure the email fields from the  request payload
+    let EmailContext {
+        fullname: sender_name,
+        email: sender_email,
+        subject: email_subject,
+        message: email_body,
+        ..
+    } = &payload;
 
-    let credentials = Credentials::new(SMTP_USERNAME.to_string(), SMTP_PASSWORD.to_string());
+    //generate an  Id store the email in a database
+    let id = Uuid::new_v4();
+    let new_email =  sqlx::query_as::<_, EmailModel>(
+        "INSERT INTO emails (id, sender_name, sender_email, email_subject, email_body, folder) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+    )
 
-    // Open a remote connection to the smtp sever
-    let mailer = SmtpTransport::relay(&SMTP_HOST)
-        .unwrap()
-        .credentials(credentials)
-        .build();
+    .bind(Some(id))
+    .bind(sender_name)
+    .bind(sender_email)
+    .bind(email_subject)
+    .bind(email_body)
+    .bind("Sent")
+    .fetch_one(&database).await;
 
-    // Send the email
-    let res = match mailer.send(&email) {
-        Ok(_) => "Email sent successfully!".to_string(),
-        Err(e) => format!("Could not send email: {:?}", e),
+    //the auto response email content
+    let receiver_email_content = format!(
+        r#"
+    <!--email content ---->
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;margin-top:15px;margin-bottom:15px">
+    {email_body}        
+    </div>
+"#
+    );
+
+    // dispatch the email
+    let frontend_url: &str = &std::env::var("FRONTEND_URL")
+        .unwrap_or_else(|_| String::from("https://opeolluwa.verce.app"));
+    let receiver_email_subject = format!(" new email from {}", frontend_url);
+    let receiver_email_payload: EmailPayload = EmailPayload {
+        recipient_name: sender_name,
+        recipient_address: sender_email,
+        email_content: receiver_email_content,
+        email_subject: &receiver_email_subject,
     };
 
-    Json(res)
+    /*
+     * get the status of the received email
+     * if successful, send an auto responder to the sender
+     * if not return an error
+     */
+    match new_email {
+        Ok(_) => {
+            //handle exception
+            let sent_owner_response: bool = mail_dispatcher(receiver_email_payload);
+            if !sent_owner_response {
+                return Err(ApiErrorResponse::ServerError {
+                    message: "An unexpected error was encountered, please try again later"
+                        .to_string(),
+                });
+            }
+            let response_body: ApiResponse<()> = ApiResponse::<()> {
+                success: true,
+                message: String::from("Message successfully sent"),
+                data: None,
+            };
+            //the response with ok status code and response body
+            Ok((StatusCode::OK, Json(response_body)))
+        }
+        Err(error_message) => Err(ApiErrorResponse::ServerError {
+            message: error_message.to_string(),
+        }),
+    }
 }
 
 ///receive email being sent from the portfolio
@@ -94,10 +116,10 @@ pub async fn receive_email(
     )
 
     .bind(Some(id))
-    .bind(&sender_name)
+    .bind(sender_name)
     .bind(sender_email)
-    .bind(&email_subject)
-    .bind(&email_body)
+    .bind(email_subject)
+    .bind(email_body)
     .fetch_one(&database).await;
 
     //the auto response email content
@@ -113,10 +135,10 @@ pub async fn receive_email(
     );
     // dispatch the email
     let sender_email_payload: EmailPayload = EmailPayload {
-        recipient_name: &sender_name,
-        recipient_address: &sender_email,
+        recipient_name: sender_name,
+        recipient_address: sender_email,
         email_content: sender_email_content,
-        email_subject: &email_subject,
+        email_subject,
     };
 
     // the receiver email
@@ -183,8 +205,26 @@ pub async fn receive_email(
 /// send the message to the user
 pub async fn reply_email(
     Path(email_id): Path<Uuid>,
+    ValidatedRequest(payload): ValidatedRequest<EmailContext>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<EmailContext>>), ApiErrorResponse> {
+    //destructure the email fields from the  request payload
+    let EmailContext {
+        message: email_body,
+        ..
+    } = &payload;
+
+    //the email content
+    let receiver_email_content = format!(
+        r#"
+    <!--email content ---->
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;margin-top:15px;margin-bottom:15px">
+    {email_body}        
+    </div>
+"#
+    );
+
+    // the fetched email which we want to reply to
     let fetched_email = sqlx::query_as::<_, EmailContext>("SELECT * FROM emails WHERE id = $1")
         .bind(Some(email_id))
         .fetch_one(&database)
@@ -194,11 +234,27 @@ pub async fn reply_email(
     match fetched_email {
         // if email is found, return the mail
         Ok(email) => {
+            let email_payload: EmailPayload = EmailPayload {
+                recipient_name: &email.fullname,
+                recipient_address: &email.email,
+                email_content: receiver_email_content,
+                email_subject: &("Reply: ".to_owned() + &email.subject),
+            };
+
+            //handle exception
+            let sent_owner_response: bool = mail_dispatcher(email_payload);
+            if !sent_owner_response {
+                return Err(ApiErrorResponse::ServerError {
+                    message: "An unexpected error was encountered, please try again later"
+                        .to_string(),
+                });
+            }
+
             //build up the response
             let ok_response_body: ApiSuccessResponse<EmailContext> = ApiSuccessResponse {
                 success: true,
-                message: String::from("email successfully retrieved "),
-                data: Some(email),
+                message: String::from("email successfully sent "),
+                data: None,
             };
 
             //return the response body
@@ -287,19 +343,21 @@ pub async fn star_email(
     Path(email_id): Path<Uuid>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<EmailContext>>), ApiErrorResponse> {
-    let fetched_email = sqlx::query_as::<_, EmailContext>("SELECT * FROM emails WHERE id = $1")
-        .bind(Some(email_id))
-        .fetch_one(&database)
-        .await;
+    let starred_email =
+        sqlx::query_as::<_, EmailContext>("UPDATE emails SET is_starred = $1 WHERE id = $2")
+            .bind(true)
+            .bind(Some(email_id))
+            .fetch_one(&database)
+            .await;
 
     //return the fetched email
-    match fetched_email {
+    match starred_email {
         // if email is found, return the mail
         Ok(email) => {
             //build up the response
             let ok_response_body: ApiSuccessResponse<EmailContext> = ApiSuccessResponse {
                 success: true,
-                message: String::from("email successfully retrieved "),
+                message: String::from("email successfully starred "),
                 data: Some(email),
             };
 
@@ -312,4 +370,48 @@ pub async fn star_email(
             message: error_message.to_string(),
         }),
     }
+}
+
+///get all emails by pagination
+/// default to default pagination config
+pub async fn get_all_emails(
+    pagination: Option<Query<Pagination>>,
+    Extension(database): Extension<PgPool>,
+) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
+    // try and get the quey params or deflect to default
+    // let pagination_params = query_params;
+    let Query(pagination) = pagination.unwrap_or_default();
+    let Pagination {
+        page: current_page,
+        no_of_rows,
+    } = &pagination;
+    let limit = (current_page - 1) * no_of_rows;
+
+    //get the emails from the database
+    let fetched_emails = sqlx::query_as::<_, EmailModel>(
+        "SELECT * FROM emails ORDER BY DESC LIMIT $1 OFFSET $2",
+    )
+    .bind(no_of_rows)
+    .bind(limit)
+    .fetch_all(&database)
+    .await.ok();
+
+    let Some(fetched_email_array) = fetched_emails else {
+        return Err(ApiErrorResponse::NotFound {
+            message: "Error fetching emails".to_string(),
+        })
+    };
+
+    //build the  body
+    let response_body: ApiSuccessResponse<Value> = ApiSuccessResponse {
+        success: true,
+        message: String::from("notes successfully fetched"),
+        data: Some(json!({
+        "emails": fetched_email_array,
+        "currentPage" : &pagination.page.to_string(),
+        "noOfRows":&pagination.no_of_rows.to_string()
+        })),
+    };
+    //return the response with 200 status code
+    Ok((StatusCode::OK, Json(response_body)))
 }

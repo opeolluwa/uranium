@@ -108,7 +108,7 @@ pub fn set_jtw_exp(exp: u64) -> u64 {
         .duration_since(std::time::UNIX_EPOCH)
         .expect("something went wrong");
     //accept the exp, convert it to seconds
-    let exp_minutes_to_second = (exp as u64) * 60;
+    let exp_minutes_to_second = (exp ) * 60;
     // return the token expiration as the summation of current unix epoch elapsed time
     let hours_from_now =
         unix_epoch_elapsed_time + std::time::Duration::from_secs(exp_minutes_to_second);
