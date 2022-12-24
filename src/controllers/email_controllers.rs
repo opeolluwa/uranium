@@ -389,7 +389,7 @@ pub async fn get_all_emails(
 
     //get the emails from the database
     let fetched_emails = sqlx::query_as::<_, EmailModel>(
-        "SELECT * FROM emails ORDER BY DESC LIMIT $1 OFFSET $2",
+        "SELECT * FROM emails ORDER BY date_sent DESC LIMIT $1 OFFSET $2",
     )
     .bind(no_of_rows)
     .bind(limit)

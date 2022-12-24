@@ -173,6 +173,7 @@ pub async fn get_all_notes(
     .fetch_all(&database)
     .await;
 
+    //use if let
     match fetched_notes {
         Ok(note_array) => {
             //build the Todo body
