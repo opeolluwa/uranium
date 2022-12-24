@@ -1,4 +1,4 @@
-use crate::models::emails::{EmailContext, EmailModel};
+use crate::models::emails::{EmailContext, EmailModel, EmailFolder};
 use crate::shared::api_response::{
     ApiErrorResponse, ApiResponse, ApiSuccessResponse, Pagination, ValidatedRequest,
 };
@@ -44,7 +44,7 @@ pub async fn get_all_emails(
     //build the  body
     let response_body: ApiSuccessResponse<Value> = ApiSuccessResponse {
         success: true,
-        message: String::from("notes successfully fetched"),
+        message: String::from("email successfully fetched"),
         data: Some(json!({
         "emails": fetched_email_array,
         "currentPage" : &pagination.page.to_string(),
@@ -260,6 +260,7 @@ pub async fn reply_email(
         r#"
     <!--email content ---->
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; font-size: 16px; line-height: 1.5em; margin-top: 0; text-align: left;margin-top:15px;margin-bottom:15px">
+    <hr style="margin:10px 0"></hr>
     {email_body}        
     </div>
 "#
@@ -315,32 +316,28 @@ pub async fn reply_email(
 pub async fn delete_email(
     Path(email_id): Path<Uuid>,
     Extension(database): Extension<PgPool>,
-) -> Result<(StatusCode, Json<ApiSuccessResponse<EmailContext>>), ApiErrorResponse> {
-    let fetched_email = sqlx::query_as::<_, EmailContext>("SELECT * FROM emails WHERE id = $1")
-        .bind(Some(email_id))
-        .fetch_one(&database)
-        .await;
+) -> Result<(StatusCode, Json<ApiSuccessResponse<EmailModel>>), ApiErrorResponse> {
+    let deleted_email =
+        sqlx::query_as::<_, EmailModel>("UPDATE emails SET folder = $1 WHERE id = $2 RETURNING *")
+            .bind(EmailFolder::Trash)
+            .bind(Some(email_id))
+            .fetch_one(&database)
+            .await
+            .ok();
 
-    //return the fetched email
-    match fetched_email {
-        // if email is found, return the mail
-        Ok(email) => {
-            //build up the response
-            let ok_response_body: ApiSuccessResponse<EmailContext> = ApiSuccessResponse {
-                success: true,
-                message: String::from("email successfully retrieved "),
-                data: Some(email),
-            };
+    //handle exception
+    let Some(email) =deleted_email else {
+        return Err(ApiErrorResponse::NotFound { message: "email not found".to_string() });
+    };
 
-            //return the response body
-            Ok((StatusCode::OK, Json(ok_response_body)))
-            // todo!()
-        }
-        //return a not found error
-        Err(error_message) => Err(ApiErrorResponse::NotFound {
-            message: error_message.to_string(),
-        }),
-    }
+    let response_body: ApiSuccessResponse<EmailModel> = ApiSuccessResponse {
+        success: true,
+        message: String::from("email successfully starred "),
+        data: Some(email),
+    };
+
+    //return the response body
+    Ok((StatusCode::OK, Json(response_body)))
 }
 
 ///fetch email
@@ -404,6 +401,39 @@ pub async fn star_email(
     let response_body: ApiSuccessResponse<EmailModel> = ApiSuccessResponse {
         success: true,
         message: String::from("email successfully starred "),
+        data: Some(email),
+    };
+
+    //return the response body
+    Ok((StatusCode::OK, Json(response_body)))
+}
+
+///move email to archive
+/// receive the email id as path variable
+/// find the email
+/// star it
+/// return the update or error
+pub async fn archive_email(
+    Path(email_id): Path<Uuid>,
+    Extension(database): Extension<PgPool>,
+) -> Result<(StatusCode, Json<ApiSuccessResponse<EmailModel>>), ApiErrorResponse> {
+    let starred_email = sqlx::query_as::<_, EmailModel>(
+        "UPDATE emails SET is_archived = $1 WHERE id = $2 RETURNING *",
+    )
+    .bind(true)
+    .bind(Some(email_id))
+    .fetch_one(&database)
+    .await
+    .ok();
+
+    //handle exception
+    let Some(email) = starred_email else {
+        return Err(ApiErrorResponse::NotFound { message: "email not found".to_string() });
+    };
+
+    let response_body: ApiSuccessResponse<EmailModel> = ApiSuccessResponse {
+        success: true,
+        message: String::from("email successfully archived"),
         data: Some(email),
     };
 
