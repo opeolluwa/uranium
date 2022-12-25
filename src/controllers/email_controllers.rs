@@ -309,6 +309,42 @@ pub async fn reply_email(
         }),
     }
 }
+
+
+///unstRstar email
+/// receive the email id as path variable
+/// find the email
+/// star it
+/// return the update or error
+pub async fn un_star_email(
+    Path(email_id): Path<Uuid>,
+    Extension(database): Extension<PgPool>,
+) -> Result<(StatusCode, Json<ApiSuccessResponse<EmailModel>>), ApiErrorResponse> {
+    let starred_email = sqlx::query_as::<_, EmailModel>(
+        "UPDATE emails SET is_starred = $1 WHERE id = $2 RETURNING *",
+    )
+    .bind(false)
+    .bind(Some(email_id))
+    .fetch_one(&database)
+    .await
+    .ok();
+
+    //handle exception
+    let Some(email) = starred_email else {
+        return Err(ApiErrorResponse::NotFound { message: "email not found".to_string() });
+    };
+
+    let response_body: ApiSuccessResponse<EmailModel> = ApiSuccessResponse {
+        success: true,
+        message: String::from("email successfully un-starred "),
+        data: Some(email),
+    };
+
+    //return the response body
+    Ok((StatusCode::OK, Json(response_body)))
+}
+
+
 ///delete email
 ///receive the id of the mail to delete
 ///exec the query on the database
@@ -332,7 +368,7 @@ pub async fn delete_email(
 
     let response_body: ApiSuccessResponse<EmailModel> = ApiSuccessResponse {
         success: true,
-        message: String::from("email successfully starred "),
+        message: String::from("email successfully deleted"),
         data: Some(email),
     };
 
@@ -344,11 +380,11 @@ pub async fn delete_email(
 /// retrieve an email from the data store
 /// if the email was found, return the fond email else,
 /// return a not found error
-pub async fn fetch_email(
+pub async fn get_email_by_id(
     Path(email_id): Path<Uuid>,
     Extension(database): Extension<PgPool>,
-) -> Result<(StatusCode, Json<ApiSuccessResponse<EmailContext>>), ApiErrorResponse> {
-    let fetched_email = sqlx::query_as::<_, EmailContext>("SELECT * FROM emails WHERE id = $1")
+) -> Result<(StatusCode, Json<ApiSuccessResponse<EmailModel>>), ApiErrorResponse> {
+    let fetched_email = sqlx::query_as::<_, EmailModel>("SELECT * FROM emails WHERE id = $1")
         .bind(Some(email_id))
         .fetch_one(&database)
         .await;
@@ -358,7 +394,7 @@ pub async fn fetch_email(
         // if email is found, return the mail
         Ok(email) => {
             //build up the response
-            let ok_response_body: ApiSuccessResponse<EmailContext> = ApiSuccessResponse {
+            let ok_response_body: ApiSuccessResponse<EmailModel> = ApiSuccessResponse {
                 success: true,
                 message: String::from("email successfully retrieved "),
                 data: Some(email),
@@ -417,7 +453,7 @@ pub async fn archive_email(
     Path(email_id): Path<Uuid>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<EmailModel>>), ApiErrorResponse> {
-    let starred_email = sqlx::query_as::<_, EmailModel>(
+    let archive_email = sqlx::query_as::<_, EmailModel>(
         "UPDATE emails SET is_archived = $1 WHERE id = $2 RETURNING *",
     )
     .bind(true)
@@ -427,7 +463,7 @@ pub async fn archive_email(
     .ok();
 
     //handle exception
-    let Some(email) = starred_email else {
+    let Some(email) = archive_email else {
         return Err(ApiErrorResponse::NotFound { message: "email not found".to_string() });
     };
 
