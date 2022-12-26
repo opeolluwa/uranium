@@ -50,84 +50,83 @@ pub async fn sign_up(
     .bind(hashed_password)
     .bind(payload.email.trim())
     .bind(payload.fullname.unwrap().trim())
-    .fetch_one(&database).await;
+    .fetch_one(&database).await.ok();
 
-    // error handling
-    match new_user {
-        Ok(result) => {
-            let otp = generate_otp();
-            let email_content = format!(
-                r#"
-             <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; line-height: 1.5em; margin-top: 0; text-align: left;">
-                            
-           
-            We are glad to have you on board with us. To complete your account set up, please use the OTP
-           
-           <h3 style="text-align:center">{otp}</h3>
-           
-           <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box;">This OTP is only valid for the next 5 minutes. If you did not request this OTP, please ignore this message.</p>
-            </p>
-            "#,
-            );
-
-            /*
-            destructure the user object,
-            encrypt the data as JWt, send email to the user
-            send the token back to the user as success response
-            if error send the error response
-            */
-            let UserModel {
-                id,
-                email,
-                fullname,
-                ..
-            } = &result;
-            // let fullname = &new_user.fullname.unwrap();
-
-            let jwt_payload = JwtClaims {
-                id: id.to_string(),
-                email: email.as_ref().unwrap().to_string(),
-                fullname: fullname.as_ref().unwrap().to_string(),
-                exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
-            };
-            //fetch the JWT secret
-            /*   let jwt_secret = crate::shared::jwt_schema::jwt_secret(); */
-            //use a custom header
-            let jwt_header = Header {
-                alg: Algorithm::HS512,
-                ..Default::default()
-            };
-
-            //build the user jwt token
-            let token = encode(&jwt_header, &jwt_payload, &JWT_SECRET.encoding).ok();
-
-            // send email to user
-            let email_payload: EmailPayload = EmailPayload {
-                recipient_name: "adefemi",
-                recipient_address: "adefemiadeoye@yahoo.com",
-                email_content,
-                email_subject: "new account",
-            };
-            send_email(email_payload);
-
-            //build the response
-            let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
-                success: true,
-                message: String::from("Please verify OTP send to your email to continue"),
-                data: Some(json!({
-                    "user":UserModel { ..result },
-                    "token":token,
-                    "tokenType":"Bearer".to_string()
-                })),
-            };
-            //return the response
-            Ok((StatusCode::CREATED, Json(response)))
-        }
-        Err(_) => Err(ApiErrorResponse::ConflictError {
+    // if error such as conflicting record, return the error error quickly
+    let Some(user) = new_user else{
+      return  Err(ApiErrorResponse::ConflictError {
             message: String::from("Email already exists"),
-        }),
-    }
+        }); 
+    };
+
+    // generate OTP and parse the email template
+    let otp = generate_otp();
+    let email_content = format!(
+        r#"
+        <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; line-height: 1.5em; margin-top: 0; text-align: left;">
+                        
+        We are glad to have you on board with us. To complete your account set up, please use the OTP
+           
+        <h3 style="text-align:center">{otp}</h3>
+           
+        <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box;">This OTP is only valid for the next 5 minutes. If you did not request this OTP, please ignore this message.</p>
+        </p>
+        "#,
+    );
+
+    /*
+    destructure the user object,
+    encrypt the data as JWt, send email to the user
+    send the token back to the user as success response
+    if error send the error response
+    */
+    let UserModel {
+        id,
+        email,
+        fullname,
+        ..
+    } = &user;
+    // let fullname = &new_user.fullname.unwrap();
+
+    let jwt_payload = JwtClaims {
+        id: id.to_string(),
+        email: email.as_ref().unwrap().to_string(),
+        fullname: fullname.as_ref().unwrap().to_string(),
+        exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
+    };
+
+    //fetch the JWT secret
+    let jwt_header = Header {
+        alg: Algorithm::HS512,
+        ..Default::default()
+    };
+
+    //build the user jwt token
+    let token = encode(&jwt_header, &jwt_payload, &JWT_SECRET.encoding).ok();
+
+    // send email to user
+    let email_payload: EmailPayload = EmailPayload {
+        recipient_name: &user.fullname.as_ref().unwrap(),
+        recipient_address:&user.email.as_ref().unwrap(),
+        email_content,
+        email_subject: "new account",
+    };
+    send_email(email_payload);
+
+    //build the response
+    let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
+        success: true,
+        message: String::from("Please verify OTP send to your email to continue"),
+        data: Some(json!({
+            "user":UserModel { ..user },
+            "token":token,
+            "tokenType":"Bearer".to_string()
+        })),
+    };
+    //return the response
+    Ok((StatusCode::CREATED, Json(response)))
 }
+
 ///verify email
 /// to verify email
 /// retrieve the bearer token fo=rom the auth header,
@@ -257,6 +256,7 @@ pub async fn login(
                         });
                     }
 
+                    
                     // destructure the user if the password is correct
                     let UserModel {
                         id,

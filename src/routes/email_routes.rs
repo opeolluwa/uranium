@@ -1,5 +1,5 @@
 use crate::controllers::email_controllers::{
-    archive_email, delete_email, get_email_by_id, get_all_emails, receive_email, reply_email,
+    archive_email, delete_email, get_all_emails, get_email_by_id, receive_email, reply_email,
     send_email, star_email, un_star_email,
 };
 use axum::{

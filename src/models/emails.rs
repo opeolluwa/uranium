@@ -25,7 +25,7 @@ pub enum EmailFolder {
     Important,
     Trash,
     Custom,
-    Sent
+    Sent,
 }
 
 /// email read status
