@@ -1,4 +1,4 @@
-use crate::models::emails::{EmailContext, EmailModel, EmailFolder};
+use crate::models::emails::{EmailContext, EmailFolder, EmailModel};
 use crate::shared::api_response::{
     ApiErrorResponse, ApiResponse, ApiSuccessResponse, Pagination, ValidatedRequest,
 };
@@ -310,7 +310,6 @@ pub async fn reply_email(
     }
 }
 
-
 ///unstRstar email
 /// receive the email id as path variable
 /// find the email
@@ -343,7 +342,6 @@ pub async fn un_star_email(
     //return the response body
     Ok((StatusCode::OK, Json(response_body)))
 }
-
 
 ///delete email
 ///receive the id of the mail to delete
