@@ -1,10 +1,7 @@
-# nitride
-![nitride](./nitride.png)
+# RACOON
+![racoon](./racoon.png)
 
-An authentication server and Admin Dashboard  [Vue.js](https://vuejs.org/), [TypeScript](https://www.typescriptlang.org/), [Rust](https://www.rust-lang.org/), and [PostgreSQL](https://www.postgresql.org/).
-
-Visit [this Repository](https://github.com/opeolluwa/nitride-ui) to See the User Interface source code.
-
+Authentication and Authorization Server for Microservices Architecture
 
 ## Requirement
 The following are required to run the application in development or in production environment
@@ -20,17 +17,9 @@ To run the application in development mode, follow the steps below
 2. copy and populate .env.example to .env `cp .env.example .env`, paying attention to the `SECRET` and `DATABASE_URL` variables
 3. Run `sqlx database create` to create the database from the specified `DATABASE_URL` Use `sqlx database drop` to revert the change
 4. Run `sqlx migrate run` to run the migrations
-5. use `sqlx migrate add <migration_name>` to add a new migration
+5. use `SQL migrate add <migration_name>` to add a new migration
 
 
 ##  Documentation 
 -  [API Documentation](https://documenter.getpostman.com/view/22658417/2s83zgv5nW) 
 - [Application (logic) Documentation](https://opeolluwa.github.io/nitride/) 
-
-
-## Demo 
-The following credentials are set up for the [demo application](https://nitride.onrender.com/)
-- EMAIL:  `guest@mailer.com`
-- PASSWORD:  `guest`
-- FULLNAME:  `Guest Username`,
-- USERNAME:  `guest`
