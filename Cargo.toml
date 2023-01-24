@@ -1,9 +1,9 @@
 [package]
 authors = ["Adeoye Adefemi <adefemiadeoye@yahoo.com>"]
-description = "a compound of nitrogen  https://github.com/opeolluwa/nirogen"
+description = "An Authentication, Authorization and Identity Management system for microservices  https://github.com/opeolluwa/racoon"
 edition = "2021"
-name = "nitride"
-version = "0.1.10"
+name = "racoon"
+version = "0.1"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
