@@ -1,0 +1,7 @@
+[book]
+authors = ["Adeoye Adefemi Opeoluwa <adefemiadeoye@yahoo.com>"]
+language = "en"
+multilingual = false
+src = "docs"
+title = "Racoon"
+description = "Racoon is an enterprise scale identity management system that address security challenges of microservices"
