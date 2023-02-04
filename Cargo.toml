@@ -7,7 +7,6 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
 axum = { version = "0.5.16", features = ["headers", "json", "ws"] }
 bcrypt = "0.13.0"
 chrono = { version = "0.4.22", features = ["serde"] }
@@ -32,3 +31,4 @@ thiserror = "1.0.29"
 otp-rs = "0.1.1"
 async-session = "3.0.0"
 console = "0.15.2"
+anyhow = "1.0.68"

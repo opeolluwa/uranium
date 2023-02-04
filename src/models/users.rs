@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use std::collections::HashMap;
 use validator::Validate;
-
+use sqlx::types::chrono::NaiveDateTime;
 
 /// define the user data structure that shall serve as the basis of serial
 /// implement debug, serialize, deserializing and #[derive(sqlx::FromRow to make the struct operable 
@@ -25,8 +25,6 @@ pub struct UserModel {
     pub username: Option<String>,
     ///the user email
     pub email: Option<String>,
-    /// the user username
-    pub username: Option<String>,
     /// the user account status
     pub account_status: Option<AccountStatus>,
     /// the user date of birthday
@@ -37,8 +35,8 @@ pub struct UserModel {
     pub avatar: Option<String>,
     /// the String data type is used in storing phone number to allow storing it with country code 
     /// example +44632900, +2342940474
-    pub phone_number : Option<String>
-    ///the user password, 
+    pub phone_number : Option<String>,
+    /// the user password, 
     /// in deserializing the user data,
     ///  don't return the password when fetching the user data
     #[serde(skip_serializing)]
