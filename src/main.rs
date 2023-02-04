@@ -30,8 +30,9 @@ async fn main() {
     // parse the .env file in development
     dotenv().ok();
     //try parsing database connection string
+    //TODO" add graceful shutdown
     let database_connection_string =
-        env::var("DATABASE_URL").expect("database URL env variable is not provided");
+        env::var("DATABASE_URL").expect("database URL is not provided in env variable");
 
     //database connection pool
     let database = PgPoolOptions::new()
@@ -41,14 +42,7 @@ async fn main() {
         .await
         .expect("Could not connect to database ");
     println!("Successfully connected to database");
-    //execute migration
-    // This embeds database migrations in the application binary so we can ensure the database
-    // is migrated correctly on startup
-    /*   sqlx::migrate!()
-           .run(&database)
-           .await
-           .expect("already exec db migrations");
-    */
+
     //static file mounting
     let assets_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("views");
     let static_files_service = get_service(
@@ -57,6 +51,7 @@ async fn main() {
     .handle_error(|error: std::io::Error| async move {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
+            //TODO" add graceful shutdown
             format!("Unhandled internal error: {}", error),
         )
     });

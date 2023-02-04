@@ -107,7 +107,7 @@ pub async fn sign_up(
     // send email to user
     let email_payload: EmailPayload = EmailPayload {
         recipient_name: &user.fullname.as_ref().unwrap(),
-        recipient_address:&user.email.as_ref().unwrap(),
+        recipient_address: &user.email.as_ref().unwrap(),
         email_content,
         email_subject: "new account",
     };
@@ -256,7 +256,6 @@ pub async fn login(
                         });
                     }
 
-                    
                     // destructure the user if the password is correct
                     let UserModel {
                         id,

@@ -27,7 +27,7 @@ The following are required to run the application in development.
 To run the application in development mode, follow the steps below
 1. clone Repository
 2. copy and populate .env.example to .env `cp .env.example .env`, paying attention to the `SECRET` and `DATABASE_URL` variables
-3. Run `sqlx database create` to create the database from the specified `DATABASE_URL` Use `sqlx database drop` to revert the change
+3. Run `sqlx database create` to create the database from the specified `DATABASE_URL` Use `SQL database drop` to revert the change
 4. Run `SQL migrate run` to run the migrations
 5. use `SQL migrate add <migration_name>` to add a new migration
 
@@ -35,3 +35,6 @@ To run the application in development mode, follow the steps below
 ##  Documentation 
 -  [API Documentation](https://documenter.getpostman.com/view/22658417/2s83zgv5nW) 
 - [Application (logic) Documentation](https://opeolluwa.github.io/nitride/) 
+
+## License 
+The application is subjected to [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
