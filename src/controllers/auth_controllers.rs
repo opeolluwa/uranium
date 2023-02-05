@@ -59,13 +59,14 @@ pub async fn sign_up(
 
     // if error such as conflicting record, return the error error quickly
     let Some(user) = new_user else{
-      return  Err(ApiErrorResponse::ConflictError {
-            message: String::from("Email already exists"),
+      return  Err(ApiErrorResponse::ServerError{
+            message: String::from("An unexpected error occurred"),
         }); 
     };
 
     // generate OTP and parse the email template
     let otp = generate_otp();
+    println!("{otp}");
     let email_content = format!(
         r#"
         <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; line-height: 1.5em; margin-top: 0; text-align: left;">

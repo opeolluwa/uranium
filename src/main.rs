@@ -6,7 +6,7 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use ormlite::model::*;
+use core::time::Duration;
 
 mod controllers;
 mod models;
@@ -23,15 +23,11 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-// sqlx::migrate!().run(<&your_pool OR &mut your_connection>).await?;
-    // parse the .env file in development
     dotenv().ok();
     //try parsing database connection string
     //TODO" add graceful shutdown
     let database_connection_string =
         env::var("DATABASE_URL").expect("database URL is not provided in env variable");
-
-    //database connection pool
     let database = PgPoolOptions::new()
         .max_connections(5)
         // .connect_timeout(Duration::from_secs(4))
@@ -49,7 +45,7 @@ async fn main() {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             //TODO" add graceful shutdown
-            format!("Unhandled internal error: {}", error),
+            format!("Unhandled internal error: {error}"),
         )
     });
 
@@ -89,28 +85,22 @@ async fn main() {
          */
         Ok(env) => {
             if env == String::from("production").trim() {
-                //return the placeholder address and the computed port
                 SocketAddr::from(([0, 0, 0, 0], port))
             } else {
-                //return localhost IP address
                 SocketAddr::from(([127, 0, 0, 1], port))
             }
         }
 
         _ =>
-        /*
-         * return the localhost IP address as a fall through
-         * if the address cannot be found, or badly constructed
-         */
+    
+         // return the localhost IP address as a fall through
+         //if the address cannot be found, or badly constructed
+    
         {
             SocketAddr::from(([127, 0, 0, 1], port))
         }
     };
     println!("Ignition started on http://{}", &ip_address);
-    /*  let otp = shared::otp_handler::generate_otp();
-       let is_valid_otp = shared::otp_handler::validate_otp(&500256);
-       println!("{otp}, is valid otp {is_valid_otp}");
-    */
     //launch the server
     axum::Server::bind(&ip_address)
         .serve(app.into_make_service())

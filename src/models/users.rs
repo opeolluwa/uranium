@@ -33,41 +33,22 @@ pub enum UserGender {
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct UserModel {
-    ///the user uniques identifier
     pub id: Uuid,
-    /// the user firstname
     pub firstname: Option<String>,
-    /// the user lastname
     pub lastname: Option<String>,
-    /// the user middle name
     pub middlename: Option<String>,
-    ///the user fullname
     pub fullname: Option<String>,
-    /// the user name
     pub username: Option<String>,
-    ///the user email
     pub email: Option<String>,
-    /// the user account status
     pub account_status: Option<AccountStatus>,
-    /// the user date of birthday
     pub date_of_birth: Option<NaiveDateTime>,
-    /// the user gender
     pub gender :Option<UserGender>,
-    /// the user profile picture URL
     pub avatar: Option<String>,
-    /// the String data type is used in storing phone number to allow storing it with country code 
-    /// example +44632900, +2342940474
     pub phone_number : Option<String>,
-    /// the user password, 
-    /// in deserializing the user data,
-    ///  don't return the password when fetching the user data
     #[serde(skip_serializing)]
     pub password: Option<String>,
-    /// the date the account was created 
     pub created_at :Option<NaiveDateTime>,
-    /// the last date the account information was updates 
     pub updated_at : Option<NaiveDateTime>,
-    /// the last login  date 
     pub last_available_at : Option<NaiveDateTime>
 }
 
@@ -77,10 +58,8 @@ pub struct UserModel {
 /// to be used for making login and sign up requests
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate)]
 pub struct UserAuthCredentials {
-    //the user email
     #[validate(email)]
     pub email: String,
-    ///the user password
     #[validate(length(min = 8))]
     pub password: String,
     /// the user fullname set to optional to allow use of struct for bothe login and sign up
@@ -91,14 +70,10 @@ pub struct UserAuthCredentials {
 /// it shall be responsible for providing the user information such as in JWT encryption
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate)]
 pub struct UserInformation {
-    /// the user email
     pub email: String,
-    /// the user password
     #[serde(skip_serializing)]
     pub password: String,
-    /// the user unique username
     pub username: Option<String>,
-    /// the user fullname
     // #[validate(length(min = 1 "cannot be empty"))]
     pub fullname: Option<String>,
 }

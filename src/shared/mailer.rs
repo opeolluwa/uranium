@@ -105,7 +105,7 @@ pub fn send_email(payload: EmailPayload) -> bool {
     match mailer.send(&email) {
         Ok(_) => true,
         Err(err) => {
-            println!("{:#?}", err);
+            println!("{err:#?}");
             false
         }
     }
