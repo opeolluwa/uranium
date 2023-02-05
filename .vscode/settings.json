@@ -4,9 +4,11 @@
         "bson",
         "chrono",
         "dotenv",
+        "Iden",
         "jsonwebtoken",
         "lettre",
         "middlename",
+        "ormlite",
         "singlepart",
         "smaple",
         "sqlx"
