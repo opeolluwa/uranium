@@ -6,43 +6,6 @@ use std::collections::HashMap;
 use validator::Validate;
 use sqlx::types::chrono::NaiveDateTime;
 
-/// define the user data structure that shall serve as the basis of serial
-/// implement debug, serialize, deserializing and #[derive(sqlx::FromRow to make the struct operable 
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct UserModel {
-    ///the user uniques identifier
-    pub id: Uuid,
-    /// the user firstname
-    pub firstname: Option<String>,
-    /// the user lastname
-    pub lastname: Option<String>,
-    /// the user middle name
-    pub middlename: Option<String>,
-    ///the user fullname
-    pub fullname: Option<String>,
-    /// the user name
-    pub username: Option<String>,
-    ///the user email
-    pub email: Option<String>,
-    /// the user account status
-    pub account_status: Option<AccountStatus>,
-    /// the user date of birthday
-    pub birthday: Option<NaiveDateTime>,
-    /// the user gender
-    pub gender :Option<UserGender>,
-    /// the user profile picture URL
-    pub avatar: Option<String>,
-    /// the String data type is used in storing phone number to allow storing it with country code 
-    /// example +44632900, +2342940474
-    pub phone_number : Option<String>,
-    /// the user password, 
-    /// in deserializing the user data,
-    ///  don't return the password when fetching the user data
-    #[serde(skip_serializing)]
-    pub password: Option<String>,
-}
-
 /// an enum stating the user current account status
 /// the variants are active, inactive, Suspended and Deactivated. The account status is essential especially for access control and authorization
 #[derive(sqlx::Type, Debug, Serialize, Deserialize, PartialEq, Clone, Copy)]
@@ -65,6 +28,50 @@ pub enum UserGender {
    Female,
    Unspecified
 }
+/// define the user data structure that shall serve as the basis of serial
+/// implement debug, serialize, deserializing and #[derive(sqlx::FromRow to make the struct operable 
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct UserModel {
+    ///the user uniques identifier
+    pub id: Uuid,
+    /// the user firstname
+    pub firstname: Option<String>,
+    /// the user lastname
+    pub lastname: Option<String>,
+    /// the user middle name
+    pub middlename: Option<String>,
+    ///the user fullname
+    pub fullname: Option<String>,
+    /// the user name
+    pub username: Option<String>,
+    ///the user email
+    pub email: Option<String>,
+    /// the user account status
+    pub account_status: Option<AccountStatus>,
+    /// the user date of birthday
+    pub date_of_birth: Option<NaiveDateTime>,
+    /// the user gender
+    pub gender :Option<UserGender>,
+    /// the user profile picture URL
+    pub avatar: Option<String>,
+    /// the String data type is used in storing phone number to allow storing it with country code 
+    /// example +44632900, +2342940474
+    pub phone_number : Option<String>,
+    /// the user password, 
+    /// in deserializing the user data,
+    ///  don't return the password when fetching the user data
+    #[serde(skip_serializing)]
+    pub password: Option<String>,
+    /// the date the account was created 
+    pub created_at :Option<NaiveDateTime>,
+    /// the last date the account information was updates 
+    pub updated_at : Option<NaiveDateTime>,
+    /// the last login  date 
+    pub last_available_at : Option<NaiveDateTime>
+}
+
+
 
 ///user authorization information
 /// to be used for making login and sign up requests

@@ -23,6 +23,7 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+// sqlx::migrate!().run(<&your_pool OR &mut your_connection>).await?;
     // parse the .env file in development
     dotenv().ok();
     //try parsing database connection string
