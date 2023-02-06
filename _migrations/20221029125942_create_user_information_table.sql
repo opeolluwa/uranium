@@ -12,3 +12,5 @@ CREATE TABLE public.user_information (
     account_status account_status DEFAULT 'inactive',
     avatar TEXT 
 );
+
+

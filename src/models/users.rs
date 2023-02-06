@@ -1,47 +1,10 @@
 use super::emails::EmailModel;
 use crate::shared::api_response::EnumerateFields;
 use serde::{Deserialize, Serialize};
+use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 use std::collections::HashMap;
 use validator::Validate;
-use sqlx::types::chrono::NaiveDateTime;
-
-/// define the user data structure that shall serve as the basis of serial
-/// implement debug, serialize, deserializing and #[derive(sqlx::FromRow to make the struct operable 
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct UserModel {
-    ///the user uniques identifier
-    pub id: Uuid,
-    /// the user firstname
-    pub firstname: Option<String>,
-    /// the user lastname
-    pub lastname: Option<String>,
-    /// the user middle name
-    pub middlename: Option<String>,
-    ///the user fullname
-    pub fullname: Option<String>,
-    /// the user name
-    pub username: Option<String>,
-    ///the user email
-    pub email: Option<String>,
-    /// the user account status
-    pub account_status: Option<AccountStatus>,
-    /// the user date of birthday
-    pub birthday: Option<NaiveDateTime>,
-    /// the user gender
-    pub gender :Option<UserGender>,
-    /// the user profile picture URL
-    pub avatar: Option<String>,
-    /// the String data type is used in storing phone number to allow storing it with country code 
-    /// example +44632900, +2342940474
-    pub phone_number : Option<String>,
-    /// the user password, 
-    /// in deserializing the user data,
-    ///  don't return the password when fetching the user data
-    #[serde(skip_serializing)]
-    pub password: Option<String>,
-}
 
 /// an enum stating the user current account status
 /// the variants are active, inactive, Suspended and Deactivated. The account status is essential especially for access control and authorization
@@ -60,20 +23,41 @@ pub enum AccountStatus {
 #[sqlx(type_name = "gender")] // only for PostgreSQL to match a type definition
 #[sqlx(rename_all = "lowercase")]
 pub enum UserGender {
-   Male,
-   Others,
-   Female,
-   Unspecified
+    Male,
+    Others,
+    Female,
+    Unspecified,
+}
+/// define the user data structure that shall serve as the basis of serial
+/// implement debug, serialize, deserializing and #[derive(sqlx::FromRow to make the struct operable
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct UserModel {
+    pub id: Uuid,
+    pub firstname: Option<String>,
+    pub lastname: Option<String>,
+    pub middlename: Option<String>,
+    pub fullname: Option<String>,
+    pub username: Option<String>,
+    pub email: Option<String>,
+    pub account_status: Option<AccountStatus>,
+    // pub date_of_birth: Option<NaiveDateTime>,
+    pub gender: Option<UserGender>,
+    pub avatar: Option<String>,
+    pub phone_number: Option<String>,
+    #[serde(skip_serializing)]
+    pub password: Option<String>,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
+    pub last_available_at: Option<NaiveDateTime>,
 }
 
 ///user authorization information
 /// to be used for making login and sign up requests
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate)]
 pub struct UserAuthCredentials {
-    //the user email
     #[validate(email)]
     pub email: String,
-    ///the user password
     #[validate(length(min = 8))]
     pub password: String,
     /// the user fullname set to optional to allow use of struct for bothe login and sign up
@@ -84,28 +68,63 @@ pub struct UserAuthCredentials {
 /// it shall be responsible for providing the user information such as in JWT encryption
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate)]
 pub struct UserInformation {
-    /// the user email
-    pub email: String,
-    /// the user password
-    #[serde(skip_serializing)]
-    pub password: String,
-    /// the user unique username
-    pub username: Option<String>,
-    /// the user fullname
-    // #[validate(length(min = 1 "cannot be empty"))]
+    // pub id: Uuid,
+    pub firstname: Option<String>,
+    pub lastname: Option<String>,
+    pub middlename: Option<String>,
     pub fullname: Option<String>,
+    pub username: Option<String>,
+    pub email: Option<String>,
+    pub account_status: Option<AccountStatus>,
+    // pub date_of_birth: Option<NaiveDateTime>,
+    pub gender: Option<UserGender>,
+    pub avatar: Option<String>,
+    pub phone_number: Option<String>,
+    #[serde(skip_serializing)]
+    pub password: Option<String>,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
+    pub last_available_at: Option<NaiveDateTime>,
 }
 
 impl Default for UserInformation {
     fn default() -> Self {
         Self {
-            email: String::from(""),
-            password: String::from(""),
-            username: Some(String::from("")),
-            fullname: Some(String::from("")),
+            firstname: None,
+            lastname: None,
+            middlename: None,
+            fullname: None,
+            username: None,
+            email: None,
+            account_status: None,
+            // date_of_birth: None,
+            gender: None,
+            avatar: None,
+            phone_number: None,
+            password: None,
+            created_at: None,
+            updated_at: None,
+            last_available_at: None,
         }
     }
 }
+
+/// implement default value for user gender
+impl Default for UserGender {
+    fn default() -> Self {
+        Self::Unspecified
+    }
+}
+// impl Default for UserInformation {
+//     fn default() -> Self {
+//         Self {
+//             email: String::from(""),
+//             password: String::from(""),
+//             username: Some(String::from("")),
+//             fullname: Some(String::from("")),
+//         }
+//     }
+// }
 
 /// the user reset password payload structure
 /// the payload will implement EnumerateFields to validate the payload
