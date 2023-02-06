@@ -6,7 +6,7 @@ use crate::{
     shared::{
         api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest},
         jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload},
-        mailer::{send_email, EmailPayload},
+        // mailer::{send_email, EmailPayload},
         otp_handler::{generate_otp, validate_otp},
     },
 };
@@ -36,101 +36,150 @@ pub async fn sign_up(
     ValidatedRequest(payload): ValidatedRequest<UserInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
+    let UserInformation {
+        firstname,
+        lastname,
+        middlename,
+        fullname,
+        username,
+        email,
+        // date_of_birth,
+        gender,
+        avatar,
+        phone_number,
+        password,
+        ..
+    } = payload;
+
+    let sql_query = r#"
+INSERT INTO
+    user_information (
+        id,
+        gender,
+        firstname,
+        lastname,
+        middlename,
+        fullname,
+        username,
+        email,
+        avatar,
+        phone_number,
+        password
+    )
+VALUES
+    (
+        $1,
+        $2,
+        NUllIF($3, ''),
+        NUllIF($4, ''),
+        NUllIF($5, ''),
+        NUllIF($6, ''),
+        NUllIF($7, ''),
+        NUllIF($8, ''),
+        NUllIF($9, ''),
+        NUllIF($10, ''),
+        NUllIF($11, '')
+    ) ON CONFLICT (email) DO NOTHING RETURNING *
+
+    "#;
     /*
      * generate a UUID and hash the user password,
      * go on to save the hashed password along side other details
      * cat any error along the way
      */
+
     let id = Uuid::new_v4();
-    let hashed_password = bcrypt::hash(payload.password.trim(), DEFAULT_COST).unwrap();
-    let new_user =  sqlx::query_as::<_, UserModel>(
-        r#"
-        INSERT INTO
-    user_information (id, password, email, fullname)
-    VALUES
-    ($1, $2, $3, $4) ON CONFLICT (email) DO NOTHING RETURNING *",
-        "#,
-    )
-    .bind(id)
-    .bind(hashed_password)
-    .bind(payload.email.trim())
-    .bind(payload.fullname.unwrap().trim())
-    .fetch_one(&database).await.ok();
+    let hashed_password = bcrypt::hash(password.unwrap_or_default().trim(), DEFAULT_COST).unwrap();
+    let new_user = sqlx::query_as::<_, UserModel>(sql_query)
+        .bind(id)
+        .bind(gender.unwrap_or_default())
+        .bind(firstname.unwrap_or_default())
+        .bind(lastname.unwrap_or_default())
+        .bind(middlename.unwrap_or_default())
+        .bind(fullname.unwrap_or_default())
+        .bind(username.unwrap_or_default())
+        .bind(email.unwrap_or_default().trim())
+        // .bind(date_of_birth.unwrap_or_default())
+        .bind(avatar.unwrap_or_default())
+        .bind(phone_number.unwrap_or_default())
+        .bind(hashed_password)
+        .fetch_one(&database)
+        .await;
 
-    // if error such as conflicting record, return the error error quickly
-    let Some(user) = new_user else{
-      return  Err(ApiErrorResponse::ServerError{
-            message: String::from("An unexpected error occurred"),
-        }); 
-    };
-
-    // generate OTP and parse the email template
-    let otp = generate_otp();
-    println!("{otp}");
-    let email_content = format!(
-        r#"
+    match new_user {
+        Ok(user) => {
+            // generate OTP and parse the email template
+            let otp = generate_otp();
+            println!("{otp}");
+            let _email_content = format!(
+                r#"
         <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; line-height: 1.5em; margin-top: 0; text-align: left;">
-                        
+
         We are glad to have you on board with us. To complete your account set up, please use the OTP
-           
+
         <h3 style="text-align:center">{otp}</h3>
-           
+
         <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box;">This OTP is only valid for the next 5 minutes. If you did not request this OTP, please ignore this message.</p>
         </p>
         "#,
-    );
+            );
 
-    /*
-    destructure the user object,
-    encrypt the data as JWt, send email to the user
-    send the token back to the user as success response
-    if error send the error response
-    */
-    let UserModel {
-        id,
-        email,
-        fullname,
-        ..
-    } = &user;
-    // let fullname = &new_user.fullname.unwrap();
+            /*
+            destructure the user object,
+            encrypt the data as JWt, send email to the user
+            send the token back to the user as success response
+            if error send the error response
+            */
+            let UserModel {
+                id,
+                email,
+                fullname,
+                ..
+            } = &user;
+            // let fullname = &new_user.fullname.unwrap();
 
-    let jwt_payload = JwtClaims {
-        id: id.to_string(),
-        email: email.as_ref().unwrap().to_string(),
-        fullname: fullname.as_ref().unwrap().to_string(),
-        exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
-    };
+            let jwt_payload = JwtClaims {
+                id: id.to_string(),
+                email: email.as_ref().unwrap().to_string(),
+                fullname: fullname.as_ref().unwrap().to_string(),
+                exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
+            };
 
-    //fetch the JWT secret
-    let jwt_header = Header {
-        alg: Algorithm::HS512,
-        ..Default::default()
-    };
+            //fetch the JWT secret
+            let jwt_header = Header {
+                alg: Algorithm::HS512,
+                ..Default::default()
+            };
 
-    //build the user jwt token
-    let token = encode(&jwt_header, &jwt_payload, &JWT_SECRET.encoding).ok();
+            //build the user jwt token
+            let token = encode(&jwt_header, &jwt_payload, &JWT_SECRET.encoding).ok();
 
-    // send email to user
-    let email_payload: EmailPayload = EmailPayload {
-        recipient_name: &user.fullname.as_ref().unwrap(),
-        recipient_address: &user.email.as_ref().unwrap(),
-        email_content,
-        email_subject: "new account",
-    };
-    send_email(email_payload);
+            // send email to user
+            /* let email_payload: EmailPayload = EmailPayload {
+                recipient_name: &user.fullname.as_ref().unwrap(),
+                recipient_address: &user.email.as_ref().unwrap(),
+                email_content,
+                email_subject: "new account",
+            };
+            send_email(email_payload); */
 
-    //build the response
-    let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
-        success: true,
-        message: String::from("Please verify OTP send to your email to continue"),
-        data: Some(json!({
-            "user":UserModel { ..user },
-            "token":token,
-            "tokenType":"Bearer".to_string()
-        })),
-    };
-    //return the response
-    Ok((StatusCode::CREATED, Json(response)))
+            //build the response
+            let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
+                success: true,
+                message: String::from("Please verify OTP send to your email to continue"),
+                data: Some(json!({
+                    "user":UserModel { ..user },
+                    "token":token,
+                    "tokenType":"Bearer".to_string()
+                })),
+            };
+            //return the response
+            Ok((StatusCode::CREATED, Json(response)))
+        }
+        Err(error_message) => Err(ApiErrorResponse::ServerError {
+            message: error_message.to_string(),
+        }),
+    }
 }
 
 ///verify email
@@ -216,7 +265,7 @@ pub async fn _request_new_token() {
 /// to login a user, fetch the request body and the database pool
 /// use the pool to query the database for the user details in the request body
 /// return result or error
-pub async fn login(
+pub async fn _login(
     ValidatedRequest(payload): ValidatedRequest<UserInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<JwtPayload>>), ApiErrorResponse> {
@@ -252,7 +301,7 @@ pub async fn login(
             }
 
             let stored_password = &user.password.as_ref().unwrap();
-            let verify_password = verify(payload.password, stored_password);
+            let verify_password = verify(payload.password.unwrap_or_default(), stored_password);
             match verify_password {
                 Ok(is_correct_password) => {
                     //send error if the password is not correct

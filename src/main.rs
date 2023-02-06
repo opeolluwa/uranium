@@ -1,4 +1,5 @@
 use axum::{extract::Extension, http::StatusCode, routing::get_service, Router};
+use core::time::Duration;
 use dotenv::dotenv;
 use sqlx::postgres::PgPoolOptions;
 use std::{env, net::SocketAddr, path::PathBuf};
@@ -6,7 +7,6 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use core::time::Duration;
 
 mod controllers;
 mod models;
@@ -92,10 +92,8 @@ async fn main() {
         }
 
         _ =>
-    
-         // return the localhost IP address as a fall through
-         //if the address cannot be found, or badly constructed
-    
+        // return the localhost IP address as a fall through
+        //if the address cannot be found, or badly constructed
         {
             SocketAddr::from(([127, 0, 0, 1], port))
         }

@@ -10,7 +10,7 @@ use axum::{
 pub fn routes() -> axum::Router {
     Router::new()
         .route("/sign-up", post(auth_controllers::sign_up))
-        .route("/login", post(auth_controllers::login))
+        // .route("/login", post(auth_controllers::login))
         .route("/verify-email", post(auth_controllers::verify_email))
         .route("/reset-password", put(auth_controllers::reset_password))
         .route("/me", get(auth_controllers::user_profile))
