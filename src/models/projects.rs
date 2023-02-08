@@ -1,4 +1,4 @@
-use crate::shared::api_response::EnumerateFields;
+use crate::utils::api_response::EnumerateFields;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;

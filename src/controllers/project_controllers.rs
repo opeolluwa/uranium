@@ -1,6 +1,6 @@
+use crate::utils::api_response::{ApiErrorResponse, ApiSuccessResponse};
+use crate::utils::jwt_schema::JwtClaims;
 use crate::models::projects::{ProjectInformation, ProjectsModel};
-use crate::shared::api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields};
-use crate::shared::jwt_schema::JwtClaims;
 use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -17,14 +17,6 @@ pub async fn add_project(
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<ProjectsModel>>), ApiErrorResponse> {
     //check through the fields to see that no field was badly formatted
-    let entries = &payload.collect_as_strings();
-    let mut bad_request_errors: Vec<String> = Vec::new();
-    for (key, value) in entries {
-        if value.is_empty() {
-            let error = format!("{key} is empty");
-            bad_request_errors.push(error);
-        }
-    }
 
     // destructure the payload
     let ProjectInformation {

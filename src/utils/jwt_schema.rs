@@ -1,4 +1,3 @@
-use super::api_response::ApiErrorResponse as AuthError;
 use axum::async_trait;
 use axum::extract::{FromRequest, RequestParts, TypedHeader};
 use axum::headers::{authorization::Bearer, Authorization};
@@ -9,6 +8,7 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::time::SystemTime;
+use crate::utils::api_response::ApiErrorResponse as AuthError;
 
 ///fetch the JWT defined environment and assign it's value to a life
 /// call on the new method of JwtEncryption keys to accept and pass down the secret to the jsonwebtoken crate EncodingKey and DecodingKey modules

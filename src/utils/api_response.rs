@@ -6,7 +6,6 @@ use axum::response::IntoResponse;
 use axum::response::Response;
 use axum::BoxError;
 use axum::Json;
-use console::Style;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -240,11 +239,6 @@ impl IntoResponse for RequestError {
     }
 }
 
-/// debug print
-/// check if the environment is development or production
-/// if development, print some stuff for easy development else dont print them
 
-pub fn debug_print<T: std::fmt::Debug>(message: &str, data: T) {
-    let cyan = Style::new().cyan();
-    println!(" {}:: {message}: {:#?}", cyan.apply_to("DEBUG PRINT"), data);
-}
+
+

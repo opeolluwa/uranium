@@ -6,6 +6,8 @@ use lettre::{
 };
 use mailer_config::*;
 use serde::{Deserialize, Serialize};
+use std::fmt;
+
 ///the email server config
 /// the configuration contains the following constants
 /// 1. SMTP username
@@ -40,11 +42,20 @@ pub mod mailer_config {
 /// the email recipient name
 /// the email recipient address
 #[derive(Debug, Serialize, Deserialize)]
-pub struct EmailPayload<'a> {
-    pub recipient_name: &'a str,
-    pub recipient_address: &'a str,
+pub struct EmailPayload {
+    pub recipient_name: String,
+    pub recipient_address: String,
     pub email_content: String,
-    pub email_subject: &'a str,
+    pub email_subject: String,
+}
+impl fmt::Display for EmailPayload {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "({} {} {} {})",
+            self.recipient_name, self.recipient_address, self.email_content, self.email_subject
+        )
+    }
 }
 /// send email, accept the email body
 /// dispatch the emil
