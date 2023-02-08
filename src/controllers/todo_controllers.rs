@@ -1,13 +1,11 @@
-use crate::lib::api_response::{Pagination, ValidatedRequest};
-use crate::lib::{
-    api_response::{ApiErrorResponse, ApiSuccessResponse},
-    jwt_schema::JwtClaims,
-};
+use crate::utils::jwt_schema::JwtClaims;
 use crate::models::todo::{TodoInformation, TodoModel};
 use axum::extract::Query;
 use axum::{extract::Path, http::StatusCode, Extension, Json};
 use serde_json::{json, Value};
 use sqlx::PgPool;
+use crate::utils::api_response::{ApiErrorResponse, ApiSuccessResponse};
+use crate::utils::api_response::{Pagination, ValidatedRequest};
 use uuid::Uuid;
 
 ///create new Todo

@@ -1,10 +1,12 @@
-use crate::lib::api_response::{
-    ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest,
-};
-use crate::lib::jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload};
-use crate::lib::otp_handler::{generate_otp, validate_otp};
 use crate::models::common::OneTimePassword;
 use crate::models::users::{AccountStatus, ResetUserPassword, UserInformation, UserModel};
+use crate::utils::api_response::{
+    ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest,
+};
+use crate::utils::jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload};
+use crate::utils::mailer::EmailPayload;
+use crate::utils::messenger::MessageQueue;
+use crate::utils::otp_handler::{generate_otp, validate_otp};
 use axum::{http::StatusCode, Extension, Json};
 use bcrypt::{verify, DEFAULT_COST};
 use jsonwebtoken::{encode, Algorithm, Header};
@@ -12,8 +14,6 @@ use once_cell::sync::Lazy;
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::env;
-use utils::mailer::EmailPayload;
-use utils::messenger::MessageQueue;
 use uuid::Uuid;
 ///fetch the JWT defined environment and assign it's value to a life
 /// call on the new method of JwtEncryption keys to accept and pass down the secret to the jsonwebtoken crate EncodingKey and DecodingKey modules

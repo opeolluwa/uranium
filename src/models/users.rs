@@ -1,5 +1,5 @@
 use super::emails::EmailModel;
-use crate::lib::api_response::EnumerateFields;
+use crate::utils::api_response::EnumerateFields;
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
@@ -67,6 +67,7 @@ pub struct UserAuthCredentials {
 ///the user information is derived from the user model
 /// it shall be responsible for providing the user information such as in JWT encryption
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate)]
+#[derive(Default)]
 pub struct UserInformation {
     // pub id: Uuid,
     pub firstname: Option<String>,
@@ -87,27 +88,7 @@ pub struct UserInformation {
     pub last_available_at: Option<NaiveDateTime>,
 }
 
-impl Default for UserInformation {
-    fn default() -> Self {
-        Self {
-            firstname: None,
-            lastname: None,
-            middlename: None,
-            fullname: None,
-            username: None,
-            email: None,
-            account_status: None,
-            // date_of_birth: None,
-            gender: None,
-            avatar: None,
-            phone_number: None,
-            password: None,
-            created_at: None,
-            updated_at: None,
-            last_available_at: None,
-        }
-    }
-}
+
 
 /// implement default value for user gender
 impl Default for UserGender {
@@ -115,16 +96,7 @@ impl Default for UserGender {
         Self::Unspecified
     }
 }
-// impl Default for UserInformation {
-//     fn default() -> Self {
-//         Self {
-//             email: String::from(""),
-//             password: String::from(""),
-//             username: Some(String::from("")),
-//             fullname: Some(String::from("")),
-//         }
-//     }
-// }
+
 
 /// the user reset password payload structure
 /// the payload will implement EnumerateFields to validate the payload
