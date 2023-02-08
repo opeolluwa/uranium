@@ -1,23 +1,20 @@
-use crate::{
-    models::{
-        common::OneTimePassword,
-        users::{AccountStatus, ResetUserPassword, UserInformation, UserModel},
-    },
-    shared::{
-        api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest},
-        jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload},
-        // mailer::{send_email, EmailPayload},
-        otp_handler::{generate_otp, validate_otp},
-    },
+use crate::lib::api_response::{
+    ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest,
 };
+use crate::lib::jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload};
+use crate::lib::otp_handler::{generate_otp, validate_otp};
+use crate::models::common::OneTimePassword;
+use crate::models::users::{AccountStatus, ResetUserPassword, UserInformation, UserModel};
 use axum::{http::StatusCode, Extension, Json};
 use bcrypt::{verify, DEFAULT_COST};
 use jsonwebtoken::{encode, Algorithm, Header};
 use once_cell::sync::Lazy;
 use serde_json::{json, Value};
 use sqlx::PgPool;
+use std::env;
+use utils::mailer::EmailPayload;
+use utils::messenger::MessageQueue;
 use uuid::Uuid;
-
 ///fetch the JWT defined environment and assign it's value to a life
 /// call on the new method of JwtEncryption keys to accept and pass down the secret to the jsonwebtoken crate EncodingKey and DecodingKey modules
 static JWT_SECRET: Lazy<JwtEncryptionKeys> = Lazy::new(|| -> JwtEncryptionKeys {
@@ -111,7 +108,7 @@ VALUES
             // generate OTP and parse the email template
             let otp = generate_otp();
             println!("{otp}");
-            let _email_content = format!(
+            let email_content = format!(
                 r#"
         <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; line-height: 1.5em; margin-top: 0; text-align: left;">
 
@@ -155,13 +152,18 @@ VALUES
             let token = encode(&jwt_header, &jwt_payload, &JWT_SECRET.encoding).ok();
 
             // send email to user
-            /* let email_payload: EmailPayload = EmailPayload {
-                recipient_name: &user.fullname.as_ref().unwrap(),
-                recipient_address: &user.email.as_ref().unwrap(),
+            let email_payload: EmailPayload = EmailPayload {
+                recipient_name: (&user.fullname.as_ref().unwrap()).to_string(),
+                recipient_address: (&user.email.as_ref().unwrap()).to_string(),
                 email_content,
-                email_subject: "new account",
+                email_subject: "new account".to_string(),
             };
-            send_email(email_payload); */
+
+            // add email to queue
+            let queue_data = email_payload;
+            let queue_name = env::var("EMAIL_QUEUE").expect("email queue name not specified");
+            let new_queue: MessageQueue<EmailPayload> = MessageQueue::new(queue_data, &queue_name);
+            new_queue.enqueue();
 
             //build the response
             let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {

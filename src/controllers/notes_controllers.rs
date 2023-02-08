@@ -1,8 +1,8 @@
-use crate::models::notes::{NotesInformation, NotesModel};
-use crate::shared::api_response::{
+use crate::lib::api_response::{
     ApiErrorResponse, ApiSuccessResponse, Pagination, ValidatedRequest,
 };
-use crate::shared::jwt_schema::JwtClaims;
+use crate::lib::jwt_schema::JwtClaims;
+use crate::models::notes::{NotesInformation, NotesModel};
 use axum::extract::Query;
 use axum::{extract::Path, http::StatusCode, Extension, Json};
 use serde_json::{json, Value};

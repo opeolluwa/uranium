@@ -1,5 +1,4 @@
 use axum::{extract::Extension, http::StatusCode, routing::get_service, Router};
-use core::time::Duration;
 use dotenv::dotenv;
 use sqlx::postgres::PgPoolOptions;
 use std::{env, net::SocketAddr, path::PathBuf};
@@ -9,9 +8,9 @@ use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod controllers;
+mod lib;
 mod models;
 mod routes;
-mod shared;
 
 #[tokio::main]
 async fn main() {

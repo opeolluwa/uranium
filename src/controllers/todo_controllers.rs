@@ -1,9 +1,9 @@
-use crate::models::todo::{TodoInformation, TodoModel};
-use crate::shared::api_response::{Pagination, ValidatedRequest};
-use crate::shared::{
+use crate::lib::api_response::{Pagination, ValidatedRequest};
+use crate::lib::{
     api_response::{ApiErrorResponse, ApiSuccessResponse},
     jwt_schema::JwtClaims,
 };
+use crate::models::todo::{TodoInformation, TodoModel};
 use axum::extract::Query;
 use axum::{extract::Path, http::StatusCode, Extension, Json};
 use serde_json::{json, Value};

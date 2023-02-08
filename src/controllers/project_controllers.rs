@@ -1,6 +1,6 @@
+use crate::lib::api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields};
+use crate::lib::jwt_schema::JwtClaims;
 use crate::models::projects::{ProjectInformation, ProjectsModel};
-use crate::shared::api_response::{ApiErrorResponse, ApiSuccessResponse, EnumerateFields};
-use crate::shared::jwt_schema::JwtClaims;
 use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
 use sqlx::PgPool;
 use uuid::Uuid;

@@ -1,13 +1,22 @@
 [package]
+edition = "2021"
 name = "utils"
 version = "0.1.0"
-edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
-
+axum = "0.5.16"
+chrono = "0.4.23"
+console = "0.15.2"
+lettre = "0.10.2"
+once_cell = "1.17.0"
+otp-rs = "0.1.1"
+serde = {version = "1.0.144", features = ["derive"]}
+validator = {version = "0.16.0", features = ["derive"]}
+thiserror = "1.0.29"
+async-trait = "0.1.57"
+http-body = "0.4.5"
 
 [lib]
-path ="./src/mod.rs"
+path = "./src/mod.rs"

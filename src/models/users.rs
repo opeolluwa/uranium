@@ -1,5 +1,5 @@
 use super::emails::EmailModel;
-use crate::shared::api_response::EnumerateFields;
+use crate::lib::api_response::EnumerateFields;
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;

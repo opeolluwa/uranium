@@ -1,3 +1,4 @@
+
 [package]
 authors = ["Adeoye Adefemi <adefemiadeoye@yahoo.com>"]
 description = "An Authentication, Authorization and Identity Management system for microservices  https://github.com/opeolluwa/racoon"
@@ -5,6 +6,11 @@ edition = "2021"
 name = "racoon"
 version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[workspace]
+members = [
+  "utils", #   "mailer",
+]
 
 [dependencies]
 anyhow = "1.0.68"
@@ -14,7 +20,6 @@ async-trait = "0.1.57"
 axum = {version = "0.5.16", features = ["headers", "json", "ws"]}
 bcrypt = "0.13.0"
 chrono = {version = "0.4.22", features = ["serde"]}
-console = "0.15.2"
 dotenv = "0.15.0"
 futures = "0.3.23"
 headers = "0.3.8"
@@ -32,7 +37,7 @@ tokio = {version = "1.20.1", features = ["full"]}
 tower-http = {version = "0.3.4", features = ["cors", "fs", "trace"]}
 tracing = "0.1.36"
 tracing-subscriber = {version = "0.3", features = ["env-filter"]}
+utils = {path = "./utils"}
 uuid = {version = "1.1.2", features = ["serde", "v4"]}
 validator = {version = "0.16.0", features = ["derive"]}
-
-
+console = "0.15.2"
