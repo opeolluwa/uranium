@@ -1,18 +1,19 @@
+use crate::utils::api_response::ApiErrorResponse as AuthError;
 use axum::async_trait;
 use axum::extract::{FromRequest, RequestParts, TypedHeader};
 use axum::headers::{authorization::Bearer, Authorization};
-use jsonwebtoken::Validation;
+use jsonwebtoken::encode;
 use jsonwebtoken::{decode, Algorithm};
 use jsonwebtoken::{DecodingKey, EncodingKey};
+use jsonwebtoken::{Header, Validation};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::time::SystemTime;
-use crate::utils::api_response::ApiErrorResponse as AuthError;
 
 ///fetch the JWT defined environment and assign it's value to a life
 /// call on the new method of JwtEncryption keys to accept and pass down the secret to the jsonwebtoken crate EncodingKey and DecodingKey modules
-static JWT_SECRET: Lazy<JwtEncryptionKeys> = Lazy::new(|| -> JwtEncryptionKeys {
+pub static JWT_SECRET: Lazy<JwtEncryptionKeys> = Lazy::new(|| -> JwtEncryptionKeys {
     let secret = std::env::var("JWT_SECRET").expect("Invalid or missing JWT Secret");
     JwtEncryptionKeys::new(secret.as_bytes())
 });
@@ -23,6 +24,43 @@ pub struct JwtClaims {
     pub email: String,
     pub fullname: String,
     pub exp: u64,
+}
+
+impl JwtClaims {
+    pub fn generate_token(&self) -> Option<String> {
+        //fetch the JWT secret
+        let jwt_header = Header {
+            alg: Algorithm::HS512,
+            ..Default::default()
+        };
+        //build the user jwt token
+        let token = encode(&jwt_header, &self, &JWT_SECRET.encoding).ok();
+        token
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_jwt_encoder() {
+        // set token to expire in 10 mines
+        let expiration_time = set_jtw_exp(10);
+        //generate sample token
+        let sample_claim: JwtClaims = JwtClaims {
+            id: String::from("16260b1d-1554-5b6f-a221-56ff4b34199c"),
+            email: String::from("cout@lahpev.mg"),
+            fullname: String::from("Jesse Rodney"),
+            exp: expiration_time,
+        };
+        let token = sample_claim.generate_token();
+        // let token: String = token.unwrap();
+
+        //see if the length of the token is greater than 10
+        // println!("{}", &token);
+        // assert!(Some('e') == token.chars().next());
+        assert!(token.is_some());
+    }
 }
 
 #[async_trait]

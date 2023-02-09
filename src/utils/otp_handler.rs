@@ -1,8 +1,11 @@
 use once_cell::sync::Lazy;
 use otp_rs::TOTP;
 use racoon_macros::debug_print::debug_print;
+use serde::{Deserialize, Serialize};
 use std::env;
 use std::time::{SystemTime, UNIX_EPOCH};
+use uuid::Uuid;
+use validator::Validate;
 
 static OTP: Lazy<TOTP> = Lazy::new(|| -> TOTP {
     TOTP::new(
@@ -37,4 +40,33 @@ pub fn generate_otp() -> u32 {
 pub fn validate_otp(otp: &str) -> bool {
     let otp = otp.trim().parse::<u32>().unwrap();
     OTP.verify(otp, OTP_VALIDITY, *CURRENT_TIMESTAMP)
+}
+
+///one time password
+#[derive(Debug, Serialize, Deserialize, Validate, sqlx::FromRow)]
+pub struct OneTimePassword {
+    pub id: Uuid,
+    pub token: String,
+    pub is_expired: bool,
+}
+
+impl Default for OneTimePassword {
+    fn default() -> Self {
+        Self {
+            is_expired: false,
+            ..Default::default()
+        }
+    }
+}
+
+impl OneTimePassword {
+    pub fn new(length: u8) -> Self {
+        let id = Uuid::new_v4();
+        let token = OTP.generate(OTP_VALIDITY, *CURRENT_TIMESTAMP).unwrap();
+        Self {
+            id,
+            token: token.to_string(),
+            ..Default::default()
+        }
+    }
 }

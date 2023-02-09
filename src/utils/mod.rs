@@ -1,5 +1,5 @@
 pub mod api_response;
-pub mod jwt_schema;
+pub mod jwt;
 pub mod mailer;
-pub mod messenger;
+pub mod message_queue;
 pub mod otp_handler;

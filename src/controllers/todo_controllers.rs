@@ -1,4 +1,4 @@
-use crate::utils::jwt_schema::JwtClaims;
+use crate::utils::jwt::JwtClaims;
 use crate::models::todo::{TodoInformation, TodoModel};
 use axum::extract::Query;
 use axum::{extract::Path, http::StatusCode, Extension, Json};
