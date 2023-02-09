@@ -11,8 +11,6 @@ use axum::{http::StatusCode, Extension, Json};
 use bcrypt::{verify, DEFAULT_COST};
 use jsonwebtoken::{encode, Algorithm, Header};
 use once_cell::sync::Lazy;
-use racoon_macros::debug_print;
-use racoon_macros::debug_print::debug_print;
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::env;
@@ -160,7 +158,7 @@ INSERT INTO
 
 ///verify email
 /// to verify email
-/// retrieve the bearer token fo=rom the auth header,
+/// retrieve the bearer token from the authorization header,
 /// retrieve the otp from request body
 /// validate token and updates account status
 /// return error or success response
