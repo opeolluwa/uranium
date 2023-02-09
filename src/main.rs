@@ -11,7 +11,7 @@ mod controllers;
 mod utils;
 mod models;
 mod routes;
-mod config;
+// mod config;
 
 #[tokio::main]
 async fn main() {

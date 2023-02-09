@@ -7,7 +7,6 @@ use crate::utils::jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPay
 use crate::utils::mailer::EmailPayload;
 use crate::utils::messenger::MessageQueue;
 use crate::utils::otp_handler::{generate_otp, validate_otp};
-use async_graphql::ServerError;
 use axum::{http::StatusCode, Extension, Json};
 use bcrypt::{verify, DEFAULT_COST};
 use jsonwebtoken::{encode, Algorithm, Header};
@@ -41,7 +40,7 @@ pub async fn sign_up(
         fullname,
         username,
         email,
-        // date_of_birth,
+        date_of_birth,
         gender,
         avatar,
         phone_number,
@@ -54,33 +53,14 @@ pub async fn sign_up(
     let sql_query = r#"
 INSERT INTO
     user_information (
-        id,
-        gender,
-        firstname,
-        lastname,
-        middlename,
-        fullname,
-        username,
-        email,
-        avatar,
-        phone_number,
+        id,gender,firstname,lastname,middlename,
+        fullname,username,email, date_of_birth,avatar, phone_number,
         password
-    )
-VALUES
-    (
-        $1,
-        $2,
-        NUllIF($3, ''),
-        NUllIF($4, ''),
-        NUllIF($5, ''),
-        NUllIF($6, ''),
-        NUllIF($7, ''),
-        NUllIF($8, ''),
-        NUllIF($9, ''),
-        NUllIF($10, ''),
-        NUllIF($11, '')
+    ) VALUES
+    ( $1, $2, NUllIF($3, ''), NUllIF($4, ''), NUllIF($5, ''),
+        NUllIF($6, ''),NUllIF($7, ''), NUllIF($8, null),
+        NUllIF($9, null), NUllIF($10, ''), NUllIF($11, ''), NULLIF($12, '')
     ) ON CONFLICT (email) DO NOTHING RETURNING *
-
     "#;
     /*
      * generate a UUID and hash the user password,
@@ -99,7 +79,7 @@ VALUES
         .bind(fullname.unwrap_or_default())
         .bind(username.unwrap_or_default())
         .bind(email.unwrap_or_default().trim())
-        // .bind(date_of_birth.unwrap_or_default())
+        .bind(date_of_birth.unwrap_or_default())
         .bind(avatar.unwrap_or_default())
         .bind(phone_number.unwrap_or_default())
         .bind(hashed_password)
@@ -108,6 +88,7 @@ VALUES
 
     match new_user {
         Ok(user) => {
+          
             // generate OTP and parse the email template
             let otp = generate_otp();
             println!("{otp}");
