@@ -1,4 +1,5 @@
 use super::emails::EmailModel;
+use crate::config::database::database_pool;
 use crate::utils::api_response::EnumerateFields;
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
@@ -52,22 +53,15 @@ pub struct UserModel {
     pub last_available_at: Option<NaiveDateTime>,
 }
 
-///user authorization information
-/// to be used for making login and sign up requests
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate)]
-pub struct UserAuthCredentials {
-    #[validate(email)]
-    pub email: String,
-    #[validate(length(min = 8))]
-    pub password: String,
-    /// the user fullname set to optional to allow use of struct for bothe login and sign up
-    pub fullname: Option<String>,
+impl UserModel {
+    pub async fn user_exists(&self) -> bool {
+        //TODO! see if a user with email or username exists
+        todo!()
+    }
 }
-
 ///the user information is derived from the user model
 /// it shall be responsible for providing the user information such as in JWT encryption
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate)]
-#[derive(Default)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate, Default)]
 pub struct UserInformation {
     // pub id: Uuid,
     pub firstname: Option<String>,
@@ -88,7 +82,17 @@ pub struct UserInformation {
     pub last_available_at: Option<NaiveDateTime>,
 }
 
-
+///user authorization information
+/// to be used for making login and sign up requests
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate)]
+pub struct UserAuthCredentials {
+    #[validate(email)]
+    pub email: String,
+    #[validate(length(min = 8))]
+    pub password: String,
+    /// the user fullname set to optional to allow use of struct for bothe login and sign up
+    pub fullname: Option<String>,
+}
 
 /// implement default value for user gender
 impl Default for UserGender {
@@ -96,7 +100,6 @@ impl Default for UserGender {
         Self::Unspecified
     }
 }
-
 
 /// the user reset password payload structure
 /// the payload will implement EnumerateFields to validate the payload

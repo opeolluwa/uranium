@@ -1,18 +1,13 @@
-use mongodb::{options::ClientOptions, Client};
+use sqlx::{postgres::PgPoolOptions, Pool};
 use std::env;
 
-pub async fn mongodb() -> mongodb::Database {
-    let database_uri = env::var("DATABASE_URI").expect("error reading database URI");
-    let database_name = env::var("DATABASE_NAME").expect("error reading database name");
-
-    // Get a handle to the cluster  and Ping the server to see if you can connect to the cluster
-    let database_client_options = ClientOptions::parse(&database_uri)
+pub async fn database_pool() -> Pool<sqlx::Postgres> {
+    let database_connection_string =
+        env::var("DATABASE_URL").expect("database URL is not provided in env variable");
+    PgPoolOptions::new()
+        .max_connections(5)
+        // .connect_timeout(Duration::from_secs(4))
+        .connect(&database_connection_string)
         .await
-        .expect("err connecting  to database");
-
-    let database_client =
-        Client::with_options(database_client_options).expect("unable to connect to db");
-    let database = database_client.database(&database_name);
-    //return database
-    database
+        .expect("Could not connect to database ")
 }

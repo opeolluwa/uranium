@@ -7,6 +7,7 @@ use crate::utils::jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPay
 use crate::utils::mailer::EmailPayload;
 use crate::utils::messenger::MessageQueue;
 use crate::utils::otp_handler::{generate_otp, validate_otp};
+use async_graphql::ServerError;
 use axum::{http::StatusCode, Extension, Json};
 use bcrypt::{verify, DEFAULT_COST};
 use jsonwebtoken::{encode, Algorithm, Header};
@@ -47,6 +48,31 @@ pub async fn sign_up(
         password,
         ..
     } = payload;
+
+    let sql_query = r#"
+    SELECT
+    *
+FROM
+    user_information
+WHERE
+    email = $1
+    OR username = $2
+    OR phone_number = $3
+    "#;
+
+    let user_information_exists = sqlx::query_as::<_, UserModel>(sql_query)
+        .bind(email.unwrap_or_default())
+        .bind(username.unwrap_or_default())
+        .bind(username.unwrap_or_default())
+        .fetch_one(&database)
+        .await
+        .ok();
+
+    if let Some(user_exists) = user_information_exists {
+        return Err(ApiErrorResponse::ServerError {
+            message: "User with provide email, phone or username already exists".to_string(),
+        });
+    }
 
     let sql_query = r#"
 INSERT INTO
