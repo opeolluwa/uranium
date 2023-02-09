@@ -1,6 +1,6 @@
 use super::emails::EmailModel;
-use crate::config::database::database_pool;
 use crate::utils::api_response::EnumerateFields;
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
@@ -42,7 +42,7 @@ pub struct UserModel {
     pub username: Option<String>,
     pub email: Option<String>,
     pub account_status: Option<AccountStatus>,
-    // pub date_of_birth: Option<NaiveDateTime>,
+    pub date_of_birth: Option<NaiveDate>,
     pub gender: Option<UserGender>,
     pub avatar: Option<String>,
     pub phone_number: Option<String>,
@@ -54,7 +54,7 @@ pub struct UserModel {
 }
 
 impl UserModel {
-    pub async fn user_exists(&self) -> bool {
+    pub async fn _user_exists(&self) -> bool {
         //TODO! see if a user with email or username exists
         todo!()
     }
@@ -62,6 +62,7 @@ impl UserModel {
 ///the user information is derived from the user model
 /// it shall be responsible for providing the user information such as in JWT encryption
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct UserInformation {
     // pub id: Uuid,
     pub firstname: Option<String>,
@@ -71,7 +72,7 @@ pub struct UserInformation {
     pub username: Option<String>,
     pub email: Option<String>,
     pub account_status: Option<AccountStatus>,
-    // pub date_of_birth: Option<NaiveDateTime>,
+    pub date_of_birth: Option<NaiveDate>,
     pub gender: Option<UserGender>,
     pub avatar: Option<String>,
     pub phone_number: Option<String>,
@@ -101,6 +102,11 @@ impl Default for UserGender {
     }
 }
 
+// impl Default for UserInformation {
+//     fn default() -> Self {
+//         None
+//     }
+// }
 /// the user reset password payload structure
 /// the payload will implement EnumerateFields to validate the payload
 /// it will also derive the rename-all trait of serde to all the use of JavaScript's camel case convection
