@@ -3,14 +3,16 @@ use crate::models::users::{AccountStatus, ResetUserPassword, UserInformation, Us
 use crate::utils::api_response::{
     ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest,
 };
-use crate::utils::jwt_schema::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload};
+use crate::utils::jwt::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload};
 use crate::utils::mailer::EmailPayload;
-use crate::utils::messenger::MessageQueue;
+use crate::utils::message_queue::MessageQueue;
 use crate::utils::otp_handler::{generate_otp, validate_otp};
 use axum::{http::StatusCode, Extension, Json};
 use bcrypt::{verify, DEFAULT_COST};
 use jsonwebtoken::{encode, Algorithm, Header};
 use once_cell::sync::Lazy;
+use racoon_macros::debug_print;
+use racoon_macros::debug_print::debug_print;
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::env;
@@ -47,8 +49,6 @@ pub async fn sign_up(
         password,
         ..
     } = payload;
-
-   
 
     let sql_query = r#"
 INSERT INTO
@@ -88,7 +88,6 @@ INSERT INTO
 
     match new_user {
         Ok(user) => {
-          
             // generate OTP and parse the email template
             let otp = generate_otp();
             println!("{otp}");
@@ -125,16 +124,7 @@ INSERT INTO
                 fullname: fullname.as_ref().unwrap().to_string(),
                 exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
             };
-
-            //fetch the JWT secret
-            let jwt_header = Header {
-                alg: Algorithm::HS512,
-                ..Default::default()
-            };
-
-            //build the user jwt token
-            let token = encode(&jwt_header, &jwt_payload, &JWT_SECRET.encoding).ok();
-
+            let jwt_token = jwt_payload.generate_token().unwrap();
             // send email to user
             let email_payload: EmailPayload = EmailPayload {
                 recipient_name: (&user.fullname.as_ref().unwrap()).to_string(),
@@ -155,7 +145,7 @@ INSERT INTO
                 message: String::from("Please verify OTP send to your email to continue"),
                 data: Some(json!({
                     "user":UserModel { ..user },
-                    "token":token,
+                    "token":jwt_token,
                     "tokenType":"Bearer".to_string()
                 })),
             };
