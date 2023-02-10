@@ -14,6 +14,7 @@
         "ormlite",
         "singlepart",
         "smaple",
-        "sqlx"
+        "sqlx",
+        "TOTP"
     ]
 }

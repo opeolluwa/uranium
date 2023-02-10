@@ -3,25 +3,18 @@ use crate::models::users::{AccountStatus, ResetUserPassword, UserInformation, Us
 use crate::utils::api_response::{
     ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest,
 };
-use crate::utils::jwt::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload};
+use crate::utils::jwt::JWT_SECRET;
+use crate::utils::jwt::{set_jtw_exp, JwtClaims, JwtPayload};
 use crate::utils::mailer::EmailPayload;
 use crate::utils::message_queue::MessageQueue;
-use crate::utils::otp_handler::{validate_otp, Otp};
+use crate::utils::otp_handler::Otp;
 use axum::{http::StatusCode, Extension, Json};
 use bcrypt::{verify, DEFAULT_COST};
 use jsonwebtoken::{encode, Algorithm, Header};
-use once_cell::sync::Lazy;
-// use racoon_macros::debug_print;
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::env;
 use uuid::Uuid;
-///fetch the JWT defined environment and assign it's value to a life
-/// call on the new method of JwtEncryption keys to accept and pass down the secret to the jsonwebtoken crate EncodingKey and DecodingKey modules
-static JWT_SECRET: Lazy<JwtEncryptionKeys> = Lazy::new(|| -> JwtEncryptionKeys {
-    let secret = std::env::var("JWT_SECRET").expect("Invalid or missing JWT Secret");
-    JwtEncryptionKeys::new(secret.as_bytes())
-});
 
 /// the bearer token validity set to 10 minutes
 const ACCESS_TOKEN_VALIDITY: u64 = 10;
@@ -108,7 +101,7 @@ INSERT INTO
 
             // build the JWT Token and create a new token
             let jwt_token = jwt_payload.generate_token().unwrap();
-            let Otp { token: otp, .. } = Otp::new(6)
+            let Otp { token: otp, .. } = Otp::new()
                 .save(&database)
                 .await
                 .link_to_user(*user_id, &database)
@@ -177,7 +170,7 @@ pub async fn verify_email(
             }
 
             // update the account status if the token is valid
-            let is_valid_otp = validate_otp(&payload.token);
+            let is_valid_otp = Otp::validate_otp(&payload.token);
             if !is_valid_otp {
                 return Err(ApiErrorResponse::BadRequest {
                     message: "invalid token".to_string(),
