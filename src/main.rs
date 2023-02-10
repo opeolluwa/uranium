@@ -1,5 +1,6 @@
 use axum::{extract::Extension, http::StatusCode, routing::get_service, Router};
 use dotenv::dotenv;
+use racoon_macros::racoon_info;
 use sqlx::postgres::PgPoolOptions;
 use std::{env, net::SocketAddr, path::PathBuf};
 use tower_http::cors::{Any, CorsLayer};
@@ -34,7 +35,7 @@ async fn main() {
         .connect(&database_connection_string)
         .await
         .expect("Could not connect to database ");
-    println!("Successfully connected to database");
+    racoon_info!("Successfully connected to database");
 
     //static file mounting
     let assets_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("views");
@@ -98,8 +99,8 @@ async fn main() {
             SocketAddr::from(([127, 0, 0, 1], port))
         }
     };
-    println!("Ignition started on http://{}", &ip_address);
     //launch the server
+    println!("Ignition started on http://{}", &ip_address);
     axum::Server::bind(&ip_address)
         .serve(app.into_make_service())
         .await

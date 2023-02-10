@@ -1,5 +1,6 @@
 use once_cell::sync::Lazy;
 use otp_rs::TOTP;
+use racoon_macros::racoon_error;
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 use std::env;
@@ -65,7 +66,11 @@ impl Otp {
         .fetch_one(db_connection)
         .await
         .ok();
-        println!("{otp:?}");
+
+        if otp.is_none() {
+            racoon_error!("An exception  was encountered while inserting data into the database");
+            std::process::exit(1);
+        }
         Self { ..otp.unwrap() }
     }
 
