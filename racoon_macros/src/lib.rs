@@ -46,8 +46,8 @@ macro_rules! racoon_info {
 pub fn _debug_print<T: std::fmt::Debug>(message: &str, data: Option<T>) {
     let debug_color = Style::new().blue().bold();
     println!(
-        "\n{}{}\n{:?}\n",
-        debug_color.apply_to("DEBUG PRINT:"),
+        "{} {}\n{:?}",
+        debug_color.apply_to("RACOON DEBUG:"),
         message,
         data
     );
@@ -56,11 +56,11 @@ pub fn _debug_print<T: std::fmt::Debug>(message: &str, data: Option<T>) {
 /// print an error message in bold red color
 pub fn _error_print(message: &str) {
     let error_color = Style::new().red().bold();
-    println!("\n{}{}\n", error_color.apply_to("DEBUG PRINT:"), message,);
+    println!("{} {}", error_color.apply_to("RACOON ERROR:"), message,);
 }
 
 /// print information in bold green text
 pub fn _info_print(message: &str) {
     let info_color = Style::new().green().bold();
-    println!("\n{}{}\n", info_color.apply_to("DEBUG PRINT:"), message,);
+    println!("{} {}", info_color.apply_to("RACOON INFO:"), message,);
 }
