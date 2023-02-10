@@ -8,9 +8,9 @@ use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod controllers;
-mod utils;
 mod models;
 mod routes;
+mod utils;
 // mod config;
 
 #[tokio::main]

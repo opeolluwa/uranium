@@ -1,13 +1,13 @@
 use crate::models::emails::{EmailContext, EmailFolder, EmailModel};
-use axum::extract::Query;
-use axum::{extract::Path, http::StatusCode, Extension, Json};
-use serde_json::{json, Value};
-use sqlx::PgPool;
 use crate::utils::api_response::{
     ApiErrorResponse, ApiResponse, ApiSuccessResponse, Pagination, ValidatedRequest,
 };
 use crate::utils::mailer::EmailPayload;
 use crate::utils::mailer::{mailer_config::FRONTEND_URL, send_email as mail_dispatcher};
+use axum::extract::Query;
+use axum::{extract::Path, http::StatusCode, Extension, Json};
+use serde_json::{json, Value};
+use sqlx::PgPool;
 use uuid::Uuid;
 
 ///get all emails by pagination
@@ -99,10 +99,10 @@ pub async fn send_email(
     let frontend_url: &str = &std::env::var("FRONTEND_URL")
         .unwrap_or_else(|_| String::from("https://opeolluwa.verce.app"));
     let receiver_email_subject = format!(" new email from {frontend_url}");
-    let receiver_email_payload: EmailPayload = EmailPayload {
+    let receiver_email_payload = EmailPayload {
         recipient_name: sender_name.to_string(),
         recipient_address: sender_email.to_string(),
-        email_content: receiver_email_content,
+        data: receiver_email_content,
         email_subject: receiver_email_subject,
     };
 
@@ -175,10 +175,10 @@ pub async fn receive_email(
         frontend_url = FRONTEND_URL.to_lowercase()
     );
     // dispatch the email
-    let sender_email_payload: EmailPayload = EmailPayload {
+    let sender_email_payload = EmailPayload {
         recipient_name: sender_name.to_string(),
         recipient_address: sender_email.to_string(),
-        email_content: sender_email_content,
+        data: sender_email_content,
         email_subject: email_subject.to_string(),
     };
 
@@ -203,10 +203,10 @@ pub async fn receive_email(
     let frontend_url: &str = &std::env::var("FRONTEND_URL")
         .unwrap_or_else(|_| String::from("https://opeolluwa.verce.app"));
     let receiver_email_subject = format!(" new email from {frontend_url}");
-    let receiver_email_payload: EmailPayload = EmailPayload {
+    let receiver_email_payload = EmailPayload {
         recipient_name: "Opeoluwa".to_string(),
         recipient_address: "adefemiadeoye@yahoo.com".to_string(),
-        email_content: receiver_email_content,
+        data: receiver_email_content,
         email_subject: receiver_email_subject,
     };
 
@@ -276,10 +276,10 @@ pub async fn reply_email(
     match fetched_email {
         // if email is found, return the mail
         Ok(email) => {
-            let email_payload: EmailPayload = EmailPayload {
+            let email_payload = EmailPayload {
                 recipient_name: email.fullname,
                 recipient_address: email.email,
-                email_content: receiver_email_content,
+                data: receiver_email_content,
                 email_subject: ("Reply: ".to_owned() + &email.subject),
             };
 

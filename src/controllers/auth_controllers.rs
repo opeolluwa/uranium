@@ -6,11 +6,12 @@ use crate::utils::api_response::{
 use crate::utils::jwt::{set_jtw_exp, JwtClaims, JwtEncryptionKeys, JwtPayload};
 use crate::utils::mailer::EmailPayload;
 use crate::utils::message_queue::MessageQueue;
-use crate::utils::otp_handler::{generate_otp, validate_otp};
+use crate::utils::otp_handler::{validate_otp, Otp};
 use axum::{http::StatusCode, Extension, Json};
 use bcrypt::{verify, DEFAULT_COST};
 use jsonwebtoken::{encode, Algorithm, Header};
 use once_cell::sync::Lazy;
+use racoon_macros::debug_print;
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::env;
@@ -86,22 +87,6 @@ INSERT INTO
 
     match new_user {
         Ok(user) => {
-            // generate OTP and parse the email template
-            let otp = generate_otp();
-            println!("{otp}");
-            let email_content = format!(
-                r#"
-        <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box; color: #3d4852; line-height: 1.5em; margin-top: 0; text-align: left;">
-
-        We are glad to have you on board with us. To complete your account set up, please use the OTP
-
-        <h3 style="text-align:center">{otp}</h3>
-
-        <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; box-sizing: border-box;">This OTP is only valid for the next 5 minutes. If you did not request this OTP, please ignore this message.</p>
-        </p>
-        "#,
-            );
-
             /*
             destructure the user object,
             encrypt the data as JWt, send email to the user
@@ -109,32 +94,38 @@ INSERT INTO
             if error send the error response
             */
             let UserModel {
-                id,
+                id: user_id,
                 email,
                 fullname,
                 ..
             } = &user;
-            // let fullname = &new_user.fullname.unwrap();
-
             let jwt_payload = JwtClaims {
-                id: id.to_string(),
+                id: user_id.to_string(),
                 email: email.as_ref().unwrap().to_string(),
                 fullname: fullname.as_ref().unwrap().to_string(),
                 exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
             };
+
+            // build the JWT Token and create a new token
             let jwt_token = jwt_payload.generate_token().unwrap();
+            let Otp { token: otp, .. } = Otp::new(6)
+                .save(database)
+                .await
+                .link_to_user(*user_id, database)
+                .await;
+
             // send email to user
-            let email_payload: EmailPayload = EmailPayload {
+            let email_payload = EmailPayload {
                 recipient_name: (&user.fullname.as_ref().unwrap()).to_string(),
                 recipient_address: (&user.email.as_ref().unwrap()).to_string(),
-                email_content,
+                data: otp.to_string(),
                 email_subject: "new account".to_string(),
             };
 
             // add email to queue
             let queue_data = email_payload;
             let queue_name = env::var("EMAIL_QUEUE").expect("email queue name not specified");
-            let new_queue: MessageQueue<EmailPayload> = MessageQueue::new(queue_data, &queue_name);
+            let new_queue = MessageQueue::new(queue_data, &queue_name);
             new_queue.enqueue();
 
             //build the response

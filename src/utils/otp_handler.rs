@@ -2,6 +2,7 @@ use once_cell::sync::Lazy;
 use otp_rs::TOTP;
 use racoon_macros::debug_print::debug_print;
 use serde::{Deserialize, Serialize};
+use sqlx::{Pool, Postgres};
 use std::env;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
@@ -43,23 +44,26 @@ pub fn validate_otp(otp: &str) -> bool {
 }
 
 ///one time password
-#[derive(Debug, Serialize, Deserialize, Validate, sqlx::FromRow)]
-pub struct OneTimePassword {
+#[derive(Debug, Serialize, Deserialize, Validate, sqlx::FromRow, Default)]
+pub struct Otp {
     pub id: Uuid,
     pub token: String,
     pub is_expired: bool,
 }
 
-impl Default for OneTimePassword {
-    fn default() -> Self {
-        Self {
-            is_expired: false,
-            ..Default::default()
-        }
+/// ipl display for Otp
+impl std::fmt::Display for Otp {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "id: {}\ntoken{}is_expired\n{}",
+            self.id, self.token, self.is_expired
+        )
     }
 }
-
-impl OneTimePassword {
+/// helper function for OTP
+impl Otp {
+    /// create new otp;
     pub fn new(length: u8) -> Self {
         let id = Uuid::new_v4();
         let token = OTP.generate(OTP_VALIDITY, *CURRENT_TIMESTAMP).unwrap();
@@ -68,5 +72,37 @@ impl OneTimePassword {
             token: token.to_string(),
             ..Default::default()
         }
+    }
+
+    /// save a newly created OTP to the database
+    pub async fn save(&self, db_connection: Pool<Postgres>) -> Self {
+        let sql_query = r#"
+       INSERT INTO one_time_password (id, token)
+       VALUES ($1, $2) RETURNING *
+       "#;
+        let otp = sqlx::query_as::<_, Self>(sql_query)
+            .bind(&self.id)
+            .bind(&self.token)
+            .fetch_one(&db_connection)
+            .await
+            .ok();
+
+        Self { ..otp.unwrap() }
+    }
+
+    /// link a newly created otp to a user using the user Id
+    pub async fn link_to_user(&self, user_id: Uuid, db_connection: Pool<Postgres>) -> Self {
+        let sql_query = r#"
+       INSERT INTO user_information (otp_id)
+       VALUES ($1) RETURNING *
+       "#;
+        let otp = sqlx::query_as::<_, Self>(sql_query)
+            .bind(&self.id)
+            .bind(&self.token)
+            .fetch_one(&db_connection)
+            .await
+            .ok();
+
+        Self { ..otp.unwrap() }
     }
 }

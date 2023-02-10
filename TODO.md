@@ -1,0 +1,1 @@
+1. Link OTP to USer using SQL association
