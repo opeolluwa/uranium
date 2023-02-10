@@ -68,8 +68,7 @@ impl Otp {
         .ok();
 
         if otp.is_none() {
-            racoon_error!("An exception  was encountered while inserting data into the database");
-            std::process::exit(1);
+            racoon_error!("An exception  was encountered while inserting OTP into the database");
         }
         Self { ..otp.unwrap() }
     }
@@ -84,6 +83,9 @@ impl Otp {
         .fetch_one(db_connection)
         .await
         .ok();
+        if otp.is_none() {
+            racoon_error!("An exception  was encountered while linking user Id to OTP");
+        }
         Self { ..otp.unwrap() }
     }
 
