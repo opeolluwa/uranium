@@ -229,7 +229,7 @@ impl IntoResponse for RequestError {
     fn into_response(self) -> Response {
         match self {
             RequestError::ValidationError(_) => ApiErrorResponse::BadRequest {
-                message: format!("Input validation error: [{}]", self).replace('\n', ", "),
+                message: format!("Input validation error: [{self}]").replace('\n', ", "),
             },
             RequestError::AxumFormRejection(_) => ApiErrorResponse::BadRequest {
                 message: self.to_string(),
@@ -238,7 +238,3 @@ impl IntoResponse for RequestError {
         .into_response()
     }
 }
-
-
-
-

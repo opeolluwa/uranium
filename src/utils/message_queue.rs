@@ -1,5 +1,6 @@
-use racoon_macros::debug_print::debug_print;
 use std::fmt;
+
+use racoon_macros::racoon_debug;
 
 ///To be used with message broker such as AMQP
 ///the function gets data and send it to a queue
@@ -25,7 +26,7 @@ impl<T: std::fmt::Display + std::fmt::Debug> MessageQueue<T> {
 
     pub fn enqueue(&self) {
         //TODO: add data to queue
-        debug_print("added new data to queue", &self.queue_name);
+        racoon_debug!("added new data to queue", Some(&self.queue_name));
         // println!(" data: {}, queue name: {}", self.data, self.queue_name)
     }
 }

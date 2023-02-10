@@ -42,30 +42,30 @@ pub mod mailer_config {
 /// the email recipient name
 /// the email recipient address
 #[derive(Debug, Serialize, Deserialize)]
-pub struct EmailPayload {
+pub struct EmailPayload<T> {
     pub recipient_name: String,
     pub recipient_address: String,
-    pub email_content: String,
+    pub data: T,
     pub email_subject: String,
 }
-impl fmt::Display for EmailPayload {
+impl<T: fmt::Display> fmt::Display for EmailPayload<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "({} {} {} {})",
-            self.recipient_name, self.recipient_address, self.email_content, self.email_subject
+            "(recipient_name: {}\nrecipient_address: {}\ndata: {}\nemail_subject: {})",
+            self.recipient_name, self.recipient_address, self.data, self.email_subject
         )
     }
 }
 /// send email, accept the email body
 /// dispatch the emil
 // #[async_trait]
-pub fn send_email(payload: EmailPayload) -> bool {
+pub fn send_email<T>(payload: EmailPayload<T>) -> bool {
     // the receiver's address
     let recipient_address = format!(
         "{name}<{address}>",
-        name = &payload.recipient_name.to_string(),
-        address = &payload.recipient_address.to_string()
+        name = &payload.recipient_name,
+        address = &payload.recipient_address
     );
 
     // the sender address from the SMTP configuration
@@ -94,8 +94,8 @@ pub fn send_email(payload: EmailPayload) -> bool {
                     SinglePart::builder()
                         .header(header::ContentType::TEXT_HTML)
                         .body(parse_email_template(
-                            payload.email_content.to_string(),
-                            payload.recipient_name.to_string(),
+                            "payload.data".to_string(),
+                            payload.recipient_name,
                         )),
                 ),
         )

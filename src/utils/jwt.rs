@@ -34,8 +34,8 @@ impl JwtClaims {
             ..Default::default()
         };
         //build the user jwt token
-        let token = encode(&jwt_header, &self, &JWT_SECRET.encoding).ok();
-        token
+
+        encode(&jwt_header, &self, &JWT_SECRET.encoding).ok()
     }
 }
 #[cfg(test)]

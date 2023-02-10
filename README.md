@@ -10,8 +10,7 @@ Authentication and Authorization in Microservices
 Architecture often pose security challenges/problems. This project is based on research work that addresses these problems and possible solution 
 
 
-The Project is built with the 
-[Rust programming [language](https://www.rust-lang.org/tools/install) a memory-safe systems programming language for building fast and secure applications. The application also integrates with the [PostgreSQL](https://www.postgresql.org/download/)
+The Project is built with the [Rust programming language](https://www.rust-lang.org/tools/install) a memory-safe systems programming language for building fast and secure applications. The application also integrates with the [PostgreSQL](https://www.postgresql.org/download/)
   database which is optimized for fast read and write database operations. 
 
 
