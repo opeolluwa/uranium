@@ -131,8 +131,8 @@ impl MailService {
         match mailer.send(&email) {
             Ok(_) => true,
             Err(err) => {
-                let err_msg = format!("Could not send mail due to {} ", err.to_string());
-                racoon_error!(&err_msg);
+                racoon_error!("Could not send mail due to ");
+                print!("{:?}", err);
                 false
             }
         }

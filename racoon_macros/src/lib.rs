@@ -25,9 +25,9 @@ macro_rules! racoon_debug {
 /// error message
 #[macro_export]
 macro_rules! racoon_error {
-    ($message:expr) => {
-        $crate::_error_print($message)
-    };
+  ($first:tt $(,$rest:tt)*) => {
+    $crate::_error_print(&concat!($first$(," ", $rest)*));
+  }
 }
 
 ///informatory
@@ -37,9 +37,9 @@ macro_rules! racoon_error {
 /// ```
 #[macro_export]
 macro_rules! racoon_info {
-    ($message:expr) => {
-        $crate::_info_print($message)
-    };
+  ($first:tt $(,$rest:tt)*) => {
+    $crate::_info_print(&concat!($first$(," ", $rest)*));
+  }
 }
 
 /// debug print in bold blue color
@@ -55,8 +55,8 @@ pub fn _debug_print<T: std::fmt::Debug>(message: &str, data: Option<T>) {
 
 /// print an error message in bold red color
 pub fn _error_print(message: &str) {
-    let error_color = Style::new().red().bold();
-    println!("{} {}", error_color.apply_to("RACOON ERROR:"), message,);
+    let red_color = Style::new().red().bold();
+    println!("{} {}", red_color.apply_to("RACOON ERROR:"), message,);
 }
 
 /// print information in bold green text
