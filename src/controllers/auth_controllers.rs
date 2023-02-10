@@ -11,7 +11,7 @@ use axum::{http::StatusCode, Extension, Json};
 use bcrypt::{verify, DEFAULT_COST};
 use jsonwebtoken::{encode, Algorithm, Header};
 use once_cell::sync::Lazy;
-use racoon_macros::debug_print;
+// use racoon_macros::debug_print;
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::env;
@@ -109,9 +109,9 @@ INSERT INTO
             // build the JWT Token and create a new token
             let jwt_token = jwt_payload.generate_token().unwrap();
             let Otp { token: otp, .. } = Otp::new(6)
-                .save(database)
+                .save(&database)
                 .await
-                .link_to_user(*user_id, database)
+                .link_to_user(*user_id, &database)
                 .await;
 
             // send email to user

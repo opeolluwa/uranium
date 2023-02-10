@@ -28,7 +28,7 @@ static CURRENT_TIMESTAMP: Lazy<u64> = Lazy::new(|| {
 });
 
 ///generate otp
-pub fn generate_otp() -> u32 {
+pub fn _generate_otp() -> u32 {
     // Generate code with period and current timestamp
     let generated_otp = OTP.generate(OTP_VALIDITY, *CURRENT_TIMESTAMP).unwrap();
     debug_print("the generated OPT is", generated_otp);
@@ -64,9 +64,11 @@ impl std::fmt::Display for Otp {
 /// helper function for OTP
 impl Otp {
     /// create new otp;
-    pub fn new(length: u8) -> Self {
+    pub fn new(otp_validity_period: u8) -> Self {
         let id = Uuid::new_v4();
-        let token = OTP.generate(OTP_VALIDITY, *CURRENT_TIMESTAMP).unwrap();
+        let token = OTP
+            .generate((otp_validity_period * 60) as u64, *CURRENT_TIMESTAMP)
+            .unwrap();
         Self {
             id,
             token: token.to_string(),
@@ -75,7 +77,7 @@ impl Otp {
     }
 
     /// save a newly created OTP to the database
-    pub async fn save(&self, db_connection: Pool<Postgres>) -> Self {
+    pub async fn save(&self, db_connection: &Pool<Postgres>) -> Self {
         let sql_query = r#"
        INSERT INTO one_time_password (id, token)
        VALUES ($1, $2) RETURNING *
@@ -83,26 +85,23 @@ impl Otp {
         let otp = sqlx::query_as::<_, Self>(sql_query)
             .bind(&self.id)
             .bind(&self.token)
-            .fetch_one(&db_connection)
+            .fetch_one(db_connection)
             .await
             .ok();
-
         Self { ..otp.unwrap() }
     }
 
     /// link a newly created otp to a user using the user Id
-    pub async fn link_to_user(&self, user_id: Uuid, db_connection: Pool<Postgres>) -> Self {
+    pub async fn link_to_user(&self, user_id: Uuid, db_connection: &Pool<Postgres>) -> Self {
         let sql_query = r#"
        INSERT INTO user_information (otp_id)
        VALUES ($1) RETURNING *
        "#;
         let otp = sqlx::query_as::<_, Self>(sql_query)
-            .bind(&self.id)
-            .bind(&self.token)
-            .fetch_one(&db_connection)
+            .bind(Uuid::from(user_id))
+            .fetch_one(db_connection)
             .await
             .ok();
-
         Self { ..otp.unwrap() }
     }
 }
