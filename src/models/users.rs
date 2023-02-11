@@ -84,7 +84,13 @@ pub struct UserInformation {
 
 /// associated functions and methods
 impl UserModel {
+    /// has a user password
     pub fn hash_password(password: Option<String>) -> String {
+        let password = password.unwrap();
+        bcrypt::hash(password.trim(), DEFAULT_COST).unwrap()
+    }
+    /// verify hashed password
+    pub fn _verify_pswd_hash(password: Option<String>) -> String {
         let password = password.unwrap();
         bcrypt::hash(password.trim(), DEFAULT_COST).unwrap()
     }
@@ -95,7 +101,6 @@ impl UserModel {
 impl SqlQueryBuilder for UserModel {
     type Entity = UserModel;
     type Attributes = UserInformation;
-
     /// save a new record in the database
     async fn save(
         fields: Self::Attributes,
@@ -146,14 +151,17 @@ INSERT INTO
             .await;
         new_user
     }
-    // update a field e.gg user password
-    /*   async fn update_field<T + std::marker::Send>(
-        field: &str,
-        value: T,
+
+    /// find user by id
+    async fn find_by_id(
+        id: &str,
         db_connection: &Pool<Postgres>,
     ) -> Result<Self::Entity, sqlx::Error> {
-        todo!();
-    } */
+        sqlx::query_as::<_, UserModel>("SELECT * FROM user_information WHERE id = $1")
+            .bind(sqlx::types::Uuid::parse_str(id).unwrap())
+            .fetch_one(db_connection)
+            .await
+    }
 }
 ///user authorization information
 /// to be used for making login and sign up requests

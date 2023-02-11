@@ -74,7 +74,7 @@ impl Otp {
     }
 
     /// link a newly created otp to a user using the user Id
-    pub async fn link_to_user(&self, user_id: Uuid, db_connection: &Pool<Postgres>) -> Self {
+    pub async fn _link_to_user(&self, user_id: Uuid, db_connection: &Pool<Postgres>) -> Self {
         let otp = sqlx::query_as::<_, Otp>(
             "INSERT INTO user_information (otp_id)
        VALUES ($1) RETURNING *",

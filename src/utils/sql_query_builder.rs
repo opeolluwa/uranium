@@ -38,9 +38,15 @@ pub trait SqlQueryBuilder {
     ) -> Result<Self::Entity, sqlx::Error>;
 
     // update a field e.gg user password
-    /*  async fn update_field<T>(
+    /* async fn update_field<T>(
         field: &str,
         value: T,
         db_connection: &Pool<Postgres>,
     ) -> Result<Self::Entity, sqlx::Error>; */
+
+    /// find model by id
+    async fn find_by_id(
+        id: &str,
+        db_connection: &Pool<Postgres>,
+    ) -> Result<Self::Entity, sqlx::Error>;
 }
