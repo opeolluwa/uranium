@@ -92,13 +92,27 @@ impl UserModel {
 
 /// implement query builder traits for UserModel
 #[async_trait]
-impl SqlQueryBuilder for UserModel {
-    type DatabaseModel = UserModel;
+impl SqlQueryBuilder for UserInformation {
+    type DatabaseModel = UserInformation;
     /// save a new record in the database
     async fn save(
         &self,
         db_connection: &Pool<Postgres>,
     ) -> Result<Self::DatabaseModel, sqlx::Error> {
+        let Self {
+            firstname,
+            lastname,
+            middlename,
+            fullname,
+            username,
+            email,
+            date_of_birth,
+            gender,
+            avatar,
+            phone_number,
+            password,
+            ..
+        } = self;
         let sql_query = r#"
 INSERT INTO
     user_information (
@@ -112,24 +126,22 @@ INSERT INTO
     ) ON CONFLICT (email) DO NOTHING RETURNING *
     "#;
         let id = Uuid::new_v4();
-        let hashed_password = Self::hash_password(Some(self.password));
+        let hashed_password = UserModel::hash_password(self.password);
         let new_user = sqlx::query_as::<_, UserModel>(sql_query)
             .bind(id)
-            .bind(self.gender.unwrap_or_default())
-            .bind(self.firstname.unwrap_or_default())
-            .bind(self.lastname.unwrap_or_default())
-            .bind(self.middlename.unwrap_or_default())
-            .bind(self.fullname.unwrap_or_default())
-            .bind(self.username.unwrap_or_default())
-            .bind(self.email.unwrap_or_default().trim())
-            .bind(self.date_of_birth.unwrap_or_default())
-            .bind(self.avatar.unwrap_or_default())
-            .bind(self.phone_number.unwrap_or_default())
+            .bind(gender.unwrap_or_default())
+            .bind(firstname.unwrap_or_default())
+            .bind(lastname.unwrap_or_default())
+            .bind(middlename.unwrap_or_default())
+            .bind(fullname.unwrap_or_default())
+            .bind(username.unwrap_or_default())
+            .bind(email.unwrap_or_default().trim())
+            .bind(date_of_birth.unwrap_or_default())
+            .bind(avatar.unwrap_or_default())
+            .bind(phone_number.unwrap_or_default())
             .bind(hashed_password)
             .fetch_one(db_connection)
             .await;
-
-        // return value
         new_user
     }
     // update a field e.gg user password
