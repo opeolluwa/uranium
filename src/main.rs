@@ -1,6 +1,6 @@
 use axum::{extract::Extension, http::StatusCode, routing::get_service, Router};
 use dotenv::dotenv;
-use racoon_macros::{racoon_error, racoon_info};
+use racoon_macros::racoon_info;
 use sqlx::postgres::PgPoolOptions;
 use std::{env, net::SocketAddr, path::PathBuf};
 use tower_http::cors::{Any, CorsLayer};

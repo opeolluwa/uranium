@@ -8,13 +8,13 @@ use crate::utils::jwt::{set_jtw_exp, JwtClaims, JwtPayload};
 use crate::utils::mailer::EmailPayload;
 use crate::utils::message_queue::MessageQueue;
 use crate::utils::otp_handler::Otp;
+use crate::utils::sql_query_builder::SqlQueryBuilder;
 use axum::{http::StatusCode, Extension, Json};
-use bcrypt::{verify, DEFAULT_COST};
+use bcrypt::verify;
 use jsonwebtoken::{encode, Algorithm, Header};
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::env;
-use uuid::Uuid;
 
 /// the bearer token validity set to 10 minutes
 const ACCESS_TOKEN_VALIDITY: u64 = 10;
@@ -27,56 +27,7 @@ pub async fn sign_up(
     ValidatedRequest(payload): ValidatedRequest<UserInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
-    let UserInformation {
-        firstname,
-        lastname,
-        middlename,
-        fullname,
-        username,
-        email,
-        date_of_birth,
-        gender,
-        avatar,
-        phone_number,
-        password,
-        ..
-    } = payload;
-
-    let sql_query = r#"
-INSERT INTO
-    user_information (
-        id,gender,firstname,lastname,middlename,
-        fullname,username,email, date_of_birth,avatar, phone_number,
-        password
-    ) VALUES
-    ( $1, $2, NUllIF($3, ''), NUllIF($4, ''), NUllIF($5, ''),
-        NUllIF($6, ''),NUllIF($7, ''), NUllIF($8, null),
-        NUllIF($9, null), NUllIF($10, ''), NUllIF($11, ''), NULLIF($12, '')
-    ) ON CONFLICT (email) DO NOTHING RETURNING *
-    "#;
-    /*
-     * generate a UUID and hash the user password,
-     * go on to save the hashed password along side other details
-     * cat any error along the way
-     */
-
-    let id = Uuid::new_v4();
-    let hashed_password = bcrypt::hash(password.unwrap_or_default().trim(), DEFAULT_COST).unwrap();
-    let new_user = sqlx::query_as::<_, UserModel>(sql_query)
-        .bind(id)
-        .bind(gender.unwrap_or_default())
-        .bind(firstname.unwrap_or_default())
-        .bind(lastname.unwrap_or_default())
-        .bind(middlename.unwrap_or_default())
-        .bind(fullname.unwrap_or_default())
-        .bind(username.unwrap_or_default())
-        .bind(email.unwrap_or_default().trim())
-        .bind(date_of_birth.unwrap_or_default())
-        .bind(avatar.unwrap_or_default())
-        .bind(phone_number.unwrap_or_default())
-        .bind(hashed_password)
-        .fetch_one(&database)
-        .await;
+    let new_user = UserModel::save(payload, &database).await;
 
     match new_user {
         Ok(user) => {
@@ -101,11 +52,9 @@ INSERT INTO
 
             // build the JWT Token and create a new token
             let jwt_token = jwt_payload.generate_token().unwrap();
-            let Otp { token: otp, .. } = Otp::new()
-                .save(&database)
-                .await
-                .link_to_user(*user_id, &database)
-                .await;
+            let Otp { token: otp, .. } = Otp::new().save(&database).await;
+            /* .link_to_user(*user_id, &database)
+            .await; */
 
             // send email to user
             let email_payload = EmailPayload {
