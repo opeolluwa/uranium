@@ -64,11 +64,11 @@ impl Otp {
         .bind(&self.id)
         .bind(&self.token)
         .fetch_one(db_connection)
-        .await
-        .ok();
+        .await;
 
-        if otp.is_none() {
+        if otp.is_err() {
             racoon_error!("An exception  was encountered while inserting OTP into the database");
+            println!("{:?}\n", otp);
         }
         Self { ..otp.unwrap() }
     }
@@ -81,10 +81,10 @@ impl Otp {
         )
         .bind(Uuid::from(user_id))
         .fetch_one(db_connection)
-        .await
-        .ok();
-        if otp.is_none() {
+        .await;
+        if otp.is_err() {
             racoon_error!("An exception  was encountered while linking user Id to OTP");
+            println!("{:?}\n", otp);
         }
         Self { ..otp.unwrap() }
     }

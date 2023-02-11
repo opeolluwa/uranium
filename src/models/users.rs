@@ -1,9 +1,13 @@
 use super::emails::EmailModel;
 use crate::utils::api_response::EnumerateFields;
+use crate::utils::sql_query_builder::SqlQueryBuilder;
+use async_trait::async_trait;
+use bcrypt::DEFAULT_COST;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
+use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
 use validator::Validate;
 
@@ -50,15 +54,10 @@ pub struct UserModel {
     pub password: Option<String>,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
+    pub otp_id: Option<Uuid>,
     pub last_available_at: Option<NaiveDateTime>,
 }
 
-impl UserModel {
-    pub async fn _user_exists(&self) -> bool {
-        //TODO! see if a user with email or username exists
-        todo!()
-    }
-}
 ///the user information is derived from the user model
 /// it shall be responsible for providing the user information such as in JWT encryption
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate, Default)]
@@ -83,6 +82,65 @@ pub struct UserInformation {
     pub last_available_at: Option<NaiveDateTime>,
 }
 
+/// associated functions and methods
+impl UserModel {
+    pub fn hash_password(password: Option<String>) -> String {
+        let password = password.unwrap();
+        bcrypt::hash(password.trim(), DEFAULT_COST).unwrap()
+    }
+}
+
+/// implement query builder traits for UserModel
+#[async_trait]
+impl SqlQueryBuilder for UserModel {
+    type DatabaseModel = UserModel;
+    /// save a new record in the database
+    async fn save(
+        &self,
+        db_connection: &Pool<Postgres>,
+    ) -> Result<Self::DatabaseModel, sqlx::Error> {
+        let sql_query = r#"
+INSERT INTO
+    user_information (
+        id,gender,firstname,lastname,middlename,
+        fullname,username,email, date_of_birth,avatar, phone_number,
+        password
+    ) VALUES
+    ( $1, $2, NUllIF($3, ''), NUllIF($4, ''), NUllIF($5, ''),
+        NUllIF($6, ''),NUllIF($7, ''), NUllIF($8, null),
+        NUllIF($9, null), NUllIF($10, ''), NUllIF($11, ''), NULLIF($12, '')
+    ) ON CONFLICT (email) DO NOTHING RETURNING *
+    "#;
+        let id = Uuid::new_v4();
+        let hashed_password = Self::hash_password(Some(self.password));
+        let new_user = sqlx::query_as::<_, UserModel>(sql_query)
+            .bind(id)
+            .bind(self.gender.unwrap_or_default())
+            .bind(self.firstname.unwrap_or_default())
+            .bind(self.lastname.unwrap_or_default())
+            .bind(self.middlename.unwrap_or_default())
+            .bind(self.fullname.unwrap_or_default())
+            .bind(self.username.unwrap_or_default())
+            .bind(self.email.unwrap_or_default().trim())
+            .bind(self.date_of_birth.unwrap_or_default())
+            .bind(self.avatar.unwrap_or_default())
+            .bind(self.phone_number.unwrap_or_default())
+            .bind(hashed_password)
+            .fetch_one(db_connection)
+            .await;
+
+        // return value
+        new_user
+    }
+    // update a field e.gg user password
+    /*   async fn update_field<T + std::marker::Send>(
+        field: &str,
+        value: T,
+        db_connection: &Pool<Postgres>,
+    ) -> Result<Self::DatabaseModel, sqlx::Error> {
+        todo!();
+    } */
+}
 ///user authorization information
 /// to be used for making login and sign up requests
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate)]
