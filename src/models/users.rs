@@ -101,6 +101,7 @@ impl UserModel {
 impl SqlQueryBuilder for UserModel {
     type Entity = UserModel;
     type Attributes = UserInformation;
+    // type UpdatedAttribute = dyn Any;
     /// save a new record in the database
     async fn save(
         fields: Self::Attributes,

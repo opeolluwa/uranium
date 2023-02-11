@@ -31,20 +31,22 @@ pub trait SqlQueryBuilder {
     /// allow generic use of the query builder for multiple models
     type Entity;
     type Attributes;
+    // type UpdatedAttribute;
+
     /// save a new record in the database
     async fn save(
         fields: Self::Attributes,
         db_connection: &Pool<Postgres>,
     ) -> Result<Self::Entity, sqlx::Error>;
 
-    // update a field e.gg user password
-    /* async fn update_field<T>(
-        field: &str,
-        value: T,
-        db_connection: &Pool<Postgres>,
-    ) -> Result<Self::Entity, sqlx::Error>; */
-
-    /// find model by id
+    /*  /// update a field e.g user password
+       async fn update_field(
+           field: &str,
+           value: Self::UpdatedAttribute,
+           db_connection: &Pool<Postgres>,
+       ) -> Result<Self::Entity, sqlx::Error>;
+    */
+    /// find record by id
     async fn find_by_id(
         id: &str,
         db_connection: &Pool<Postgres>,
