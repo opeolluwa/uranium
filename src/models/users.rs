@@ -92,14 +92,16 @@ impl UserModel {
 
 /// implement query builder traits for UserModel
 #[async_trait]
-impl SqlQueryBuilder for UserInformation {
-    type DatabaseModel = UserInformation;
+impl SqlQueryBuilder for UserModel {
+    type Entity = UserModel;
+    type Attributes = UserInformation;
+
     /// save a new record in the database
     async fn save(
-        &self,
+        fields: Self::Attributes,
         db_connection: &Pool<Postgres>,
-    ) -> Result<Self::DatabaseModel, sqlx::Error> {
-        let Self {
+    ) -> Result<Self::Entity, sqlx::Error> {
+        let Self::Attributes {
             firstname,
             lastname,
             middlename,
@@ -112,7 +114,7 @@ impl SqlQueryBuilder for UserInformation {
             phone_number,
             password,
             ..
-        } = self;
+        } = fields;
         let sql_query = r#"
 INSERT INTO
     user_information (
@@ -126,7 +128,7 @@ INSERT INTO
     ) ON CONFLICT (email) DO NOTHING RETURNING *
     "#;
         let id = Uuid::new_v4();
-        let hashed_password = UserModel::hash_password(self.password);
+        let hashed_password = UserModel::hash_password(password);
         let new_user = sqlx::query_as::<_, UserModel>(sql_query)
             .bind(id)
             .bind(gender.unwrap_or_default())
@@ -149,7 +151,7 @@ INSERT INTO
         field: &str,
         value: T,
         db_connection: &Pool<Postgres>,
-    ) -> Result<Self::DatabaseModel, sqlx::Error> {
+    ) -> Result<Self::Entity, sqlx::Error> {
         todo!();
     } */
 }

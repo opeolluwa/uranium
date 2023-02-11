@@ -29,18 +29,18 @@ use sqlx::{Pool, Postgres};
 #[async_trait]
 pub trait SqlQueryBuilder {
     /// allow generic use of the query builder for multiple models
-    type DatabaseModel;
-
+    type Entity;
+    type Attributes;
     /// save a new record in the database
     async fn save(
-        &self,
+        fields: Self::Attributes,
         db_connection: &Pool<Postgres>,
-    ) -> Result<Self::DatabaseModel, sqlx::Error>;
+    ) -> Result<Self::Entity, sqlx::Error>;
 
     // update a field e.gg user password
-   /*  async fn update_field<T>(
+    /*  async fn update_field<T>(
         field: &str,
         value: T,
         db_connection: &Pool<Postgres>,
-    ) -> Result<Self::DatabaseModel, sqlx::Error>; */
+    ) -> Result<Self::Entity, sqlx::Error>; */
 }
