@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use sqlx::{Pool, Postgres};
-
+use std::future::Future;
 /// a placeholder for building SQL query abstractions
 /// the util implements a number of common SQL transactions like, save, get by primary key, get all, get one, e.t.c
 /// #Example
@@ -31,50 +31,56 @@ pub trait SqlQueryBuilder {
     /// allow generic use of the query builder for multiple models
     type Entity;
     type Attributes;
-    // type UpdatedAttribute;
 
     /// save a new record in the database
     async fn create(
         fields: Self::Attributes,
         db_connection: &Pool<Postgres>,
     ) -> Result<Self::Entity, sqlx::Error>;
-
-    /*   /// update a field e.g user password
-       async fn update_field(
-           field: &str,
-           value: Self::UpdatedAttribute,
-           db_connection: &Pool<Postgres>,
-       ) -> Result<Self::Entity, sqlx::Error>;
-    */
     /// find record by id
     async fn find_by_pk(
         id: &str,
         db_connection: &Pool<Postgres>,
     ) -> Result<Self::Entity, sqlx::Error>;
-}
 
-/* 
-#[async_trait]
-pub trait SqlQueryBuilderX {
-    /// allow generic use of the query builder for multiple models
-    type Entity;
-    type Attributes;
+    /* /// update model record
+    async fn update(
+        fields: Self::Attributes,
+        db_connection: &Pool<Postgres>,
+    ) -> Result<Self::Entity, sqlx::Error>;
 
-    /// create model record
-    async fn create(fields: Self::Attributes, db_connection: &Pool<Postgres>) -> Self::Entity {
-        Self::Entity
-    }
+    /// update a field e.g user password
+    async fn update_field(
+        field: &str,
+        value: &str,
+        db_connection: &Pool<Postgres>,
+    ) -> Result<Self::Entity, sqlx::Error>;
     /// find model record
-    async fn find(fields: Self::Attributes, db_connection: &Pool<Postgres>) -> Self::Entity {
-        Self::Entity
-    }
-    /// update model record
-    async fn update(fields: Self::Attributes, db_connection: &Pool<Postgres>) -> Self::Entity {
-        self::Entity
-    }
+    async fn find(
+        &self,
+        fields: Self::Attributes,
+        db_connection: &Pool<Postgres>,
+    ) -> Result<Self::Entity, sqlx::Error>;
+
     /// delete model record
-    async fn destroy(fields: Self::Attributes, db_connection: &Pool<Postgres>) -> Self::Entity {
-        self::Entity
+    async fn destroy(
+        fields: Self::Attributes,
+        db_connection: &Pool<Postgres>,
+    ) -> Result<(), sqlx::Error>; */
+}
+#[async_trait]
+pub trait MyTrait {
+    type Output: Future<Output = Result<(), String>>;
+    async fn create(&self) -> Self::Output;
+    async fn find(&self) -> Self::Output;
+}
+
+struct MyStruct;
+
+#[async_trait]
+impl MyTrait for MyStruct {
+    type Output = Result<(), String>;
+    async fn create(&self) -> Self::Output {
+        Ok(())
     }
 }
-*/

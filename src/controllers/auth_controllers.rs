@@ -56,9 +56,11 @@ pub async fn sign_up(
 
     // build the JWT Token and create a new token
     let jwt_token = jwt_payload.generate_token().unwrap();
-    let Otp { token: otp, .. } = Otp::new().save(&database).await;
-    /* .link_to_user(*user_id, &database)
-    .await; */
+    let Otp { token: otp, .. } = Otp::new()
+        .save(&database)
+        .await
+        .link_to_user(*user_id, &database)
+        .await;
 
     // send email to user
     let email_payload = EmailPayload {
