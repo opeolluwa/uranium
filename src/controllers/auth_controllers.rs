@@ -27,66 +27,65 @@ pub async fn sign_up(
     ValidatedRequest(payload): ValidatedRequest<UserInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
-    let new_user = UserModel::save(payload, &database).await;
-
-    match new_user {
-        Ok(user) => {
-            /*
-            destructure the user object,
-            encrypt the data as JWt, send email to the user
-            send the token back to the user as success response
-            if error send the error response
-            */
-            let UserModel {
-                id: user_id,
-                email,
-                fullname,
-                ..
-            } = &user;
-            let jwt_payload = JwtClaims {
-                id: user_id.to_string(),
-                email: email.as_ref().unwrap().to_string(),
-                fullname: fullname.as_ref().unwrap().to_string(),
-                exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
-            };
-
-            // build the JWT Token and create a new token
-            let jwt_token = jwt_payload.generate_token().unwrap();
-            let Otp { token: otp, .. } = Otp::new().save(&database).await;
-            /* .link_to_user(*user_id, &database)
-            .await; */
-
-            // send email to user
-            let email_payload = EmailPayload {
-                recipient_name: (&user.fullname.as_ref().unwrap()).to_string(),
-                recipient_address: (&user.email.as_ref().unwrap()).to_string(),
-                data: otp.to_string(),
-                email_subject: "new account".to_string(),
-            };
-
-            // add email to queue
-            let queue_data = email_payload;
-            let queue_name = env::var("EMAIL_QUEUE").expect("email queue name not specified");
-            let new_queue = MessageQueue::new(queue_data, &queue_name);
-            new_queue.enqueue();
-
-            //build the response
-            let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
-                success: true,
-                message: String::from("Please verify OTP send to your email to continue"),
-                data: Some(json!({
-                    "user":UserModel { ..user },
-                    "token":jwt_token,
-                    "tokenType":"Bearer".to_string()
-                })),
-            };
-            //return the response
-            Ok((StatusCode::CREATED, Json(response)))
-        }
-        Err(error_message) => Err(ApiErrorResponse::ServerError {
+    let new_user = UserModel::create(payload, &database).await;
+    if let Err(error_message) = new_user {
+        return Err(ApiErrorResponse::ServerError {
             message: error_message.to_string(),
-        }),
+        });
     }
+
+    let user = new_user.ok().unwrap();
+    /*
+    destructure the user object,
+    encrypt the data as JWt, send email to the user
+    send the token back to the user as success response
+    if error send the error response
+    */
+    let UserModel {
+        id: user_id,
+        email,
+        fullname,
+        ..
+    } = &user;
+    let jwt_payload = JwtClaims {
+        id: user_id.to_string(),
+        email: email.as_ref().unwrap().to_string(),
+        fullname: fullname.as_ref().unwrap().to_string(),
+        exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
+    };
+
+    // build the JWT Token and create a new token
+    let jwt_token = jwt_payload.generate_token().unwrap();
+    let Otp { token: otp, .. } = Otp::new().save(&database).await;
+    /* .link_to_user(*user_id, &database)
+    .await; */
+
+    // send email to user
+    let email_payload = EmailPayload {
+        recipient_name: (&user.fullname.as_ref().unwrap()).to_string(),
+        recipient_address: (&user.email.as_ref().unwrap()).to_string(),
+        data: otp.to_string(),
+        email_subject: "new account".to_string(),
+    };
+
+    // add email to queue
+    let queue_data = email_payload;
+    let queue_name = env::var("EMAIL_QUEUE").expect("email queue name not specified");
+    let new_queue = MessageQueue::new(queue_data, &queue_name);
+    new_queue.enqueue();
+
+    //build the response
+    let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
+        success: true,
+        message: String::from("Please verify OTP send to your email to continue"),
+        data: Some(json!({
+            "user":UserModel { ..user },
+            "token":jwt_token,
+            "tokenType":"Bearer".to_string()
+        })),
+    };
+    //return the response
+    Ok((StatusCode::CREATED, Json(response)))
 }
 
 ///verify email
