@@ -47,7 +47,7 @@ pub trait SqlQueryBuilder {
        ) -> Result<Self::Entity, sqlx::Error>;
     */
     /// find record by id
-    async fn find_by_id(
+    async fn find_by_pk(
         id: &str,
         db_connection: &Pool<Postgres>,
     ) -> Result<Self::Entity, sqlx::Error>;

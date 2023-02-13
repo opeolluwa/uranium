@@ -100,13 +100,7 @@ pub async fn verify_email(
     authenticated_user: JwtClaims,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
-    let user_information =
-        sqlx::query_as::<_, UserModel>("SELECT * FROM user_information WHERE email = $1")
-            .bind(&authenticated_user.email)
-            .fetch_one(&database)
-            .await;
-
-    //handle errors
+    let user_information = UserModel::find_by_pk(&authenticated_user.id, &database).await;
     match user_information {
         Ok(user) => {
             // if account has not been activated
