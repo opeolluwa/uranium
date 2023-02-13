@@ -34,12 +34,12 @@ pub trait SqlQueryBuilder {
     // type UpdatedAttribute;
 
     /// save a new record in the database
-    async fn save(
+    async fn create(
         fields: Self::Attributes,
         db_connection: &Pool<Postgres>,
     ) -> Result<Self::Entity, sqlx::Error>;
 
-    /*  /// update a field e.g user password
+    /*   /// update a field e.g user password
        async fn update_field(
            field: &str,
            value: Self::UpdatedAttribute,
@@ -47,8 +47,34 @@ pub trait SqlQueryBuilder {
        ) -> Result<Self::Entity, sqlx::Error>;
     */
     /// find record by id
-    async fn find_by_id(
+    async fn find_by_pk(
         id: &str,
         db_connection: &Pool<Postgres>,
     ) -> Result<Self::Entity, sqlx::Error>;
 }
+
+/* 
+#[async_trait]
+pub trait SqlQueryBuilderX {
+    /// allow generic use of the query builder for multiple models
+    type Entity;
+    type Attributes;
+
+    /// create model record
+    async fn create(fields: Self::Attributes, db_connection: &Pool<Postgres>) -> Self::Entity {
+        Self::Entity
+    }
+    /// find model record
+    async fn find(fields: Self::Attributes, db_connection: &Pool<Postgres>) -> Self::Entity {
+        Self::Entity
+    }
+    /// update model record
+    async fn update(fields: Self::Attributes, db_connection: &Pool<Postgres>) -> Self::Entity {
+        self::Entity
+    }
+    /// delete model record
+    async fn destroy(fields: Self::Attributes, db_connection: &Pool<Postgres>) -> Self::Entity {
+        self::Entity
+    }
+}
+*/

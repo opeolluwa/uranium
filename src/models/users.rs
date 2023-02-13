@@ -103,7 +103,7 @@ impl SqlQueryBuilder for UserModel {
     type Attributes = UserInformation;
     // type UpdatedAttribute = dyn Any;
     /// save a new record in the database
-    async fn save(
+    async fn create(
         fields: Self::Attributes,
         db_connection: &Pool<Postgres>,
     ) -> Result<Self::Entity, sqlx::Error> {
@@ -154,7 +154,7 @@ INSERT INTO
     }
 
     /// find user by id
-    async fn find_by_id(
+    async fn find_by_pk(
         id: &str,
         db_connection: &Pool<Postgres>,
     ) -> Result<Self::Entity, sqlx::Error> {
