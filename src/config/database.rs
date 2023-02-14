@@ -11,3 +11,8 @@ pub async fn database_pool() -> Pool<sqlx::Postgres> {
         .await
         .expect("Could not connect to database ")
 }
+
+pub enum DataCollection {
+    UserInformation(String),
+    OneTimePasswords(String),
+}

@@ -1,6 +1,6 @@
 use super::emails::EmailModel;
 use crate::utils::api_response::EnumerateFields;
-use crate::utils::sql_query_builder::SqlQueryBuilder;
+use crate::utils::sql_query_builder::{Create, FindByPk};
 use async_trait::async_trait;
 use bcrypt::DEFAULT_COST;
 use chrono::NaiveDate;
@@ -98,7 +98,7 @@ impl UserModel {
 
 /// implement query builder traits for UserModel
 #[async_trait]
-impl SqlQueryBuilder for UserModel {
+impl Create for UserModel {
     type Entity = UserModel;
     type Attributes = UserInformation;
     // type UpdatedAttribute = dyn Any;
@@ -152,7 +152,12 @@ INSERT INTO
             .await;
         new_user
     }
+}
 
+#[async_trait]
+impl FindByPk for UserModel {
+    type Entity = UserModel;
+    type Attributes = UserInformation;
     /// find user by id
     async fn find_by_pk(
         id: &str,
