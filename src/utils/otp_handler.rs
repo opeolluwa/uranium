@@ -76,9 +76,9 @@ impl Otp {
     /// link a newly created otp to a user using the user Id
     pub async fn link_to_user(&self, user_id: Uuid, db_connection: &Pool<Postgres>) -> Self {
         let otp = sqlx::query_as::<_, Otp>(
-            "INSERT INTO user_information (otp_id)
-       VALUES ($1) RETURNING *",
+            "UPDATE user_information SET otp_id = $1 WHERE id = $2 RETURNING *",
         )
+        .bind(Uuid::from(self.id))
         .bind(Uuid::from(user_id))
         .fetch_one(db_connection)
         .await;
@@ -86,7 +86,9 @@ impl Otp {
             racoon_error!("An exception  was encountered while linking user Id to OTP");
             println!("{:?}\n", otp);
         }
-        Self { ..otp.unwrap() }
+        Self {
+            ..otp.ok().unwrap()
+        }
     }
 
     /// validate otp

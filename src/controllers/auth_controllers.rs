@@ -8,7 +8,7 @@ use crate::utils::jwt::{set_jtw_exp, JwtClaims, JwtPayload};
 use crate::utils::mailer::EmailPayload;
 use crate::utils::message_queue::MessageQueue;
 use crate::utils::otp_handler::Otp;
-use crate::utils::sql_query_builder::SqlQueryBuilder;
+use crate::utils::sql_query_builder::{Create, FindByPk};
 use axum::{http::StatusCode, Extension, Json};
 use bcrypt::verify;
 use jsonwebtoken::{encode, Algorithm, Header};
