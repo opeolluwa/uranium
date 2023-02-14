@@ -1,3 +1,17 @@
+// Copyright 2022 The Racoon Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 use once_cell::sync::Lazy;
 use otp_rs::TOTP;
 use racoon_macros::racoon_error;
@@ -76,7 +90,7 @@ impl Otp {
     /// link a newly created otp to a user using the user Id
     pub async fn link_to_user(&self, user_id: Uuid, db_connection: &Pool<Postgres>) -> Self {
         let otp = sqlx::query_as::<_, Otp>(
-            "UPDATE user_information SET otp_id = $1 WHERE id = $2 RETURNING *",
+            "UPDATE user_information SET otp_id = $1 WHERE id = $2; SELECT * FROM one_time_passwords WHERE id = $1",
         )
         .bind(Uuid::from(self.id))
         .bind(Uuid::from(user_id))

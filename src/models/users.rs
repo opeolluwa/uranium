@@ -1,6 +1,6 @@
 use super::emails::EmailModel;
 use crate::utils::api_response::EnumerateFields;
-use crate::utils::sql_query_builder::{Create, FindByPk};
+use crate::utils::sql_query_builder::{Create, FindByPk, UpdateEntity};
 use async_trait::async_trait;
 use bcrypt::DEFAULT_COST;
 use chrono::NaiveDate;
@@ -60,7 +60,7 @@ pub struct UserModel {
 
 ///the user information is derived from the user model
 /// it shall be responsible for providing the user information such as in JWT encryption
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate, Default)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct UserInformation {
     // pub id: Uuid,
@@ -154,6 +154,7 @@ INSERT INTO
     }
 }
 
+///implement find by PK for user Model
 #[async_trait]
 impl FindByPk for UserModel {
     type Entity = UserModel;
@@ -169,6 +170,26 @@ impl FindByPk for UserModel {
             .await
     }
 }
+
+#[async_trait]
+/// impl Update Entity of user model
+impl UpdateEntity for UserModel {
+    type Entity = UserModel;
+    async fn update<V>(
+        &self,
+        fields: Vec<std::collections::HashMap<String, V>>,
+        db_connection: &Pool<Postgres>,
+    ) -> Result<Self::Entity, sqlx::Error> {
+        
+        Ok(
+            sqlx::query_as::<_, UserModel>("UPDATE user_information SET $1 = $2 WHERE id = $3")
+                .bind(sqlx::types::Uuid::parse_str(self.id).unwrap())
+                .fetch_one(db_connection)
+                .await?,
+        )
+    }
+}
+
 ///user authorization information
 /// to be used for making login and sign up requests
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate)]

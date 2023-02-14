@@ -1,37 +1,23 @@
+// Copyright 2022 The Racoon Authors. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 use async_trait::async_trait;
 use sqlx::{Pool, Postgres};
-/// a placeholder for building SQL query abstractions
-/// the util implements a number of common SQL transactions like, save, get by primary key, get all, get one, e.t.c
-/// #Example
-///
-/// ``` rust
-/// #[derive(sqlx::FromRow, Debug, Serialize, Deserialize)]
-/// struct User {
-/// id: Uuid,
-/// age: u32,
-/// name: String
-/// }
-///
-/// impl SqlQueryBuilder for User {
-/// fn save(db_connection){
-/// let sql_query = "INSERT INTO user_information (id, age, name) VALUES ($1, $2, $3) RETURNING *";
-///    let otp = sqlx::query_as::<_, Otp>(sql_query)
-///     .bind(self.id)
-///     .bind(self.age)
-///    .bind(self.name)
-///  .fetch_one(db_connection)
-/// .await;
-///  }
-/// }
-/// ```
-
+/// Create - create a new database record
 #[async_trait]
 pub trait Create {
-    /// allow generic use of the query builder for multiple models
     type Entity;
     type Attributes;
-
-    /// save a new record in the database
     async fn create(
         fields: Self::Attributes,
         db_connection: &Pool<Postgres>,
@@ -79,15 +65,37 @@ pub trait FindAndCount {
         db_connection: &Pool<Postgres>,
     ) -> Result<Self::Entity, sqlx::Error>;
 }
+
+/// update fields
 #[async_trait]
 pub trait UpdateEntity {
     type Entity;
-    type Attributes;
-    async fn update(
-        fields: Self::Attributes,
+    async fn update<V>(
+        &self,
+        fields: Vec<std::collections::HashMap<String, V>>,
         db_connection: &Pool<Postgres>,
     ) -> Result<Self::Entity, sqlx::Error>;
 }
+
+/// find a user by primary key
+/// #Example
+/// ```rust
+///
+/// #[async_trait]
+/// impl FindByPk for UserModel {
+/// type Entity = UserModel;
+/// type Attributes = UserInformation;
+///    async fn find_by_pk(
+///       id: &str,
+///       db_connection: &Pool<Postgres>,
+///   ) -> Result<Self::Entity, sqlx::Error> {
+///    sqlx::query_as::<_, UserModel>("SELECT * FROM user_information WHERE id = $1")
+///     .bind(sqlx::types::Uuid::parse_str(id).unwrap())
+///   .fetch_one(db_connection)
+///      .await
+/// }
+///}
+/// ```
 
 #[async_trait]
 pub trait FindByPk {
