@@ -8,7 +8,7 @@ use crate::utils::jwt::{set_jtw_exp, JwtClaims, JwtPayload};
 use crate::utils::mailer::EmailPayload;
 use crate::utils::message_queue::MessageQueue;
 use crate::utils::otp_handler::Otp;
-use crate::utils::sql_query_builder::SqlQueryBuilder;
+use crate::utils::sql_query_builder::{Create, FindByPk};
 use axum::{http::StatusCode, Extension, Json};
 use bcrypt::verify;
 use jsonwebtoken::{encode, Algorithm, Header};
@@ -56,9 +56,11 @@ pub async fn sign_up(
 
     // build the JWT Token and create a new token
     let jwt_token = jwt_payload.generate_token().unwrap();
-    let Otp { token: otp, .. } = Otp::new().save(&database).await;
-    /* .link_to_user(*user_id, &database)
-    .await; */
+    let Otp { token: otp, .. } = Otp::new()
+        .save(&database)
+        .await
+        .link_to_user(*user_id, &database)
+        .await;
 
     // send email to user
     let email_payload = EmailPayload {

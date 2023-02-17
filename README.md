@@ -1,7 +1,7 @@
 # Racoon 
 _Authentication and Authorization Server for Microservices Architecture_
 
-![racoon](./racoon.png)
+![racoon](./racoon.jpg)
 
 
 ## Overview 
