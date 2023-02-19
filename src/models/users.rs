@@ -54,13 +54,14 @@ pub struct UserModel {
     pub password: Option<String>,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
+    #[serde(skip_serializing)]
     pub otp_id: Option<Uuid>,
     pub last_available_at: Option<NaiveDateTime>,
 }
 
 ///the user information is derived from the user model
 /// it shall be responsible for providing the user information such as in JWT encryption
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate, Default)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct UserInformation {
     // pub id: Uuid,
@@ -85,14 +86,16 @@ pub struct UserInformation {
 /// associated functions and methods
 impl UserModel {
     /// has a user password
-    pub fn hash_password(password: Option<String>) -> String {
+    pub fn hash_pswd(password: Option<String>) -> String {
         let password = password.unwrap();
         bcrypt::hash(password.trim(), DEFAULT_COST).unwrap()
     }
     /// verify hashed password
-    pub fn _verify_pswd_hash(password: Option<String>) -> String {
-        let password = password.unwrap();
-        bcrypt::hash(password.trim(), DEFAULT_COST).unwrap()
+    pub fn _verify_pswd_hash(&self, raw_password: &str) -> bool {
+        let stored_password = self.password.as_ref().unwrap();
+        bcrypt::verify(raw_password, stored_password)
+            .ok()
+            .is_some()
     }
 }
 
@@ -134,7 +137,7 @@ INSERT INTO
     ) ON CONFLICT (email) DO NOTHING RETURNING *
     "#;
         let id = Uuid::new_v4();
-        let hashed_password = UserModel::hash_password(password);
+        let hashed_password = UserModel::hash_pswd(password);
         let new_user = sqlx::query_as::<_, UserModel>(sql_query)
             .bind(id)
             .bind(gender.unwrap_or_default())
@@ -154,6 +157,7 @@ INSERT INTO
     }
 }
 
+///implement find by PK for user Model
 #[async_trait]
 impl FindByPk for UserModel {
     type Entity = UserModel;
@@ -169,6 +173,28 @@ impl FindByPk for UserModel {
             .await
     }
 }
+
+// #[async_trait]
+// /// impl Update Entity of user model
+// impl UpdateEntity for UserModel {
+//     type Entity = UserModel;
+//     //TODO: make the update filed take an array of generic hashmaps, representing the updates
+//     async fn update(
+//         &self,
+//         fields: Vec<std::collections::HashMap<String, String>>,
+//         db_connection: &Pool<Postgres>,
+//     ) -> Result<Self::Entity, sqlx::Error> {
+//         let key = "";
+//         let value = "";
+
+//         sqlx::query_as::<_, UserModel>("UPDATE user_information SET $1 = $2 WHERE id = $3")
+//             .bind(&key)
+//             .bind(&value)
+//             .fetch_one(db_connection)
+//             .await
+//     }
+// }
+
 ///user authorization information
 /// to be used for making login and sign up requests
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate)]
