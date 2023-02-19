@@ -108,9 +108,9 @@ impl Otp {
     // fetch and verify otp
     pub async fn validate_otp(otp_id: Uuid, token: &str, db_connection: &Pool<Postgres>) -> bool {
         let verifiable_otp =
-            sqlx::query_as::<_, Otp>("SELECT * FROM one_time_passwords WHERE id = $1")
+            sqlx::query_as::<_, Otp>("SELECT * FROM one_time_passwords WHERE id = $1 AND token = $2")
                 .bind(Uuid::from(otp_id))
-                // .bind(token.trim())
+                .bind(token.trim())
                 .fetch_one(db_connection)
                 .await;
 
