@@ -41,7 +41,7 @@ impl<T: std::fmt::Display + std::fmt::Debug> MessageQueue<T> {
     pub fn enqueue(&self) {
         //TODO: add data to queue
         racoon_debug!("added new data to queue", Some(&self.queue_name));
-        // println!(" data: {}, queue name: {}", self.data, self.queue_name)
+        println!(" data: {}, queue name: {}", self.data, self.queue_name)
     }
 }
 

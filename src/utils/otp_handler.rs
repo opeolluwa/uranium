@@ -107,12 +107,13 @@ impl Otp {
 
     // fetch and verify otp
     pub async fn validate_otp(otp_id: Uuid, token: &str, db_connection: &Pool<Postgres>) -> bool {
-        let verifiable_otp =
-            sqlx::query_as::<_, Otp>("SELECT * FROM one_time_passwords WHERE id = $1 AND token = $2")
-                .bind(Uuid::from(otp_id))
-                .bind(token.trim())
-                .fetch_one(db_connection)
-                .await;
+        let verifiable_otp = sqlx::query_as::<_, Otp>(
+            "SELECT * FROM one_time_passwords WHERE id = $1 AND token = $2",
+        )
+        .bind(Uuid::from(otp_id))
+        .bind(token.trim())
+        .fetch_one(db_connection)
+        .await;
 
         if verifiable_otp.is_err() {
             return false;
@@ -122,15 +123,11 @@ impl Otp {
         true
     }
     /// unlink otp from user
-    pub async fn _unlink_from_user(
-        &self,
-        user_id: Uuid,
-        db_connection: &Pool<Postgres>,
-    ) -> UserModel {
+    pub async fn unlink_from_user(user_id: Uuid, db_connection: &Pool<Postgres>) -> UserModel {
         let linked_user = sqlx::query_as::<_, UserModel>(
             "UPDATE user_information SET otp_id = $1, account_status = $2 WHERE id = $3 RETURNING *",
         )
-        .bind(String::from("null"))
+        .bind(None::<Uuid>)
         .bind(AccountStatus::Active)
         .bind(Uuid::from(user_id))
         .fetch_one(db_connection)

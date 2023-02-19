@@ -123,25 +123,14 @@ pub async fn verify_email(
                 });
             }
 
-            //update th e user information
-            sqlx::query_as::<_, UserInformation>(
-                "UPDATE user_information SET account_status = $1 WHERE email = $2 RETURNING *",
-            )
-            .bind(AccountStatus::Active)
-            .bind(Some(&authenticated_user.email.trim()))
-            .fetch_one(&database)
-            .await
-            .unwrap();
-
-            // build the response
+            //update the user account status
+            let verified_user = Otp::unlink_from_user(user.id, &database).await;
             let response_body = ApiSuccessResponse {
                 success: true,
-                message: "User account successfully activated ".to_string(),
+                message: String::from("User account successfully activated"),
                 data: Some(json!({
                     "user":UserModel {
-                    password: Some("".to_string()),
-                    account_status:Some(AccountStatus::Active),
-                ..user
+                    ..verified_user
                 }
                 })),
             };
