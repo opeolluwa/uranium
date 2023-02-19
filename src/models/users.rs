@@ -186,10 +186,10 @@ impl Find for UserModel {
         */
         let mut sql_query = "SELECT * FROM user_information WHERE ".to_string();
         for (key, value) in fields.as_object().unwrap() {
-            sql_query += &format!("{key} = {} AND ", value).to_string();
+            sql_query += &format!("{key} = {value} AND ").to_string();
         }
         let (sql_query, _) = sql_query.split_at(sql_query.len() - 4);
-        let sql_query = sql_query.replace("\"", "'"); // trim  trailing "AND "
+        let sql_query = sql_query.replace('\"', "'"); // trim  trailing "AND "
         println!("{sql_query}");
         sqlx::query_as::<_, UserModel>(&sql_query)
             .fetch_one(db_connection)

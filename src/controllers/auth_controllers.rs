@@ -62,7 +62,7 @@ pub async fn sign_up(
     // build the JWT Token and create a new token
     let jwt_token = jwt_payload.generate_token().unwrap();
     let generated_otp = Otp::new().save(&database).await;
-    let updated_user = generated_otp.link_to_user(*user_id, &database).await;
+    generated_otp.link_to_user(*user_id, &database).await;
 
     // send email to user
     let email_payload = EmailPayload {
@@ -83,7 +83,6 @@ pub async fn sign_up(
         success: true,
         message: String::from("Please verify OTP send to your email to continue"),
         data: Some(json!({
-            "user":UserModel { ..updated_user },
             "token":jwt_token,
             "tokenType":"Bearer".to_string()
         })),
@@ -124,15 +123,11 @@ pub async fn verify_email(
             }
 
             //update the user account status
-            let verified_user = Otp::unlink_from_user(user.id, &database).await;
+            Otp::unlink_from_user(user.id, &database).await;
             let response_body = ApiSuccessResponse {
                 success: true,
                 message: String::from("User account successfully activated"),
-                data: Some(json!({
-                    "user":UserModel {
-                    ..verified_user
-                }
-                })),
+                data: None,
             };
 
             Ok((StatusCode::OK, Json(response_body)))
@@ -181,7 +176,7 @@ pub async fn request_new_otp(
     // build the JWT Token and create a new token
     let jwt_token = jwt_payload.generate_token().unwrap();
     let generated_otp = Otp::new().save(&database).await;
-    let updated_user = generated_otp.link_to_user(*user_id, &database).await;
+    generated_otp.link_to_user(*user_id, &database).await;
 
     // send email to user
     let email_payload = EmailPayload {
@@ -202,7 +197,7 @@ pub async fn request_new_otp(
         success: true,
         message: String::from("Please verify OTP send to your email to continue"),
         data: Some(json!({
-            "user":UserModel { ..updated_user },
+            // "user":UserModel { ..updated_user },
             "token":jwt_token,
             "tokenType":"Bearer".to_string()
         })),
@@ -219,20 +214,12 @@ pub async fn request_account_verification(
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
     // find the user
-    let user_information = UserModel::find(
-        json!({
-                  "lastname":"adeoye",
-        "email":payload.email,
-                   "firstname":"opeoluwa",
-              }),
-        &database,
-    )
-    .await;
-    /*  if user_information.is_err() {
+    let user_information = UserModel::find(json!({"email":payload.email }), &database).await;
+    if user_information.is_err() {
         return Err(ApiErrorResponse::BadRequest {
             message: String::from("A user with the provided email was not found!"),
         });
-    } */
+    }
 
     if let Err(err_message) = user_information {
         return Err(ApiErrorResponse::BadRequest {
@@ -257,7 +244,7 @@ pub async fn request_account_verification(
     // build the JWT Token and create a new token
     let jwt_token = jwt_payload.generate_token().unwrap();
     let generated_otp = Otp::new().save(&database).await;
-    let updated_user = generated_otp.link_to_user(*user_id, &database).await;
+    generated_otp.link_to_user(*user_id, &database).await;
 
     // send email to user
     let email_payload = EmailPayload {
@@ -278,7 +265,6 @@ pub async fn request_account_verification(
         success: true,
         message: String::from("Please verify OTP send to your email to continue"),
         data: Some(json!({
-            "user":UserModel { ..updated_user },
             "token":jwt_token,
             "tokenType":"Bearer".to_string()
         })),
@@ -290,7 +276,7 @@ pub async fn request_account_verification(
 /// to login a user, fetch the request body and the database pool
 /// use the pool to query the database for the user details in the request body
 /// return result or error
-pub async fn _login(
+pub async fn login(
     ValidatedRequest(payload): ValidatedRequest<UserInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<JwtPayload>>), ApiErrorResponse> {
