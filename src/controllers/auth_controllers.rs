@@ -28,7 +28,7 @@ pub async fn sign_up(
     let new_user = UserModel::create(payload, &database).await;
     if let Err(error_message) = new_user {
         if error_message.to_string().to_lowercase()
-            == String::from("no rows returned by a query that expected to return at least one row")
+            == *"no rows returned by a query that expected to return at least one row"
         {
             return Err(ApiErrorResponse::ServerError {
                 message: String::from("A user with provided email already exists"),

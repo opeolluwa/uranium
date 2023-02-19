@@ -91,9 +91,9 @@ impl UserModel {
         bcrypt::hash(password.trim(), DEFAULT_COST).unwrap()
     }
     /// verify hashed password
-    pub fn verify_pswd_hash(&self, raw_password: &str) -> bool {
+    pub fn _verify_pswd_hash(&self, raw_password: &str) -> bool {
         let stored_password = self.password.as_ref().unwrap();
-        bcrypt::verify(raw_password.to_string(), &stored_password)
+        bcrypt::verify(raw_password, stored_password)
             .ok()
             .is_some()
     }

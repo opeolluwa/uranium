@@ -132,7 +132,7 @@ impl MailService {
             Ok(_) => true,
             Err(err) => {
                 racoon_error!("Could not send mail due to ");
-                print!("{:?}", err);
+                print!("{err:?}");
                 false
             }
         }

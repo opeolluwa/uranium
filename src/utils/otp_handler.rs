@@ -77,14 +77,14 @@ impl Otp {
             "INSERT INTO one_time_passwords (id, token)
        VALUES ($1, $2) RETURNING *",
         )
-        .bind(&self.id)
+        .bind(self.id)
         .bind(&self.token)
         .fetch_one(db_connection)
         .await;
 
         if otp.is_err() {
             racoon_error!("An exception  was encountered while inserting OTP into the database");
-            println!("{:?}\n", otp);
+            // println!("{otp:?}\n");
         }
         Self { ..otp.unwrap() }
     }
@@ -94,13 +94,13 @@ impl Otp {
         let linked_user = sqlx::query_as::<_, UserModel>(
             "UPDATE user_information SET otp_id = $1 WHERE id = $2 RETURNING *",
         )
-        .bind(Uuid::from(self.id))
-        .bind(Uuid::from(user_id))
+        .bind(self.id)
+        .bind(user_id)
         .fetch_one(db_connection)
         .await;
         if linked_user.is_err() {
             racoon_error!("An exception  was encountered while linking user Id to OTP");
-            println!("{:?}\n", linked_user);
+            // println!("{linked_user:?}\n");
         }
         linked_user.ok().unwrap()
     }
@@ -110,7 +110,7 @@ impl Otp {
         let verifiable_otp = sqlx::query_as::<_, Otp>(
             "SELECT * FROM one_time_passwords WHERE id = $1 AND token = $2",
         )
-        .bind(Uuid::from(otp_id))
+        .bind(otp_id)
         .bind(token.trim())
         .fetch_one(db_connection)
         .await;
@@ -118,8 +118,7 @@ impl Otp {
         if verifiable_otp.is_err() {
             return false;
         }
-
-        println!("{:?}", verifiable_otp);
+        // println!("{verifiable_otp:?}");
         true
     }
     /// unlink otp from user
@@ -129,12 +128,12 @@ impl Otp {
         )
         .bind(None::<Uuid>)
         .bind(AccountStatus::Active)
-        .bind(Uuid::from(user_id))
+        .bind(user_id)
         .fetch_one(db_connection)
         .await;
         if linked_user.is_err() {
             racoon_error!("An exception  was encountered while unlinking user Id from OTP");
-            println!("{:?}\n", linked_user);
+            println!("{linked_user:?}\n");
         }
         linked_user.ok().unwrap()
     }
