@@ -184,13 +184,11 @@ impl Find for UserModel {
          loop thru the key and value pair of the fields, see sandbox at
          https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=7e75818b01d2597b17d49b938761af62
         */
-        let  sql_query:  = "SELECT * FROM user_information WHERE ";
+        let mut sql_query = "SELECT * FROM user_information WHERE ".to_string();
         for (key, value) in fields.as_object().unwrap() {
-            sql_query
-                .to_owned()
-                .push_str(&format!("{key} = {value} AND "))
+            sql_query += &format!("{key} = {value} AND ").to_string();
         }
-      let  (sql_query, _) = sql_query.split_at(sql_query.len() - 4); // trim  trailing "AND "
+        let (sql_query, _) = sql_query.split_at(sql_query.len() - 4); // trim  trailing "AND "
         println!("{sql_query}");
         sqlx::query_as::<_, UserModel>(sql_query)
             .fetch_one(db_connection)

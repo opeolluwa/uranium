@@ -18,7 +18,7 @@ use std::env;
 
 const ACCESS_TOKEN_VALIDITY: u64 = 10; // the bearer token validity set to 10 minutes
 const REFRESH_TOKEN_VALIDITY: u64 = 25; // 25 minutes for refresh token validity
-// type ApiResponse = Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse>;
+                                        // type ApiResponse = Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse>;
 
 /// create new user account
 pub async fn sign_up(
@@ -101,7 +101,7 @@ pub async fn verify_email(
     ValidatedRequest(payload): ValidatedRequest<OneTimePassword>,
     authenticated_user: JwtClaims,
     Extension(database): Extension<PgPool>,
-) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse>{
+) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
     let user_information = UserModel::find_by_pk(&authenticated_user.id, &database).await;
 
     match user_information {
@@ -217,22 +217,27 @@ pub async fn request_new_otp(
 pub async fn request_account_verification(
     ValidatedRequest(payload): ValidatedRequest<EmailVerification>,
     Extension(database): Extension<PgPool>,
-) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse>{
+) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
     // find the user
     let user_information = UserModel::find(
         json!({
             "email":payload.email,
-            "age":23
         }),
         &database,
     )
     .await;
-    if user_information.is_err() {
+    /*  if user_information.is_err() {
         return Err(ApiErrorResponse::BadRequest {
             message: String::from("A user with the provided email was not found!"),
         });
-    }
+    } */
 
+    if let Err(err_message) = user_information {
+        return Err(ApiErrorResponse::BadRequest {
+            message: err_message.to_string()
+            // message: String::from("A user with the provided email was not found!"),
+        });
+    }
     // generate new otp
     let user = user_information.ok().unwrap();
     let UserModel {
