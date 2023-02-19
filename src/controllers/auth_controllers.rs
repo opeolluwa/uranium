@@ -154,6 +154,14 @@ pub async fn _request_new_token() {
     todo!()
 }
 
+/// request verification
+/// Suppose a user account setup could not be completed during setup,
+/// this handler let the user pick up from where he stopped
+/// the user provide email, a JWT is generated, sent to the client interface/Application, An OTP is sent to the user.
+pub async fn _request_account_verification() {
+    todo!()
+}
+
 ///Login a New User :
 /// to login a user, fetch the request body and the database pool
 /// use the pool to query the database for the user details in the request body
@@ -262,7 +270,7 @@ pub async fn _login(
 ///  Validate the token then get the user_id from the validated token
 /// - use the user_id to make request to the database
 /// return the user details if no error else return the appropriate error code and response
-pub async fn user_profile(
+pub async fn fetch_user_profile(
     authenticated_user: JwtClaims,
     Extension(database): Extension<PgPool>,
 ) -> Result<Json<ApiSuccessResponse<Value>>, ApiErrorResponse> {
