@@ -16,19 +16,24 @@ use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::env;
 
-/// the bearer token validity set to 10 minutes
-const ACCESS_TOKEN_VALIDITY: u64 = 10;
-/// refresh token set to 25 minutes
-const REFRESH_TOKEN_VALIDITY: u64 = 25;
+const ACCESS_TOKEN_VALIDITY: u64 = 10; // the bearer token validity set to 10 minutes
+const REFRESH_TOKEN_VALIDITY: u64 = 25; // 25 minutes for refresh token validity
+type ApiResponse = Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse>;
 
-/// basic auth sign_up
-// create new user account
+/// create new user account
 pub async fn sign_up(
     ValidatedRequest(payload): ValidatedRequest<UserInformation>,
     Extension(database): Extension<PgPool>,
-) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
+) -> ApiResponse {
     let new_user = UserModel::create(payload, &database).await;
     if let Err(error_message) = new_user {
+        if error_message.to_string().to_lowercase()
+            == String::from("no rows returned by a query that expected to return at least one row")
+        {
+            return Err(ApiErrorResponse::ServerError {
+                message: String::from("A user with provided email already exists"),
+            });
+        }
         return Err(ApiErrorResponse::ServerError {
             message: error_message.to_string(),
         });
@@ -56,17 +61,14 @@ pub async fn sign_up(
 
     // build the JWT Token and create a new token
     let jwt_token = jwt_payload.generate_token().unwrap();
-    let Otp { token: otp, .. } = Otp::new()
-        .save(&database)
-        .await
-        .link_to_user(*user_id, &database)
-        .await;
+    let generated_otp = Otp::new().save(&database).await;
+    let updated_user = generated_otp.link_to_user(*user_id, &database).await;
 
     // send email to user
     let email_payload = EmailPayload {
         recipient_name: (&user.fullname.as_ref().unwrap()).to_string(),
         recipient_address: (&user.email.as_ref().unwrap()).to_string(),
-        data: otp.to_string(),
+        data: generated_otp.token.to_string(),
         email_subject: "new account".to_string(),
     };
 
@@ -81,7 +83,7 @@ pub async fn sign_up(
         success: true,
         message: String::from("Please verify OTP send to your email to continue"),
         data: Some(json!({
-            "user":UserModel { ..user },
+            "user":UserModel { ..updated_user },
             "token":jwt_token,
             "tokenType":"Bearer".to_string()
         })),
@@ -90,7 +92,6 @@ pub async fn sign_up(
     Ok((StatusCode::CREATED, Json(response)))
 }
 
-///verify email
 /// to verify email
 /// retrieve the bearer token from the authorization header,
 /// retrieve the otp from request body
@@ -98,11 +99,11 @@ pub async fn sign_up(
 /// return error or success response
 pub async fn verify_email(
     ValidatedRequest(payload): ValidatedRequest<OneTimePassword>,
-    // Json(payload): Json<OneTimePassword>,
     authenticated_user: JwtClaims,
     Extension(database): Extension<PgPool>,
-) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
+) -> ApiResponse {
     let user_information = UserModel::find_by_pk(&authenticated_user.id, &database).await;
+
     match user_information {
         Ok(user) => {
             // if account has not been activated
@@ -114,10 +115,11 @@ pub async fn verify_email(
             }
 
             // update the account status if the token is valid
-            let is_valid_otp = Otp::validate_otp(&payload.token);
+            let is_valid_otp =
+                Otp::validate_otp(user.otp_id.unwrap(), &payload.token, &database).await;
             if !is_valid_otp {
                 return Err(ApiErrorResponse::BadRequest {
-                    message: "invalid token".to_string(),
+                    message: "invalid or expired OTP".to_string(),
                 });
             }
 

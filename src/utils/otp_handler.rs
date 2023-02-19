@@ -22,6 +22,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 use validator::Validate;
 
+use crate::models::users::{AccountStatus, UserModel};
+
 // TOTP encryption key
 pub static OTP: Lazy<TOTP> = Lazy::new(|| -> TOTP {
     TOTP::new(&env::var("TOTP_ENCRYPTION_KEY").expect("TOTP secret missing"))
@@ -88,30 +90,64 @@ impl Otp {
     }
 
     /// link a newly created otp to a user using the user Id
-    pub async fn link_to_user(&self, user_id: Uuid, db_connection: &Pool<Postgres>) -> Self {
-        let otp = sqlx::query_as::<_, Otp>(
-            "UPDATE user_information SET otp_id = $1 WHERE id = $2; SELECT * FROM one_time_passwords WHERE id = $1",
+    pub async fn link_to_user(&self, user_id: Uuid, db_connection: &Pool<Postgres>) -> UserModel {
+        let linked_user = sqlx::query_as::<_, UserModel>(
+            "UPDATE user_information SET otp_id = $1 WHERE id = $2 RETURNING *",
         )
         .bind(Uuid::from(self.id))
         .bind(Uuid::from(user_id))
         .fetch_one(db_connection)
         .await;
-        if otp.is_err() {
+        if linked_user.is_err() {
             racoon_error!("An exception  was encountered while linking user Id to OTP");
-            println!("{:?}\n", otp);
+            println!("{:?}\n", linked_user);
         }
-        Self {
-            ..otp.ok().unwrap()
-        }
+        linked_user.ok().unwrap()
     }
 
-    /// validate otp
+    // fetch and verify otp
+    pub async fn validate_otp(otp_id: Uuid, token: &str, db_connection: &Pool<Postgres>) -> bool {
+        let verifiable_otp =
+            sqlx::query_as::<_, Otp>("SELECT * FROM one_time_passwords WHERE id = $1")
+                .bind(Uuid::from(otp_id))
+                // .bind(token.trim())
+                .fetch_one(db_connection)
+                .await;
+
+        if verifiable_otp.is_err() {
+            return false;
+        }
+
+        println!("{:?}", verifiable_otp);
+        true
+    }
+    /// unlink otp from user
+    pub async fn _unlink_from_user(
+        &self,
+        user_id: Uuid,
+        db_connection: &Pool<Postgres>,
+    ) -> UserModel {
+        let linked_user = sqlx::query_as::<_, UserModel>(
+            "UPDATE user_information SET otp_id = $1, account_status = $2 WHERE id = $3 RETURNING *",
+        )
+        .bind(String::from("null"))
+        .bind(AccountStatus::Active)
+        .bind(Uuid::from(user_id))
+        .fetch_one(db_connection)
+        .await;
+        if linked_user.is_err() {
+            racoon_error!("An exception  was encountered while unlinking user Id from OTP");
+            println!("{:?}\n", linked_user);
+        }
+        linked_user.ok().unwrap()
+    }
+    /*  /// validate otp
     /// accept the otp that was generated  as function params,
     /// verify the
     pub fn validate_otp(otp: &str) -> bool {
         let otp = otp.trim().parse::<u32>().unwrap();
         OTP.verify(otp, OTP_VALIDITY, *CURRENT_TIMESTAMP)
-    }
+    } */
 }
 
 /// tests

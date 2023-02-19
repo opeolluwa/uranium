@@ -1,6 +1,6 @@
 use super::emails::EmailModel;
 use crate::utils::api_response::EnumerateFields;
-use crate::utils::sql_query_builder::{Create, FindByPk, UpdateEntity};
+use crate::utils::sql_query_builder::{Create, FindByPk};
 use async_trait::async_trait;
 use bcrypt::DEFAULT_COST;
 use chrono::NaiveDate;
@@ -54,6 +54,7 @@ pub struct UserModel {
     pub password: Option<String>,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
+    #[serde(skip_serializing)]
     pub otp_id: Option<Uuid>,
     pub last_available_at: Option<NaiveDateTime>,
 }
@@ -85,14 +86,16 @@ pub struct UserInformation {
 /// associated functions and methods
 impl UserModel {
     /// has a user password
-    pub fn hash_password(password: Option<String>) -> String {
+    pub fn hash_pswd(password: Option<String>) -> String {
         let password = password.unwrap();
         bcrypt::hash(password.trim(), DEFAULT_COST).unwrap()
     }
     /// verify hashed password
-    pub fn _verify_pswd_hash(password: Option<String>) -> String {
-        let password = password.unwrap();
-        bcrypt::hash(password.trim(), DEFAULT_COST).unwrap()
+    pub fn verify_pswd_hash(&self, raw_password: &str) -> bool {
+        let stored_password = self.password.as_ref().unwrap();
+        bcrypt::verify(raw_password.to_string(), &stored_password)
+            .ok()
+            .is_some()
     }
 }
 
@@ -134,7 +137,7 @@ INSERT INTO
     ) ON CONFLICT (email) DO NOTHING RETURNING *
     "#;
         let id = Uuid::new_v4();
-        let hashed_password = UserModel::hash_password(password);
+        let hashed_password = UserModel::hash_pswd(password);
         let new_user = sqlx::query_as::<_, UserModel>(sql_query)
             .bind(id)
             .bind(gender.unwrap_or_default())
@@ -171,24 +174,26 @@ impl FindByPk for UserModel {
     }
 }
 
-#[async_trait]
-/// impl Update Entity of user model
-impl UpdateEntity for UserModel {
-    type Entity = UserModel;
-    async fn update<V>(
-        &self,
-        fields: Vec<std::collections::HashMap<String, V>>,
-        db_connection: &Pool<Postgres>,
-    ) -> Result<Self::Entity, sqlx::Error> {
-        
-        Ok(
-            sqlx::query_as::<_, UserModel>("UPDATE user_information SET $1 = $2 WHERE id = $3")
-                .bind(sqlx::types::Uuid::parse_str(self.id).unwrap())
-                .fetch_one(db_connection)
-                .await?,
-        )
-    }
-}
+// #[async_trait]
+// /// impl Update Entity of user model
+// impl UpdateEntity for UserModel {
+//     type Entity = UserModel;
+//     //TODO: make the update filed take an array of generic hashmaps, representing the updates
+//     async fn update(
+//         &self,
+//         fields: Vec<std::collections::HashMap<String, String>>,
+//         db_connection: &Pool<Postgres>,
+//     ) -> Result<Self::Entity, sqlx::Error> {
+//         let key = "";
+//         let value = "";
+
+//         sqlx::query_as::<_, UserModel>("UPDATE user_information SET $1 = $2 WHERE id = $3")
+//             .bind(&key)
+//             .bind(&value)
+//             .fetch_one(db_connection)
+//             .await
+//     }
+// }
 
 ///user authorization information
 /// to be used for making login and sign up requests

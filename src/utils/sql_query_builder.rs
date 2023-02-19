@@ -70,9 +70,9 @@ pub trait FindAndCount {
 #[async_trait]
 pub trait UpdateEntity {
     type Entity;
-    async fn update<V>(
+    async fn update(
         &self,
-        fields: Vec<std::collections::HashMap<String, V>>,
+        fields: Vec<std::collections::HashMap<String, String>>,
         db_connection: &Pool<Postgres>,
     ) -> Result<Self::Entity, sqlx::Error>;
 }
