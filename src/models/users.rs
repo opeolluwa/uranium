@@ -1,10 +1,11 @@
 use super::emails::EmailModel;
 use crate::utils::api_response::EnumerateFields;
-use crate::utils::sql_query_builder::{Create, FindByPk};
+use crate::utils::sql_query_builder::{Create, Find, FindByPk};
 use async_trait::async_trait;
 use bcrypt::DEFAULT_COST;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 use sqlx::{Pool, Postgres};
@@ -93,9 +94,7 @@ impl UserModel {
     /// verify hashed password
     pub fn _verify_pswd_hash(&self, raw_password: &str) -> bool {
         let stored_password = self.password.as_ref().unwrap();
-        bcrypt::verify(raw_password, stored_password)
-            .ok()
-            .is_some()
+        bcrypt::verify(raw_password, stored_password).ok().is_some()
     }
 }
 
@@ -169,6 +168,31 @@ impl FindByPk for UserModel {
     ) -> Result<Self::Entity, sqlx::Error> {
         sqlx::query_as::<_, UserModel>("SELECT * FROM user_information WHERE id = $1")
             .bind(sqlx::types::Uuid::parse_str(id).unwrap())
+            .fetch_one(db_connection)
+            .await
+    }
+}
+
+#[async_trait]
+impl Find for UserModel {
+    type Entity = UserModel;
+    async fn find(
+        fields: Value,
+        db_connection: &Pool<Postgres>,
+    ) -> Result<Self::Entity, sqlx::Error> {
+        /*
+         loop thru the key and value pair of the fields, see sandbox at
+         https://play.rust-lang.org/?version=stable&mode=debug&edition=2018&gist=7e75818b01d2597b17d49b938761af62
+        */
+        let  sql_query:  = "SELECT * FROM user_information WHERE ";
+        for (key, value) in fields.as_object().unwrap() {
+            sql_query
+                .to_owned()
+                .push_str(&format!("{key} = {value} AND "))
+        }
+      let  (sql_query, _) = sql_query.split_at(sql_query.len() - 4); // trim  trailing "AND "
+        println!("{sql_query}");
+        sqlx::query_as::<_, UserModel>(sql_query)
             .fetch_one(db_connection)
             .await
     }

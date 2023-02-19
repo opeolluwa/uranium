@@ -1,4 +1,4 @@
-use crate::models::common::OneTimePassword;
+use crate::models::common::{EmailVerification, OneTimePassword};
 use crate::models::users::{AccountStatus, ResetUserPassword, UserInformation, UserModel};
 use crate::utils::api_response::{
     ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest,
@@ -8,7 +8,7 @@ use crate::utils::jwt::{set_jtw_exp, JwtClaims, JwtPayload};
 use crate::utils::mailer::EmailPayload;
 use crate::utils::message_queue::MessageQueue;
 use crate::utils::otp_handler::Otp;
-use crate::utils::sql_query_builder::{Create, FindByPk};
+use crate::utils::sql_query_builder::{Create, Find, FindByPk};
 use axum::{http::StatusCode, Extension, Json};
 use bcrypt::verify;
 use jsonwebtoken::{encode, Algorithm, Header};
@@ -18,13 +18,13 @@ use std::env;
 
 const ACCESS_TOKEN_VALIDITY: u64 = 10; // the bearer token validity set to 10 minutes
 const REFRESH_TOKEN_VALIDITY: u64 = 25; // 25 minutes for refresh token validity
-type ApiResponse = Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse>;
+// type ApiResponse = Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse>;
 
 /// create new user account
 pub async fn sign_up(
     ValidatedRequest(payload): ValidatedRequest<UserInformation>,
     Extension(database): Extension<PgPool>,
-) -> ApiResponse {
+) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
     let new_user = UserModel::create(payload, &database).await;
     if let Err(error_message) = new_user {
         if error_message.to_string().to_lowercase()
@@ -101,7 +101,7 @@ pub async fn verify_email(
     ValidatedRequest(payload): ValidatedRequest<OneTimePassword>,
     authenticated_user: JwtClaims,
     Extension(database): Extension<PgPool>,
-) -> ApiResponse {
+) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse>{
     let user_information = UserModel::find_by_pk(&authenticated_user.id, &database).await;
 
     match user_information {
@@ -150,16 +150,134 @@ pub async fn verify_email(
 /// the returned JWT will contain the required information needed by the server for further processing
 /// the server will also send new token to the user's email if the email as found
 
-pub async fn _request_new_token() {
-    todo!()
+pub async fn request_new_otp(
+    // ValidatedRequest(payload): ValidatedRequest<EmailVerification>,
+    authenticated_user: JwtClaims,
+    Extension(database): Extension<PgPool>,
+) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
+    // find the user
+    let user_information = UserModel::find_by_pk(&authenticated_user.id, &database).await;
+    if user_information.is_err() {
+        return Err(ApiErrorResponse::BadRequest {
+            message: String::from("A user with the provided email was not found!"),
+        });
+    }
+
+    // generate new otp
+    let user = user_information.ok().unwrap();
+    let UserModel {
+        id: user_id,
+        email,
+        fullname,
+        ..
+    } = &user;
+    let jwt_payload = JwtClaims {
+        id: user_id.to_string(),
+        email: email.as_ref().unwrap().to_string(),
+        fullname: fullname.as_ref().unwrap().to_string(),
+        exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
+    };
+
+    // build the JWT Token and create a new token
+    let jwt_token = jwt_payload.generate_token().unwrap();
+    let generated_otp = Otp::new().save(&database).await;
+    let updated_user = generated_otp.link_to_user(*user_id, &database).await;
+
+    // send email to user
+    let email_payload = EmailPayload {
+        recipient_name: (&user.fullname.as_ref().unwrap()).to_string(),
+        recipient_address: (&user.email.as_ref().unwrap()).to_string(),
+        data: generated_otp.token.to_string(),
+        email_subject: "Account verification token".to_string(),
+    };
+
+    // add email to queue
+    let queue_data = email_payload;
+    let queue_name = env::var("EMAIL_QUEUE").expect("email queue name not specified");
+    let new_queue = MessageQueue::new(queue_data, &queue_name);
+    new_queue.enqueue();
+
+    //build the response
+    let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
+        success: true,
+        message: String::from("Please verify OTP send to your email to continue"),
+        data: Some(json!({
+            "user":UserModel { ..updated_user },
+            "token":jwt_token,
+            "tokenType":"Bearer".to_string()
+        })),
+    };
+    Ok((StatusCode::CREATED, Json(response)))
 }
 
 /// request verification
 /// Suppose a user account setup could not be completed during setup,
 /// this handler let the user pick up from where he stopped
 /// the user provide email, a JWT is generated, sent to the client interface/Application, An OTP is sent to the user.
-pub async fn _request_account_verification() {
-    todo!()
+pub async fn request_account_verification(
+    ValidatedRequest(payload): ValidatedRequest<EmailVerification>,
+    Extension(database): Extension<PgPool>,
+) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse>{
+    // find the user
+    let user_information = UserModel::find(
+        json!({
+            "email":payload.email,
+            "age":23
+        }),
+        &database,
+    )
+    .await;
+    if user_information.is_err() {
+        return Err(ApiErrorResponse::BadRequest {
+            message: String::from("A user with the provided email was not found!"),
+        });
+    }
+
+    // generate new otp
+    let user = user_information.ok().unwrap();
+    let UserModel {
+        id: user_id,
+        email,
+        fullname,
+        ..
+    } = &user;
+    let jwt_payload = JwtClaims {
+        id: user_id.to_string(),
+        email: email.as_ref().unwrap().to_string(),
+        fullname: fullname.as_ref().unwrap().to_string(),
+        exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
+    };
+
+    // build the JWT Token and create a new token
+    let jwt_token = jwt_payload.generate_token().unwrap();
+    let generated_otp = Otp::new().save(&database).await;
+    let updated_user = generated_otp.link_to_user(*user_id, &database).await;
+
+    // send email to user
+    let email_payload = EmailPayload {
+        recipient_name: (&user.fullname.as_ref().unwrap()).to_string(),
+        recipient_address: (&user.email.as_ref().unwrap()).to_string(),
+        data: generated_otp.token.to_string(),
+        email_subject: "Account verification token".to_string(),
+    };
+
+    // add email to queue
+    let queue_data = email_payload;
+    let queue_name = env::var("EMAIL_QUEUE").expect("email queue name not specified");
+    let new_queue = MessageQueue::new(queue_data, &queue_name);
+    new_queue.enqueue();
+
+    //build the response
+    let response: ApiSuccessResponse<Value> = ApiSuccessResponse::<Value> {
+        success: true,
+        message: String::from("Please verify OTP send to your email to continue"),
+        data: Some(json!({
+            "user":UserModel { ..updated_user },
+            "token":jwt_token,
+            "tokenType":"Bearer".to_string()
+        })),
+    };
+    Ok((StatusCode::CREATED, Json(response)))
 }
 
 ///Login a New User :
