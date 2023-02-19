@@ -1,6 +1,6 @@
 //! #user profile routes
 // import the user controllers
-use crate::controllers::auth_controllers;
+use crate::controllers::auth_controllers as handler;
 use axum::{
     routing::{get, post, put},
     Router,
@@ -9,11 +9,16 @@ use axum::{
 // mount the controllers to the route
 pub fn routes() -> axum::Router {
     Router::new()
-        .route("/sign-up", post(auth_controllers::sign_up))
-        // .route("/login", post(auth_controllers::login))
-        .route("/verify-email", post(auth_controllers::verify_email))
-        .route("/reset-password", put(auth_controllers::reset_password))
-        .route("/me", get(auth_controllers::fetch_user_profile))
-        .route("/me", put(auth_controllers::update_user_profile))
-        .route("/", get(auth_controllers::get_refresh_token))
+        .route("/sign-up", post(handler::sign_up))
+        // .route("/login", post(handler::login))
+        .route("/verify-email", post(handler::verify_email))
+        .route(
+            "/request-verification",
+            post(handler::request_account_verification),
+        )
+        .route("/request-new-otp", post(handler::request_new_otp))
+        .route("/reset-password-reset", put(handler::reset_password))
+        .route("/me", get(handler::fetch_user_profile))
+        .route("/me", put(handler::update_user_profile))
+        .route("/", get(handler::get_refresh_token))
 }

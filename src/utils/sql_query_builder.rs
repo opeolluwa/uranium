@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 use async_trait::async_trait;
+use serde_json::Value;
 use sqlx::{Pool, Postgres};
 /// Create - create a new database record
 #[async_trait]
@@ -35,16 +36,17 @@ pub trait DeleteEntity {
     ) -> Result<(), sqlx::Error>;
 }
 
+///find one base on the options provided
 #[async_trait]
-pub trait FindEntity {
+pub trait Find {
     type Entity;
-    type Attributes;
     async fn find(
-        &self,
-        fields: Self::Attributes,
+        fields: Value,
         db_connection: &Pool<Postgres>,
     ) -> Result<Self::Entity, sqlx::Error>;
 }
+
+/// find user, create if not exist;
 #[async_trait]
 pub trait FindOrCreate {
     type Entity;
@@ -96,7 +98,6 @@ pub trait UpdateEntity {
 /// }
 ///}
 /// ```
-
 #[async_trait]
 pub trait FindByPk {
     type Entity;
