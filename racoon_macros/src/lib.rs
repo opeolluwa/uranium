@@ -53,7 +53,6 @@ pub fn _debug_print<T: std::fmt::Debug>(message: &str, data: Option<T>) {
     );
 }
 
-
 /// print an error message in bold red color
 pub fn _error_print(message: &str) {
     let red_color = Style::new().red().bold();

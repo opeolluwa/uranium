@@ -12,7 +12,10 @@ pub fn routes() -> axum::Router {
         .route("/sign-up", post(handler::sign_up))
         // .route("/login", post(handler::login))
         .route("/verify-email", post(handler::verify_email))
-        .route("/request-verification", post(handler::request_account_verification))
+        .route(
+            "/request-verification",
+            post(handler::request_account_verification),
+        )
         .route("/request-new-otp", post(handler::request_new_otp))
         .route("/reset-password-reset", put(handler::reset_password))
         .route("/me", get(handler::fetch_user_profile))

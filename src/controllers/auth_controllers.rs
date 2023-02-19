@@ -221,8 +221,10 @@ pub async fn request_account_verification(
     // find the user
     let user_information = UserModel::find(
         json!({
-            "email":payload.email,
-        }),
+                  "lastname":"adeoye",
+        "email":payload.email,
+                   "firstname":"opeoluwa",
+              }),
         &database,
     )
     .await;
@@ -234,8 +236,7 @@ pub async fn request_account_verification(
 
     if let Err(err_message) = user_information {
         return Err(ApiErrorResponse::BadRequest {
-            message: err_message.to_string()
-            // message: String::from("A user with the provided email was not found!"),
+            message: err_message.to_string(), // message: String::from("A user with the provided email was not found!"),
         });
     }
     // generate new otp
