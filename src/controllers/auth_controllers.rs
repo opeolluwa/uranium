@@ -17,7 +17,6 @@ use std::env;
 
 const ACCESS_TOKEN_VALIDITY: u64 = 10; // the bearer token validity set to 10 minutes
 const REFRESH_TOKEN_VALIDITY: u64 = 25; // 25 minutes for refresh token validity
-                                        // type ApiResponse = Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse>;
 
 /// create new user account
 pub async fn sign_up(
