@@ -1,8 +1,0 @@
-
-struct OtpModel{
-
-}
-
-struct OtpInformation {
-    
-}
