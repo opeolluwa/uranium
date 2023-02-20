@@ -1,11 +1,11 @@
 use crate::models::common::{EmailVerification, OneTimePassword};
+use crate::models::emails::EmailPayload;
 use crate::models::users::{AccountStatus, ResetUserPassword, UserInformation, UserModel};
 use crate::utils::api_response::{
     ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest,
 };
 use crate::utils::jwt::JWT_SECRET;
 use crate::utils::jwt::{set_jtw_exp, JwtClaims, JwtPayload};
-use crate::utils::mailer::EmailPayload;
 use crate::utils::message_queue::MessageQueue;
 use crate::utils::otp_handler::Otp;
 use crate::utils::sql_query_builder::{Create, Find, FindByPk};
@@ -279,16 +279,9 @@ pub async fn login(
     ValidatedRequest(payload): ValidatedRequest<UserInformation>,
     Extension(database): Extension<PgPool>,
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<JwtPayload>>), ApiErrorResponse> {
-    /*
-     * if both email and password is provided ,
-     * fetch the user information
-     * if none if found send error else confirm the user password
-     * if correct password, return jwt
-     */
     let user_information = UserModel::find(json!({"email":payload.email}), &database).await;
     if let Err(error_message) = user_information {
         return Err(ApiErrorResponse::ServerError {
-            /* message: message.to_string(), */
             message: error_message.to_string(),
         });
     }
@@ -299,7 +292,9 @@ pub async fn login(
     //if user account has not been verified
     if user_account_status == AccountStatus::Inactive {
         return Err(ApiErrorResponse::Unauthorized {
-            message: String::from("Please verify your account to continue"),
+            message: String::from(
+                "Your account has not been activated. Please verify your email to continue",
+            ),
         });
     }
 
@@ -358,8 +353,6 @@ pub async fn login(
     };
     // response
     Ok((StatusCode::OK, Json(response)))
-
-   
 }
 
 /// Get the user profile fom the database.
@@ -409,7 +402,6 @@ pub async fn fetch_user_profile(
  * get the user details from the JWT claims
  * use the the extracted details to fetch the user data
  * send error if no user with the provided data was found
- *
  * if found, update the password, expire the JWt,
  * generate new JWT. send new JWT to the client and a success response
  */

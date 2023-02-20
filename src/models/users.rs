@@ -1,4 +1,4 @@
-use super::emails::EmailModel;
+// use super::emails::EmailModel;
 use crate::utils::api_response::EnumerateFields;
 use crate::utils::sql_query_builder::{Create, Find, FindByPk};
 use async_trait::async_trait;
@@ -272,9 +272,3 @@ impl EnumerateFields for ResetUserPassword {
     }
 }
 
-/// the user dashboard data
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
-pub struct UserAccountInformation {
-    profile: UserModel,
-    emails: Vec<EmailModel>,
-}
