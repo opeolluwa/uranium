@@ -10,7 +10,6 @@ use crate::utils::message_queue::MessageQueue;
 use crate::utils::otp_handler::Otp;
 use crate::utils::sql_query_builder::{Create, Find, FindByPk};
 use axum::{http::StatusCode, Extension, Json};
-use bcrypt::verify;
 use jsonwebtoken::{encode, Algorithm, Header};
 use serde_json::{json, Value};
 use sqlx::PgPool;
@@ -286,92 +285,81 @@ pub async fn login(
      * if none if found send error else confirm the user password
      * if correct password, return jwt
      */
-    let user_information =
-        sqlx::query_as::<_, UserModel>("SELECT * FROM user_information WHERE email = $1")
-            .bind(payload.email)
-            .fetch_one(&database)
-            .await;
-
-    match user_information {
-        Ok(user) => {
-            // if account has not been activated
-            let user_account_status = user.account_status.unwrap();
-            if user_account_status == AccountStatus::Inactive {
-                return Err(ApiErrorResponse::Unauthorized {
-                    message: String::from("Please verify your email to continue"),
-                });
-            }
-
-            // if user account has been deactivated
-            if user_account_status == AccountStatus::Deactivated {
-                return Err(ApiErrorResponse::Unauthorized {
-                    message: String::from(
-                        "Account ahs been suspended, please contact administrator",
-                    ),
-                });
-            }
-
-            let stored_password = &user.password.as_ref().unwrap();
-            let verify_password = verify(payload.password.unwrap_or_default(), stored_password);
-            match verify_password {
-                Ok(is_correct_password) => {
-                    //send error if the password is not correct
-                    if !is_correct_password {
-                        return Err(ApiErrorResponse::WrongCredentials {
-                            message: String::from("incorrect password"),
-                        });
-                    }
-
-                    // destructure the user if the password is correct
-                    let UserModel {
-                        id,
-                        email,
-                        fullname,
-                        ..
-                    } = &user;
-
-                    //encrypt the user data
-                    let jwt_payload = JwtClaims {
-                        id: id.to_string(),
-                        email: email.as_ref().unwrap().to_string(),
-                        fullname: fullname
-                            .as_ref()
-                            .unwrap_or(&"default".to_string())
-                            .to_string(),
-                        exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
-                    };
-                    //fetch the JWT secret
-                    /*   let jwt_secret = crate::shared::jwt_schema::jwt_secret(); */
-                    //use a custom header
-                    let jwt_header = Header {
-                        alg: Algorithm::HS512,
-                        ..Default::default()
-                    };
-
-                    //build the user jwt token
-                    let token = encode(&jwt_header, &jwt_payload, &JWT_SECRET.encoding);
-                    //construct and return a response
-                    let response: ApiSuccessResponse<JwtPayload> = ApiSuccessResponse::<JwtPayload> {
-                        success: true,
-                        message: String::from("user successfully logged in"),
-                        data: Some(JwtPayload {
-                            token: token.unwrap(),
-                            token_type: String::from("Bearer"),
-                        }),
-                    };
-                    // response
-                    Ok((StatusCode::OK, Json(response)))
-                }
-                Err(_) => Err(ApiErrorResponse::BadRequest {
-                    message: "Invalid username or password".to_string(),
-                }),
-            }
-        }
-        Err(_) => Err(ApiErrorResponse::ServerError {
+    let user_information = UserModel::find(json!({"email":payload.email}), &database).await;
+    if let Err(error_message) = user_information {
+        return Err(ApiErrorResponse::ServerError {
             /* message: message.to_string(), */
-            message: "account does not exist".to_string(),
-        }),
+            message: error_message.to_string(),
+        });
     }
+
+    let user = user_information.ok().unwrap();
+    let user_account_status = user.account_status.unwrap();
+
+    //if user account has not been verified
+    if user_account_status == AccountStatus::Inactive {
+        return Err(ApiErrorResponse::Unauthorized {
+            message: String::from("Please verify your account to continue"),
+        });
+    }
+
+    // if user account has been deactivated
+    if user_account_status == AccountStatus::Deactivated {
+        return Err(ApiErrorResponse::Unauthorized {
+            message: String::from("Account has been suspended, please contact administrator"),
+        });
+    }
+
+    //verify the password
+    let is_correct_password: bool = user.verify_pswd_hash(&payload.password.unwrap());
+    // racoon_debug!("{}", &is_correct_password);
+    if !is_correct_password {
+        return Err(ApiErrorResponse::Unauthorized {
+            message: String::from("Invalid email or password"),
+        });
+    }
+
+    // destructure the user if the password is correct
+    let UserModel {
+        id,
+        email,
+        fullname,
+        ..
+    } = &user;
+
+    //encrypt the user data
+    let jwt_payload = JwtClaims {
+        id: id.to_string(),
+        email: email.as_ref().unwrap().to_string(),
+        fullname: fullname
+            .as_ref()
+            .unwrap_or(&"default".to_string())
+            .to_string(),
+        exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
+    };
+    //fetch the JWT secret
+    /*   let jwt_secret = crate::shared::jwt_schema::jwt_secret(); */
+    //use a custom header
+    let jwt_header = Header {
+        alg: Algorithm::HS512,
+        ..Default::default()
+    };
+
+    //build the user jwt token
+    let token = encode(&jwt_header, &jwt_payload, &JWT_SECRET.encoding);
+    //construct and return a response
+    let response: ApiSuccessResponse<JwtPayload> = ApiSuccessResponse::<JwtPayload> {
+        success: true,
+        message: String::from("user successfully logged in"),
+        data: Some(JwtPayload {
+            token: token.unwrap(),
+            token_type: String::from("Bearer"),
+        }),
+    };
+    // response
+    Ok((StatusCode::OK, Json(response)))
+
+   
 }
 
 /// Get the user profile fom the database.

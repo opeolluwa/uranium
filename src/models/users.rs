@@ -4,6 +4,7 @@ use crate::utils::sql_query_builder::{Create, Find, FindByPk};
 use async_trait::async_trait;
 use bcrypt::DEFAULT_COST;
 use chrono::NaiveDate;
+// use racoon_macros::racoon_debug;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::types::chrono::NaiveDateTime;
@@ -92,9 +93,11 @@ impl UserModel {
         bcrypt::hash(password.trim(), DEFAULT_COST).unwrap()
     }
     /// verify hashed password
-    pub fn _verify_pswd_hash(&self, raw_password: &str) -> bool {
+    pub fn verify_pswd_hash(&self, raw_password: &str) -> bool {
         let stored_password = self.password.as_ref().unwrap();
-        bcrypt::verify(raw_password, stored_password).ok().is_some()
+        let is_password_correct = bcrypt::verify(raw_password, stored_password).ok().unwrap();
+        // racoon_debug!("the password is correct =>", Some(&correct_password));
+        is_password_correct
     }
 }
 
