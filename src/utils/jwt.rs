@@ -27,6 +27,20 @@ pub struct JwtClaims {
 }
 
 impl JwtClaims {
+    /// generate token
+    /// # Example
+    /// ```rust
+    ///  let expiration_time = set_jtw_exp(10);
+    ///    //generate sample token
+    /// let sample_claim: JwtClaims = JwtClaims {
+    ///  id: String::from("16260b1d-1554-5b6f-a221-56ff4b34199c"),
+    //      email: String::from("cout@lahpev.mg"),
+    //    fullname: String::from("Jesse Rodney"),
+    //  exp: expiration_time,
+    ///};
+    ///let token = sample_claim.generate_token();
+    ///let token: String = token.unwrap();
+    ///```
     pub fn generate_token(&self) -> Option<String> {
         //fetch the JWT secret
         let jwt_header = Header {
@@ -34,7 +48,6 @@ impl JwtClaims {
             ..Default::default()
         };
         //build the user jwt token
-
         encode(&jwt_header, &self, &JWT_SECRET.encoding).ok()
     }
 }
