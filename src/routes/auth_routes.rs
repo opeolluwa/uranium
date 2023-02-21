@@ -17,7 +17,11 @@ pub fn routes() -> axum::Router {
             post(handler::request_account_verification),
         )
         .route("/request-new-otp", post(handler::request_new_otp))
-        .route("/reset-password-reset", put(handler::reset_password))
+        .route(
+            "/request-password-reset",
+            post(handler::request_password_reset),
+        )
+        .route("/reset-password", put(handler::reset_password))
         .route("/me", get(handler::fetch_user_profile))
         .route("/me", put(handler::update_user_profile))
         .route("/", get(handler::get_refresh_token))
