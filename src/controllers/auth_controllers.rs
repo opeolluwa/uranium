@@ -1,9 +1,7 @@
 use crate::models::common::{EmailVerification, OneTimePassword};
 use crate::models::emails::EmailPayload;
 use crate::models::users::{AccountStatus, ResetUserPassword, UserInformation, UserModel};
-use crate::utils::api_response::{
-    ApiErrorResponse, ApiSuccessResponse, EnumerateFields, ValidatedRequest,
-};
+use crate::utils::api_response::{ApiErrorResponse, ApiSuccessResponse, ValidatedRequest};
 use crate::utils::jwt::JWT_SECRET;
 use crate::utils::jwt::{set_jtw_exp, JwtClaims, JwtPayload};
 use crate::utils::message_queue::MessageQueue;
@@ -17,7 +15,6 @@ use std::env;
 
 const ACCESS_TOKEN_VALIDITY: u64 = 10; // the bearer token validity set to 10 minutes
 const REFRESH_TOKEN_VALIDITY: u64 = 25; // 25 minutes for refresh token validity
-                                        // type ApiResponse = Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse>;
 
 /// create new user account
 pub async fn sign_up(
@@ -369,11 +366,7 @@ pub async fn fetch_user_profile(
     // fetch the user details from the database using...
     //the user id from the authenticated_user object
     let user_information =
-        sqlx::query_as::<_, UserModel>("SELECT * FROM user_information WHERE email = $1")
-            .bind(Some(authenticated_user.email.trim()))
-            .fetch_one(&database)
-            .await;
-
+        UserModel::find(json!({"email":authenticated_user.email.trim()}), &database).await;
     //handle errors
     match user_information {
         Ok(user_object) => {
@@ -398,6 +391,49 @@ pub async fn fetch_user_profile(
     }
 }
 
+pub async fn request_password_reset(
+    ValidatedRequest(payload): ValidatedRequest<UserInformation>,
+    Extension(database): Extension<PgPool>,
+) -> Result<(StatusCode, Json<ApiSuccessResponse<JwtPayload>>), ApiErrorResponse> {
+    let user_information = UserModel::find(json!({"email":payload.email}), &database).await;
+
+    // check the error
+    if let Err(error_message) = user_information {
+        return Err(ApiErrorResponse::ServerError {
+            message: error_message.to_string(),
+        });
+    }
+
+    let user = user_information.ok().unwrap();
+    // destructure the user if the password is correct
+    let UserModel {
+        id,
+        email,
+        fullname,
+        ..
+    } = &user;
+
+    //encrypt the user data as JWT
+    let jwt_payload = JwtClaims {
+        id: id.to_string(),
+        email: email.as_ref().unwrap().to_string(),
+        fullname: fullname
+            .as_ref()
+            .unwrap_or(&"default".to_string())
+            .to_string(),
+        exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
+    };
+    let token = jwt_payload.generate_token().unwrap();
+    let response: ApiSuccessResponse<JwtPayload> = ApiSuccessResponse::<JwtPayload> {
+        success: true,
+        message: String::from("Please verify OTP sent to yor email"),
+        data: Some(JwtPayload {
+            token,
+            token_type: String::from("Bearer"),
+        }),
+    };
+    Ok((StatusCode::OK, Json(response)))
+}
 /*
  * get the user details from the JWT claims
  * use the the extracted details to fetch the user data
@@ -411,34 +447,8 @@ pub async fn reset_password(
     authenticated_user: JwtClaims,
     Extension(database): Extension<PgPool>,
 ) -> Result<Json<ApiSuccessResponse<()>>, ApiErrorResponse> {
-    //check through the fields to see that no field was badly formatted
-    let entries = &payload.collect_as_strings();
-    let mut bad_request_errors: Vec<String> = Vec::new();
-    for (key, value) in entries {
-        if value.is_empty() {
-            let error = format!("{key} is empty");
-            bad_request_errors.push(error);
-        }
-    }
-
-    if payload.new_password.trim() != payload.confirm_password {
-        bad_request_errors.push("Password does not match".to_string());
-    }
-
-    //if we have empty fields return error to client
-    if !bad_request_errors.is_empty() {
-        return Err(ApiErrorResponse::BadRequest {
-            message: bad_request_errors.join(", "),
-        });
-    }
-
-    //destructure the payload
     let user_information =
-        sqlx::query_as::<_, UserInformation>("SELECT * FROM user_information WHERE email = $1")
-            .bind(Some(authenticated_user.email.trim()))
-            .fetch_one(&database)
-            .await;
-
+        UserModel::find(json!({"email":authenticated_user.email.trim()}), &database).await;
     //handle errors
     match user_information {
         Ok(_) => {
