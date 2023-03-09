@@ -16,7 +16,7 @@ members = [
 
 [dependencies]
 anyhow = "1.0.68"
-async-graphql = {version = "3.0.12"}
+async-graphql = {version = "4.0.6"}
 async-session = "3.0.0"
 async-trait = "0.1.57"
 axum = {version = "0.5.16", features = ["headers", "json", "ws"]}
