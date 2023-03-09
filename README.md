@@ -5,7 +5,7 @@ _Authentication and Authorization Server for Microservices Architecture_
 
 
 ## Overview 
- This project is research work that focuses on enterprise-scale identity management for Microservices inspired of Google Authentication Strategies
+ This project is research work that focuses on enterprise-scale identity management for Microservices inspired by Google Applications Authentication Strategies
 
 The solution is implemented with the [Rust programming language](https://www.rust-lang.org/tools/install) a memory-safe systems programming language for building fast and secure applications. The application also integrates with the [PostgreSQL](https://www.postgresql.org/download/)
   database which is optimized for fast read and write database operations. 
@@ -30,7 +30,7 @@ To run the application in development mode, follow the steps below
 
 ##  Documentation 
 -  [API Documentation](https://documenter.getpostman.com/view/22658417/2s83zgv5nW) 
-- [Application (logic) Documentation](https://opeolluwa.github.io/nitride/) 
+<!-- - [Application (logic) Documentation](https://opeolluwa.github.io/nitride/)  -->
 
 ## License 
 The application is subjected to [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)

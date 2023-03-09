@@ -1,16 +1,12 @@
-// use super::emails::EmailModel;
-use crate::utils::api_response::EnumerateFields;
 use crate::utils::sql_query_builder::{Create, Find, FindByPk};
 use async_trait::async_trait;
 use bcrypt::DEFAULT_COST;
 use chrono::NaiveDate;
-// use racoon_macros::racoon_debug;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 use sqlx::{Pool, Postgres};
-use std::collections::HashMap;
 use validator::Validate;
 
 /// an enum stating the user current account status
@@ -240,11 +236,6 @@ impl Default for UserGender {
     }
 }
 
-// impl Default for UserInformation {
-//     fn default() -> Self {
-//         None
-//     }
-// }
 /// the user reset password payload structure
 /// the payload will implement EnumerateFields to validate the payload
 /// it will also derive the rename-all trait of serde to all the use of JavaScript's camel case convection
@@ -254,21 +245,3 @@ pub struct ResetUserPassword {
     pub new_password: String,
     pub confirm_password: String,
 }
-
-/// implement Enumerate fields for Reset UserPassword
-impl EnumerateFields for ResetUserPassword {
-    /* return a key value pair of the the entries
-     * to avoid borrow checker error and possible error from dereferencing,
-     * clone the values of the struct
-     */
-    fn collect_as_strings(&self) -> std::collections::HashMap<String, String> {
-        HashMap::from([
-            (String::from("newPassword"), self.new_password.clone()),
-            (
-                String::from("confirmPassword"),
-                self.confirm_password.clone(),
-            ),
-        ])
-    }
-}
-

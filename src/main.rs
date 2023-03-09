@@ -12,11 +12,10 @@ mod controllers;
 mod models;
 mod routes;
 mod utils;
-// mod config;
 
 #[tokio::main]
 async fn main() {
-    //logger
+    //the logger implementation
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
             std::env::var("RUST_LOG").unwrap_or_else(|_| "logging=debug,tower_http=debug".into()),
