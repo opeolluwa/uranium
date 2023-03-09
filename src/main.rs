@@ -1,3 +1,5 @@
+use axum::handler::Handler;
+use axum::response::IntoResponse;
 use axum::{extract::Extension, http::StatusCode, routing::get_service, Router};
 use dotenv::dotenv;
 use racoon_macros::racoon_info;
@@ -7,6 +9,7 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use utils::api_response::ApiErrorResponse;
 
 mod controllers;
 mod models;
@@ -44,7 +47,6 @@ async fn main() {
     .handle_error(|error: std::io::Error| async move {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            //TODO" add graceful shutdown
             format!("Unhandled internal error: {error}"),
         )
     });
@@ -62,6 +64,9 @@ async fn main() {
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .layer(Extension(database));
+
+    // add a fallback service for handling routes to unknown paths
+    let app = app.fallback(handle_404.into_service());
 
     //mount the server to an ip address
     /*
@@ -105,3 +110,22 @@ async fn main() {
         .await
         .unwrap();
 }
+
+// 404 handler
+
+// async fn handler() -> axum::response::Html<&'static str> {
+//     axum::response::Html("<h1>Hello, World!</h1>")
+// }
+
+async fn handle_404() -> impl IntoResponse {
+    (StatusCode::NOT_FOUND, "nothing to see here")
+}
+// async fn handle_404() -> impl IntoResponse {
+//     // Ok()
+//     (
+//         StatusCode::NOT_FOUND,
+//         axum::Json(ApiErrorResponse::NotFound {
+//             message: String::from("The requested resource does not exist on this server!"),
+//         }),
+//     )
+// }
