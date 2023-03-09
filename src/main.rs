@@ -59,7 +59,7 @@ async fn main() {
     //mount the app routes and middleware
     let app = Router::new()
         .fallback(static_files_service)
-        .nest("/api/v1/", routes::root::router())
+        .nest("/v1/", routes::root::router())
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .layer(Extension(database));
