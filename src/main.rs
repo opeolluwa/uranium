@@ -9,7 +9,6 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use utils::api_response::ApiErrorResponse;
 
 mod controllers;
 mod models;
@@ -118,14 +117,11 @@ async fn main() {
 // }
 
 async fn handle_404() -> impl IntoResponse {
-    (StatusCode::NOT_FOUND, "nothing to see here")
+    (
+        StatusCode::NOT_FOUND,
+        axum::response::Json(serde_json::json!({
+        "success":false,
+        "message":String::from("The requested resource does not exist on this server!"),
+        })),
+    )
 }
-// async fn handle_404() -> impl IntoResponse {
-//     // Ok()
-//     (
-//         StatusCode::NOT_FOUND,
-//         axum::Json(ApiErrorResponse::NotFound {
-//             message: String::from("The requested resource does not exist on this server!"),
-//         }),
-//     )
-// }
