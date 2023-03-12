@@ -1,16 +1,12 @@
-// use super::emails::EmailModel;
-use crate::utils::api_response::EnumerateFields;
 use crate::utils::sql_query_builder::{Create, Find, FindByPk};
 use async_trait::async_trait;
 use bcrypt::DEFAULT_COST;
 use chrono::NaiveDate;
-// use racoon_macros::racoon_debug;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::types::Uuid;
 use sqlx::{Pool, Postgres};
-use std::collections::HashMap;
 use validator::Validate;
 
 /// an enum stating the user current account status
@@ -95,9 +91,8 @@ impl UserModel {
     /// verify hashed password
     pub fn verify_pswd_hash(&self, raw_password: &str) -> bool {
         let stored_password = self.password.as_ref().unwrap();
-        let is_password_correct = bcrypt::verify(raw_password, stored_password).ok().unwrap();
-        // racoon_debug!("the password is correct =>", Some(&correct_password));
-        is_password_correct
+        bcrypt::verify(raw_password, stored_password).ok().unwrap()
+        // racoon_debug!("the password is correct =>", Some(&correct_password)
     }
 }
 
@@ -140,7 +135,7 @@ INSERT INTO
     "#;
         let id = Uuid::new_v4();
         let hashed_password = UserModel::hash_pswd(password);
-        let new_user = sqlx::query_as::<_, UserModel>(sql_query)
+        sqlx::query_as::<_, UserModel>(sql_query)
             .bind(id)
             .bind(gender.unwrap_or_default())
             .bind(firstname.unwrap_or_default())
@@ -154,8 +149,7 @@ INSERT INTO
             .bind(phone_number.unwrap_or_default())
             .bind(hashed_password)
             .fetch_one(db_connection)
-            .await;
-        new_user
+            .await
     }
 }
 
@@ -240,11 +234,6 @@ impl Default for UserGender {
     }
 }
 
-// impl Default for UserInformation {
-//     fn default() -> Self {
-//         None
-//     }
-// }
 /// the user reset password payload structure
 /// the payload will implement EnumerateFields to validate the payload
 /// it will also derive the rename-all trait of serde to all the use of JavaScript's camel case convection
@@ -254,21 +243,3 @@ pub struct ResetUserPassword {
     pub new_password: String,
     pub confirm_password: String,
 }
-
-/// implement Enumerate fields for Reset UserPassword
-impl EnumerateFields for ResetUserPassword {
-    /* return a key value pair of the the entries
-     * to avoid borrow checker error and possible error from dereferencing,
-     * clone the values of the struct
-     */
-    fn collect_as_strings(&self) -> std::collections::HashMap<String, String> {
-        HashMap::from([
-            (String::from("newPassword"), self.new_password.clone()),
-            (
-                String::from("confirmPassword"),
-                self.confirm_password.clone(),
-            ),
-        ])
-    }
-}
-

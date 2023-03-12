@@ -4,7 +4,7 @@ authors = ["Adeoye Adefemi <adefemiadeoye@yahoo.com>"]
 description = "An Authentication, Authorization and Identity Management system for microservices  https://github.com/opeolluwa/racoon"
 edition = "2021"
 name = "racoon"
-version = "0.1.0"
+version = "0.1.1"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace]
@@ -16,7 +16,7 @@ members = [
 
 [dependencies]
 anyhow = "1.0.68"
-async-graphql = {version = "3.0.12"}
+async-graphql = {version = "4.0.6"}
 async-session = "3.0.0"
 async-trait = "0.1.57"
 axum = {version = "0.5.16", features = ["headers", "json", "ws"]}
