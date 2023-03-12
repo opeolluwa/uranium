@@ -11,10 +11,10 @@ use serde::Deserialize;
 use serde::Serialize;
 use std::error::Error;
 use std::fs::File;
-use std::io;
+
 use std::io::prelude::*;
-use std::net::SocketAddr;
-use std::{fmt, fs};
+
+use std::{fmt};
 use tinytemplate::TinyTemplate;
 
 // the template file to be read will be as html unless otherwise  stated
@@ -117,7 +117,7 @@ impl MailService {
             .from(sender_address.parse().unwrap())
             .reply_to(reply_to_addr.parse().unwrap())
             .to(self.recipient_address.parse().unwrap())
-            .subject(&self.email_subject.to_string())
+            .subject(self.email_subject.to_string())
             .multipart(
                 MultiPart::alternative() // This is composed of two parts.
                     .singlepart(
@@ -183,7 +183,7 @@ impl MailService {
             template_file_extension = TEMPLATE_FILE_EXTENSION
         );
         let mut template_content = String::new();
-        let mut template_file = File::open(&template_file_path)?;
+        let mut template_file = File::open(template_file_path)?;
         template_file.read_to_string(&mut template_content)?;
 
         // parse the content extracted
