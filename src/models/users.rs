@@ -91,9 +91,8 @@ impl UserModel {
     /// verify hashed password
     pub fn verify_pswd_hash(&self, raw_password: &str) -> bool {
         let stored_password = self.password.as_ref().unwrap();
-        let is_password_correct = bcrypt::verify(raw_password, stored_password).ok().unwrap();
-        // racoon_debug!("the password is correct =>", Some(&correct_password));
-        is_password_correct
+        bcrypt::verify(raw_password, stored_password).ok().unwrap()
+        // racoon_debug!("the password is correct =>", Some(&correct_password)
     }
 }
 
@@ -136,7 +135,7 @@ INSERT INTO
     "#;
         let id = Uuid::new_v4();
         let hashed_password = UserModel::hash_pswd(password);
-        let new_user = sqlx::query_as::<_, UserModel>(sql_query)
+        sqlx::query_as::<_, UserModel>(sql_query)
             .bind(id)
             .bind(gender.unwrap_or_default())
             .bind(firstname.unwrap_or_default())
@@ -150,8 +149,7 @@ INSERT INTO
             .bind(phone_number.unwrap_or_default())
             .bind(hashed_password)
             .fetch_one(db_connection)
-            .await;
-        new_user
+            .await
     }
 }
 
