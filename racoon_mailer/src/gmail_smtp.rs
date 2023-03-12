@@ -49,6 +49,7 @@ pub struct MailService {
     pub email_subject: String,
     pub email_body: String,
 }
+
 impl fmt::Display for MailService {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -137,6 +138,15 @@ impl MailService {
             }
         }
     }
+
+    /// parse email template
+    /// get the template as string then extract the string content
+    /// parse the string content
+    /// saturate placeholders found in the template with concrete data
+    /// return an html compatible string
+    pub fn parse_template() {
+        todo!()
+    }
 }
 ///accept template data
 /// fill in the content
@@ -187,7 +197,6 @@ pub fn parse_email_template(email_content: String, recipient_name: String) -> St
                                         Hello {recipient_name},
                                     </b>
                                     {email_content}
-
 
                                 </td>
                             </tr>
