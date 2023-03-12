@@ -1,8 +1,8 @@
-# .github/workflows/release.yml
-
+name: build-artifact
 on:
-  release:
-    types: [created]
+  push:
+   branches:
+   - master
 
 jobs:
   release:
