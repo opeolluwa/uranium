@@ -1,6 +1,6 @@
 use axum::Router;
 
-use super::oauth2_discord as discord;
+use super::{oauth2_discord as discord, oauth2_google as google};
 
 /**
  * an  abstraction over all oauth2 route services
@@ -19,5 +19,5 @@ use super::oauth2_discord as discord;
  * /google/logout
  */
 pub fn routes() -> axum::Router {
-    Router::new().nest("/discord", discord::routes())
+    Router::new().nest("/discord", discord::routes()).nest("/google", google::routes())
 }

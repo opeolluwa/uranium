@@ -16,8 +16,9 @@ pub struct AuthRequest {
     state: String,
 }
 
-// The user data we'll get back from Discord.
-// https://discord.com/developers/docs/resources/user#user-object-user-structure
+// The user data we'll get back from google.
+// https://google.com/developers/docs/resources/user#user-object-user-structure
+//https://support.google.com/googleapi/answer/6158849
 #[derive(Debug, Serialize, Deserialize)]
 struct User {
     id: String,
@@ -28,31 +29,31 @@ struct User {
 }
 
 /**
- * 1) Create a new application at <https://discord.com/developers/applications>
+ * 1) Create a new application at <https://google.com/developers/applications>
 * 2) Visit the OAuth2 tab to get your CLIENT_ID and CLIENT_SECRET
 */
 pub async fn request_auth() -> impl IntoResponse {
-    let (auth_url, _csrf_token) = discord_oauth_client()
+    let (auth_url, _csrf_token) = google_oauth_client()
         .authorize_url(CsrfToken::new_random)
         .add_scope(Scope::new("identify".to_string()))
         .url();
 
-    // Redirect to Discord's oauth service
+    // Redirect to google's oauth service
     Redirect::to(&auth_url.to_string())
 }
 /// a function to login the user using the returned token
 pub async fn verify_auth(Query(query): Query<AuthRequest>) -> impl IntoResponse {
-    let token = discord_oauth_client()
+    let token = google_oauth_client()
         .exchange_code(AuthorizationCode::new(query.code.clone()))
         .request_async(async_http_client)
         .await
         .unwrap();
 
-    // Fetch user data from discord
+    // Fetch user data from google
     let client = ::reqwest::Client::new();
     let user_data: User = client
-        // https://discord.com/developers/docs/resources/user#get-current-user
-        .get("https://discordapp.com/api/users/@me")
+        // https://google.com/developers/docs/resources/user#get-current-user
+        .get("https://googleapp.com/api/users/@me")
         .bearer_auth(token.access_token().secret())
         .send()
         .await
@@ -65,17 +66,17 @@ pub async fn verify_auth(Query(query): Query<AuthRequest>) -> impl IntoResponse 
     println!("\nthe user data is {:?}\n", user_data);
 }
 
-// oauth client to interface with discord API
-fn discord_oauth_client() -> BasicClient {
+// oauth client to interface with google API
+fn google_oauth_client() -> BasicClient {
     //TODO: use better error handling
-    let client_id = env::var("DISCORD_CLIENT_ID").expect("Missing  DISCORD_CLIENT_ID!");
-    let client_secret = env::var("DISCORD_CLIENT_SECRET").expect("Missing DISCORD_CLIENT_SECRET!");
-    let redirect_url = env::var("DISCORD_REDIRECT_URL").expect("missing DISCORD_REDIRECT URL");
-    let auth_url = env::var("AUTH_URL").unwrap_or_else(|_| {
-        "https://discord.com/api/oauth2/authorize?response_type=code".to_string()
-    });
+    let client_id = env::var("GOOGLE_CLIENT_ID").expect("Missing  GOOGLE_CLIENT_ID!");
+    let client_secret = env::var("GOOGLE_CLIENT_SECRET").expect("Missing GOOGLE_CLIENT_SECRET!");
+    let redirect_url = env::var("GOOGLE_REDIRECT_URL").expect("missing GOOGLE_REDIRECT URL");
+    let auth_url = env::var("GOOGLE_AUTH_URL")
+        .unwrap_or_else(|_| "https://accounts.google.com/o/oauth2/v2/auth".to_string());
     let token_url = env::var("TOKEN_URL")
-        .unwrap_or_else(|_| "https://discord.com/api/oauth2/token".to_string());
+        .unwrap_or_else(|_| "https://www.googleapis.com/oauth2/v3/token".to_string());
+
 
     BasicClient::new(
         ClientId::new(client_id),
