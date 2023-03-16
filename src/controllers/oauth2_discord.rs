@@ -1,18 +1,31 @@
+use axum::extract::Query;
 use axum::response::{IntoResponse, Redirect};
 use oauth2::basic::BasicClient;
 use oauth2::reqwest::async_http_client;
 use oauth2::{
-    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge, RedirectUrl,
-    Scope, TokenUrl,
+    AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, RedirectUrl,
+    Scope, TokenResponse, TokenUrl,
 };
+use serde::{Deserialize, Serialize};
 use std::env;
+// use reqwest::Client;
 
-// #[derive(Debug, Deserialize)]
-// #[allow(dead_code)]
-// struct AuthRequest {
-//     code: String,
-//     state: String,
-// }
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+pub struct AuthRequest {
+    code: String,
+    state: String,
+}
+
+// The user data we'll get back from Discord.
+// https://discord.com/developers/docs/resources/user#user-object-user-structure
+#[derive(Debug, Serialize, Deserialize)]
+struct User {
+    id: String,
+    avatar: Option<String>,
+    username: String,
+    discriminator: String,
+}
 
 pub async fn request_auth() -> impl IntoResponse {
     let (auth_url, _csrf_token) = discord_oauth_client()
@@ -23,7 +36,29 @@ pub async fn request_auth() -> impl IntoResponse {
     // Redirect to Discord's oauth service
     Redirect::to(&auth_url.to_string())
 }
-// a function to get username
+/// a function to login the user using the returned token
+pub async fn verify_auth(Query(query): Query<AuthRequest>) -> impl IntoResponse {
+    let token = discord_oauth_client()
+        .exchange_code(AuthorizationCode::new(query.code.clone()))
+        .request_async(async_http_client)
+        .await
+        .unwrap();
+
+    // Fetch user data from discord
+    let client = ::reqwest::Client::new();
+    let user_data: User = client
+        // https://discord.com/developers/docs/resources/user#get-current-user
+        .get("https://discordapp.com/api/users/@me")
+        .bearer_auth(token.access_token().secret())
+        .send()
+        .await
+        .unwrap()
+        .json::<User>()
+        .await
+        .unwrap();
+
+    println!("\nthe user data is {:?}\n", user_data);
+}
 
 fn discord_oauth_client() -> BasicClient {
     //TODO: use better error handling

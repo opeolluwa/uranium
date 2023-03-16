@@ -3,7 +3,7 @@ use axum::Router;
 use super::oauth2_discord as discord;
 
 /**
- * an  abstraction over all 0auth2 routes
+ * an  abstraction over all oauth2 route services
  * the module encapsulate the main routs available for 0auth services
  * -/  to connect to the auth server
  * /verify - to validate the returned token
