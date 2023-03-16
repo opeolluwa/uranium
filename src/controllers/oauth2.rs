@@ -1,32 +1,45 @@
-use axum::response::IntoResponse;
-/// use social authentication strategies
-/// !. Google https://support.google.com/googleapi/answer/6158849
-use oauth2::{basic::BasicClient, revocation::StandardRevocableToken, TokenResponse};
-// Alternatively, this can be oauth2::curl::http_client or a custom.
-use oauth2::reqwest::{async_http_client, http_client};
+use axum::response::{IntoResponse, Redirect};
+use oauth2::basic::BasicClient;
+use oauth2::reqwest::async_http_client;
 use oauth2::{
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge, RedirectUrl,
-    RevocationUrl, Scope, TokenUrl,
+    Scope, TokenUrl,
 };
-// use std::env;
-// use std::io::{BufRead, BufReader, Write};
-// use std::net::TcpListener;
-// use url::Url;
-
-// build new google )auth Client
-// const GOOGLE_CLIENT_ID: ClientId = ClientId::new(
-//     env::var("GOOGLE_CLIENT_ID").expect("Missing the GOOGLE_CLIENT_ID environment variable."),
-// );
-// const GOOGLE_CLIENT_SECRET: ClientSecret = ClientSecret::new(
-//     env::var("GOOGLE_CLIENT_SECRET")
-//         .expect("Missing the GOOGLE_CLIENT_SECRET environment variable."),
-// );
-// const AUTH_URL: AuthUrl = AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string())
-//     .expect("Invalid authorization endpoint URL");
-// const TOKEN_URL: TokenUrl = TokenUrl::new("https://www.googleapis.com/oauth2/v3/token".to_string())
-//     .expect("Invalid token endpoint URL");
+use std::env;
 
 pub async fn google_auth() -> impl IntoResponse {
+    // use std::io::{BufRead, BufReader, Write};
+    // use std::net::TcpListener;
+    // use url::Url;
+
+    // new discord 0Auth2 config
+    // const DISCORD_CLIENT_ID: Lazy<ClientId> =
+    //     Lazy::new(|| env::var("DISCORD_CLIENT_ID").expect("Discord client ID not provided"));
+    // const DISCORD_CLIENT_ID: ClientId = ClientId::new(
+    //     env::var("GOOGLE_CLIENT_ID").expect("Missing the GOOGLE_CLIENT_ID environment variable."),
+    // );
+
+    // const DISCORD_CLIENT_SECRET: ClientSecret = ClientSecret::new(
+    //     env::var("GOOGLE_CLIENT_SECRET")
+    //         .expect("Missing the GOOGLE_CLIENT_SECRET environment variable."),
+    // );
+    // const AUTH_URL: AuthUrl = AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string())
+    //     .expect("Invalid authorization endpoint URL");
+    // const TOKEN_URL: TokenUrl = TokenUrl::new("https://www.googleapis.com/oauth2/v3/token".to_string())
+    //     .expect("Invalid token endpoint URL");
+
+    // build new google )auth Client
+    // const GOOGLE_CLIENT_ID: ClientId = ClientId::new(
+    //     env::var("GOOGLE_CLIENT_ID").expect("Missing the GOOGLE_CLIENT_ID environment variable."),
+    // );
+    // const GOOGLE_CLIENT_SECRET: ClientSecret = ClientSecret::new(
+    //     env::var("GOOGLE_CLIENT_SECRET")
+    //         .expect("Missing the GOOGLE_CLIENT_SECRET environment variable."),
+    // );
+    // const AUTH_URL: AuthUrl = AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string())
+    //     .expect("Invalid authorization endpoint URL");
+    // const TOKEN_URL: TokenUrl = TokenUrl::new("https://www.googleapis.com/oauth2/v3/token".to_string())
+    //     .expect("Invalid token endpoint URL");
     // Create an OAuth2 client by specifying the client ID, client secret, authorization URL and
     // token URL.
     let client = BasicClient::new(
@@ -42,7 +55,7 @@ pub async fn google_auth() -> impl IntoResponse {
     let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
 
     // Generate the full authorization URL.
-    let (auth_url, csrf_token) = client
+    let (auth_url, _csrf_token) = client
         .authorize_url(CsrfToken::new_random)
         // Set the desired scopes.
         .add_scope(Scope::new("read".to_string()))
@@ -75,4 +88,47 @@ pub async fn google_auth() -> impl IntoResponse {
 
 pub async fn twitter_auth() -> &'static str {
     "Hello, World!"
+}
+
+pub async fn discord_auth() -> impl IntoResponse {
+    // Environment variables (* = required):
+    // *"CLIENT_ID"     "REPLACE_ME";
+    // *"CLIENT_SECRET" "REPLACE_ME";
+    //  "REDIRECT_URL"  "http://127.0.0.1:3000/auth/authorized";
+    //  "AUTH_URL"      "https://discord.com/api/oauth2/authorize?response_type=code";
+    //  "TOKEN_URL"     "https://discord.com/api/oauth2/token";
+
+    let client_id = env::var("DISCORD_CLIENT_ID").expect("Missing  DISCORD_CLIENT_ID!");
+    let client_secret = env::var("DISCORD_CLIENT_SECRET").expect("Missing DISCORD_CLIENT_SECRET!");
+    let redirect_url = env::var("DISCORD_REDIRECT_URL")
+        .unwrap_or_else(|_| "http://127.0.0.1:3000/auth/authorized".to_string());
+
+    let auth_url = env::var("AUTH_URL").unwrap_or_else(|_| {
+        "https://discord.com/api/oauth2/authorize?response_type=code".to_string()
+    });
+
+    let token_url = env::var("TOKEN_URL")
+        .unwrap_or_else(|_| "https://discord.com/api/oauth2/token".to_string());
+
+    let discord_oauth_client = BasicClient::new(
+        ClientId::new(client_id),
+        Some(ClientSecret::new(client_secret)),
+        AuthUrl::new(auth_url).unwrap(),
+        Some(TokenUrl::new(token_url).unwrap()),
+    )
+    .set_redirect_uri(RedirectUrl::new(redirect_url).unwrap());
+
+    let (auth_url, _csrf_token) = discord_oauth_client
+        .authorize_url(CsrfToken::new_random)
+        .add_scope(Scope::new("identify".to_string()))
+        .url();
+
+    // Redirect to Discord's oauth service
+    Redirect::to(&auth_url.to_string())
+}
+// a function to get username
+
+fn _fetch_env(env_var: &str) -> String {
+    once_cell::sync::Lazy::new(|| env::var(env_var).expect(&format!("{env_var} not provided")))
+        .to_string()
 }

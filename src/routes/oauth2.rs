@@ -6,4 +6,5 @@ pub fn routes() -> axum::Router {
     Router::new()
         .route("/google", get(handler::google_auth))
         .route("/twitter", get(handler::twitter_auth))
+        .route("/discord", get(handler::discord_auth))
 }
