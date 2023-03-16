@@ -1,3 +1,5 @@
+use axum::handler::Handler;
+use axum::response::IntoResponse;
 use axum::{extract::Extension, http::StatusCode, routing::get_service, Router};
 use dotenv::dotenv;
 use racoon_macros::racoon_info;
@@ -12,11 +14,10 @@ mod controllers;
 mod models;
 mod routes;
 mod utils;
-// mod config;
 
 #[tokio::main]
 async fn main() {
-    //logger
+    //the logger implementation
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
             std::env::var("RUST_LOG").unwrap_or_else(|_| "logging=debug,tower_http=debug".into()),
@@ -45,7 +46,6 @@ async fn main() {
     .handle_error(|error: std::io::Error| async move {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
-            //TODO" add graceful shutdown
             format!("Unhandled internal error: {error}"),
         )
     });
@@ -59,10 +59,13 @@ async fn main() {
     //mount the app routes and middleware
     let app = Router::new()
         .fallback(static_files_service)
-        .nest("/api/v1/", routes::root::router())
+        .nest("/v1/", routes::root::router())
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .layer(Extension(database));
+
+    // add a fallback service for handling routes to unknown paths
+    let app = app.fallback(handle_404.into_service());
 
     //mount the server to an ip address
     /*
@@ -105,4 +108,20 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
+}
+
+// 404 handler
+
+// async fn handler() -> axum::response::Html<&'static str> {
+//     axum::response::Html("<h1>Hello, World!</h1>")
+// }
+
+async fn handle_404() -> impl IntoResponse {
+    (
+        StatusCode::NOT_FOUND,
+        axum::response::Json(serde_json::json!({
+        "success":false,
+        "message":String::from("The requested resource does not exist on this server!"),
+        })),
+    )
 }

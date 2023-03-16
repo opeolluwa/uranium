@@ -18,6 +18,7 @@
         "smaple",
         "sqlx",
         "tbody",
+        "tinytemplate",
         "TOTP"
     ]
 }
