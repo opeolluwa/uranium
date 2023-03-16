@@ -7,6 +7,13 @@ use oauth2::{
 };
 use std::env;
 
+// #[derive(Debug, Deserialize)]
+// #[allow(dead_code)]
+// struct AuthRequest {
+//     code: String,
+//     state: String,
+// }
+
 pub async fn google_auth() -> impl IntoResponse {
     // use std::io::{BufRead, BufReader, Write};
     // use std::net::TcpListener;
@@ -98,17 +105,16 @@ pub async fn discord_auth() -> impl IntoResponse {
     //  "AUTH_URL"      "https://discord.com/api/oauth2/authorize?response_type=code";
     //  "TOKEN_URL"     "https://discord.com/api/oauth2/token";
 
+    //TODO: use better error handling
     let client_id = env::var("DISCORD_CLIENT_ID").expect("Missing  DISCORD_CLIENT_ID!");
     let client_secret = env::var("DISCORD_CLIENT_SECRET").expect("Missing DISCORD_CLIENT_SECRET!");
-    let redirect_url = env::var("DISCORD_REDIRECT_URL")
-        .unwrap_or_else(|_| "http://127.0.0.1:3000/auth/authorized".to_string());
-
+    let redirect_url = env::var("DISCORD_REDIRECT_URL").expect("missing DISCORD_REDIRECT URL");
     let auth_url = env::var("AUTH_URL").unwrap_or_else(|_| {
         "https://discord.com/api/oauth2/authorize?response_type=code".to_string()
     });
-
     let token_url = env::var("TOKEN_URL")
         .unwrap_or_else(|_| "https://discord.com/api/oauth2/token".to_string());
+
 
     let discord_oauth_client = BasicClient::new(
         ClientId::new(client_id),

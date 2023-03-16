@@ -1,10 +1,23 @@
-use crate::controllers::oauth2 as handler;
-use axum::{routing::get, Router};
+use axum::Router;
 
-// mount the controllers to the route
+use super::oauth2_discord as discord;
+
+/**
+ * an  abstraction over all 0auth2 routes
+ * the module encapsulate the main routs available for 0auth services
+ * -/  to connect to the auth server
+ * /verify - to validate the returned token
+ * /logout - to destroy the token
+ *
+ * example route will be
+ * /discord
+ * /discord/verify
+ * /discord/logout
+ *
+ * /google
+ * /google/verify
+ * /google/logout
+ */
 pub fn routes() -> axum::Router {
-    Router::new()
-        .route("/google", get(handler::google_auth))
-        .route("/twitter", get(handler::twitter_auth))
-        .route("/discord", get(handler::discord_auth))
+    Router::new().nest("/discord", discord::routes())
 }
