@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use console::Style;
-// pub type NullValue = None;
+
 /// debug message
 #[macro_export]
 macro_rules! racoon_debug {
@@ -30,11 +30,7 @@ macro_rules! racoon_error {
   }
 }
 
-///informatory
-/// #Example
-/// ```rust
-///
-/// ```
+///informatory message
 #[macro_export]
 macro_rules! racoon_info {
   ($first:tt $(,$rest:tt)*) => {

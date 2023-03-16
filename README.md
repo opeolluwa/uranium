@@ -1,4 +1,4 @@
-# Racoon 
+# Racoon Identity and Access Management
 _Authentication and Authorization Server for Microservices Architecture_
 
 ![racoon](./racoon.jpg)
