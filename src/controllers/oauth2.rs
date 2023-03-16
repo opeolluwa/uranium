@@ -8,10 +8,10 @@ use oauth2::{
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge, RedirectUrl,
     RevocationUrl, Scope, TokenUrl,
 };
-use std::env;
-use std::io::{BufRead, BufReader, Write};
-use std::net::TcpListener;
-use url::Url;
+// use std::env;
+// use std::io::{BufRead, BufReader, Write};
+// use std::net::TcpListener;
+// use url::Url;
 
 // build new google )auth Client
 // const GOOGLE_CLIENT_ID: ClientId = ClientId::new(
@@ -32,11 +32,11 @@ pub async fn google_auth() -> impl IntoResponse {
     let client = BasicClient::new(
         ClientId::new("client_id".to_string()),
         Some(ClientSecret::new("client_secret".to_string())),
-        AuthUrl::new("http://authorize".to_string())?,
-        Some(TokenUrl::new("http://token".to_string())?),
+        AuthUrl::new("http://authorize".to_string()).unwrap(),
+        Some(TokenUrl::new("http://token".to_string()).unwrap()),
     )
     // Set the URL the user will be redirected to after the authorization process.
-    .set_redirect_uri(RedirectUrl::new("http://redirect".to_string())?);
+    .set_redirect_uri(RedirectUrl::new("http://redirect".to_string()).unwrap());
 
     // Generate a PKCE challenge.
     let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
@@ -67,5 +67,8 @@ pub async fn google_auth() -> impl IntoResponse {
         // Set the PKCE code verifier.
         .set_pkce_verifier(pkce_verifier)
         .request_async(async_http_client)
-        .await?;
+        .await
+        .unwrap();
+
+    println!("{:?}", token_result);
 }
