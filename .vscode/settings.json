@@ -13,6 +13,7 @@
         "lettre",
         "middlename",
         "ormlite",
+        "pkce",
         "pswd",
         "reqwest",
         "singlepart",

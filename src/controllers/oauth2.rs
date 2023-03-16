@@ -72,3 +72,7 @@ pub async fn google_auth() -> impl IntoResponse {
 
     println!("{:?}", token_result);
 }
+
+pub async fn twitter_auth() -> &'static str {
+    "Hello, World!"
+}
