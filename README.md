@@ -1,4 +1,4 @@
-# Racoon Identity and  
+# Racoon 
 
 _Authentication and Authorization Server for Microservices Architecture_
 
