@@ -2,11 +2,11 @@
 authors = ["<Adeoye Adefemi adefemiadeoye@yahoo.com>"]
 language = "en"
 multilingual = false
-src = "docs/src"
+src = "src"
 title = "racoon"
 
 [output.html]
 default-theme = "light"
 git-repository-icon = "fa-github"
-git-repository-url = "https://github.com/opeolluwa/molybdenum"
+git-repository-url = "https://github.com/opeolluwa/racoon"
 input-404 = "not-found.md"
