@@ -2,7 +2,7 @@
 authors = ["<Adeoye Adefemi adefemiadeoye@yahoo.com>"]
 language = "en"
 multilingual = false
-src = "docs/src"
+src = "src"
 title = "racoon"
 
 [output.html]
