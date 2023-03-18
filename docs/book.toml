@@ -1,12 +1,13 @@
 [book]
-authors = ["<Adeoye Adefemi adefemiadeoye@yahoo.com>"]
+authors = ["Adeoye Adefemi Opeoluwa"]
+description = "Production ready Authentication Server boilerplate for Node.js/Typescript and SQL tool chain "
 language = "en"
 multilingual = false
 src = "src"
-title = "racoon"
+title = "Molybdenum"
 
 [output.html]
 default-theme = "light"
 git-repository-icon = "fa-github"
-git-repository-url = "https://github.com/opeolluwa/racoon"
+git-repository-url = "https://github.com/opeolluwa/molybdenum"
 input-404 = "not-found.md"
