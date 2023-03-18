@@ -1,7 +1,6 @@
 # Summary
-- [Introduction](./introduction.md)
-- [Features](./features.md)
-- [Getting Started](./getting-started.md)
-- [API Documentation](./api-documentation.md)
-- [License](./license.md)
-- [Change Log](./changelog.md)
+
+- [Overview](./overview.md)
+- [Introduction](./chapter_01/index.md)
+    - [Project Overview](./chapter_01/overview.md)
+    - [Local Setup](./chapter_01/installation.md)
