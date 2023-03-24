@@ -8,6 +8,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # To push a branch
+      pull-requests: write  # To create a PR from that branch
     steps:
     - uses: actions/checkout@v2
       with:
@@ -23,6 +26,7 @@ jobs:
         # Just add a `cd` here if you need to change to another directory.
         cd docs
         mdbook build
+        ls -l book
         git worktree add gh-pages
         git config user.name "Deploy from CI"
         git config user.email ""
@@ -30,7 +34,7 @@ jobs:
         # Delete the ref to avoid keeping history.
         git update-ref -d refs/heads/gh-pages
         rm -rf *
-        mv ../book/* .
+        mv -v ../book/* .
         git add .
         git commit -m "Deploy $GITHUB_SHA to gh-pages"
         git push --force --set-upstream origin gh-pages
