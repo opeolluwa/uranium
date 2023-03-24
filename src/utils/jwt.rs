@@ -61,7 +61,7 @@ mod tests {
         dotenv().ok();
 
         // set token to expire in 10 mines
-        let expiration_time = set_jtw_exp(10);
+        let expiration_time = set_jwt_exp(10);
         //generate sample token
         let sample_claim: JwtClaims = JwtClaims {
             id: String::from("16260b1d-1554-5b6f-a221-56ff4b34199c"),
@@ -154,7 +154,7 @@ pub struct JwtPayload {
 
 /// set the expiration of token
 /// accept the exp as the minutes from now ehn the token will be  invalidated
-pub fn set_jtw_exp(exp: u64) -> u64 {
+pub fn set_jwt_exp(exp: u64) -> u64 {
     // the current time
     let now = SystemTime::now();
     // unix epoch elapsed time
