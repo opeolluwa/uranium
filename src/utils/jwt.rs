@@ -9,7 +9,9 @@ use jsonwebtoken::{Header, Validation};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
+use std::ops::Add;
 use std::time::SystemTime;
+use time;
 
 ///fetch the JWT defined environment and assign it's value to a life
 /// call on the new method of JwtEncryption keys to accept and pass down the secret to the jsonwebtoken crate EncodingKey and DecodingKey modules
@@ -126,23 +128,27 @@ pub struct JwtPayload {
 }
 
 /// set the expiration of token
-/// accept the exp as the minutes from now ehn the token will be  invalidated
+/// accept the exp as the minutes from now when the token will be invalidated
 pub fn set_jwt_exp(exp: u64) -> u64 {
-    // the current time
-    let now = SystemTime::now();
+    _set_jwt_exp(SystemTime::now(), exp)
+}
+
+// This internal function ease testing with custom now values
+fn _set_jwt_exp(now: impl Into<time::OffsetDateTime>, exp: u64) -> u64 {
     // unix epoch elapsed time
-    let unix_epoch_elapsed_time = now
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("something went wrong");
-    //accept the exp, convert it to seconds
+    let unix_epoch_elapsed_time: time::Duration = now.into() - time::OffsetDateTime::UNIX_EPOCH;
+
+    // accept the exp, convert it to seconds
     let exp_minutes_to_second = (exp) * 60;
+
     // return the token expiration as the summation of current unix epoch elapsed time
     let hours_from_now =
-        unix_epoch_elapsed_time + std::time::Duration::from_secs(exp_minutes_to_second);
+        unix_epoch_elapsed_time.add(time::Duration::seconds(exp_minutes_to_second as i64));
 
-    //return the result as seconds
-    hours_from_now.as_secs()
+    // return the result as seconds
+    hours_from_now.as_seconds_f64() as u64
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -168,5 +174,24 @@ mod tests {
         // println!("{}", &token);
         // assert!(Some('e') == token.chars().next());
         assert!(token.is_some());
+    }
+
+    #[test]
+    fn set_jwt_exp_should_return_the_exp_as_seconds_when_now_is_unix_epoch() {
+        let now = time::OffsetDateTime::UNIX_EPOCH;
+        let exp_in_minutes = 42;
+        let expected = exp_in_minutes * 60;
+
+        assert_eq!(_set_jwt_exp(now, exp_in_minutes), expected);
+    }
+
+    #[test]
+    fn set_jwt_exp_should_return_the_seconds_between_unix_epoch_and_now_added_with_exp() {
+        let timestamp = 1_000_000_000;
+        let now = time::OffsetDateTime::from_unix_timestamp(timestamp).unwrap();
+        let exp_in_minutes: u64 = 42;
+        let expected = timestamp as u64 + (exp_in_minutes * 60);
+
+        assert_eq!(_set_jwt_exp(now, exp_in_minutes), expected);
     }
 }
