@@ -26,7 +26,6 @@ jobs:
         # Just add a `cd` here if you need to change to another directory.
         cd docs
         mdbook build
-        ls -l book
         git worktree add gh-pages
         git config user.name "Deploy from CI"
         git config user.email ""
@@ -34,7 +33,7 @@ jobs:
         # Delete the ref to avoid keeping history.
         git update-ref -d refs/heads/gh-pages
         rm -rf *
-        mv -v ../book/* .
+        mv ../book/* .
         git add .
         git commit -m "Deploy $GITHUB_SHA to gh-pages"
         git push --force --set-upstream origin gh-pages
