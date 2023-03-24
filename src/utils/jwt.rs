@@ -51,33 +51,6 @@ impl JwtClaims {
         encode(&jwt_header, &self, &JWT_SECRET.encoding).ok()
     }
 }
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use dotenv::dotenv;
-
-    #[test]
-    fn test_jwt_encoder() {
-        dotenv().ok();
-
-        // set token to expire in 10 mines
-        let expiration_time = set_jwt_exp(10);
-        //generate sample token
-        let sample_claim: JwtClaims = JwtClaims {
-            id: String::from("16260b1d-1554-5b6f-a221-56ff4b34199c"),
-            email: String::from("cout@lahpev.mg"),
-            fullname: String::from("Jesse Rodney"),
-            exp: expiration_time,
-        };
-        let token = sample_claim.generate_token();
-        // let token: String = token.unwrap();
-
-        //see if the length of the token is greater than 10
-        // println!("{}", &token);
-        // assert!(Some('e') == token.chars().next());
-        assert!(token.is_some());
-    }
-}
 
 #[async_trait]
 impl<S> FromRequest<S> for JwtClaims
@@ -169,4 +142,31 @@ pub fn set_jwt_exp(exp: u64) -> u64 {
 
     //return the result as seconds
     hours_from_now.as_secs()
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use dotenv::dotenv;
+
+    #[test]
+    fn test_jwt_encoder() {
+        dotenv().ok();
+
+        // set token to expire in 10 mines
+        let expiration_time = set_jwt_exp(10);
+        //generate sample token
+        let sample_claim: JwtClaims = JwtClaims {
+            id: String::from("16260b1d-1554-5b6f-a221-56ff4b34199c"),
+            email: String::from("cout@lahpev.mg"),
+            fullname: String::from("Jesse Rodney"),
+            exp: expiration_time,
+        };
+        let token = sample_claim.generate_token();
+        // let token: String = token.unwrap();
+
+        //see if the length of the token is greater than 10
+        // println!("{}", &token);
+        // assert!(Some('e') == token.chars().next());
+        assert!(token.is_some());
+    }
 }
