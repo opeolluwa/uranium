@@ -150,8 +150,12 @@ impl Otp {
 #[cfg(test)]
 mod test {
     use super::Otp;
+    use dotenv::dotenv;
+
     #[test]
     fn otp_is_generated() {
+        dotenv().ok();
+
         let otp = Otp::new();
         let otp: u32 = otp.token.parse().unwrap();
         assert!(otp > 0)

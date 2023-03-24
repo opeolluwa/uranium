@@ -54,9 +54,12 @@ impl JwtClaims {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use dotenv::dotenv;
 
     #[test]
     fn test_jwt_encoder() {
+        dotenv().ok();
+
         // set token to expire in 10 mines
         let expiration_time = set_jtw_exp(10);
         //generate sample token
