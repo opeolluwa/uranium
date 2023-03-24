@@ -12,9 +12,10 @@ use jsonwebtoken::{encode, Algorithm, Header};
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::env;
+use time;
 
-const ACCESS_TOKEN_VALIDITY: u64 = 10; // the bearer token validity set to 10 minutes
-const REFRESH_TOKEN_VALIDITY: u64 = 25; // 25 minutes for refresh token validity
+const ACCESS_TOKEN_VALIDITY: time::Duration = time::Duration::minutes(10); // the bearer token validity set to 10 minutes
+const REFRESH_TOKEN_VALIDITY: time::Duration = time::Duration::minutes(25); // 25 minutes for refresh token validity
 
 /// create new user account
 pub async fn sign_up(
