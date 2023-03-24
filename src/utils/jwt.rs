@@ -9,7 +9,9 @@ use jsonwebtoken::{Header, Validation};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
+use std::ops::Add;
 use std::time::SystemTime;
+use time;
 
 ///fetch the JWT defined environment and assign it's value to a life
 /// call on the new method of JwtEncryption keys to accept and pass down the secret to the jsonwebtoken crate EncodingKey and DecodingKey modules
@@ -49,30 +51,6 @@ impl JwtClaims {
         };
         //build the user jwt token
         encode(&jwt_header, &self, &JWT_SECRET.encoding).ok()
-    }
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_jwt_encoder() {
-        // set token to expire in 10 mines
-        let expiration_time = set_jtw_exp(10);
-        //generate sample token
-        let sample_claim: JwtClaims = JwtClaims {
-            id: String::from("16260b1d-1554-5b6f-a221-56ff4b34199c"),
-            email: String::from("cout@lahpev.mg"),
-            fullname: String::from("Jesse Rodney"),
-            exp: expiration_time,
-        };
-        let token = sample_claim.generate_token();
-        // let token: String = token.unwrap();
-
-        //see if the length of the token is greater than 10
-        // println!("{}", &token);
-        // assert!(Some('e') == token.chars().next());
-        assert!(token.is_some());
     }
 }
 
@@ -150,20 +128,66 @@ pub struct JwtPayload {
 }
 
 /// set the expiration of token
-/// accept the exp as the minutes from now ehn the token will be  invalidated
-pub fn set_jtw_exp(exp: u64) -> u64 {
-    // the current time
-    let now = SystemTime::now();
-    // unix epoch elapsed time
-    let unix_epoch_elapsed_time = now
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("something went wrong");
-    //accept the exp, convert it to seconds
-    let exp_minutes_to_second = (exp) * 60;
-    // return the token expiration as the summation of current unix epoch elapsed time
-    let hours_from_now =
-        unix_epoch_elapsed_time + std::time::Duration::from_secs(exp_minutes_to_second);
+/// accept the exp as the minutes from now when the token will be invalidated
+pub fn set_jwt_exp(exp: time::Duration) -> u64 {
+    _set_jwt_exp(SystemTime::now(), exp)
+}
 
-    //return the result as seconds
-    hours_from_now.as_secs()
+// This internal function ease testing with custom now values
+fn _set_jwt_exp(now: impl Into<time::OffsetDateTime>, exp: time::Duration) -> u64 {
+    // unix epoch elapsed time
+    let unix_epoch_elapsed_time: time::Duration = now.into() - time::OffsetDateTime::UNIX_EPOCH;
+
+    // return the token expiration as the summation of current unix epoch elapsed time
+    let hours_from_now = unix_epoch_elapsed_time.add(exp);
+
+    // return the result as seconds
+    hours_from_now.as_seconds_f64() as u64
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use dotenv::dotenv;
+
+    #[test]
+    fn test_jwt_encoder() {
+        dotenv().ok();
+
+        // set token to expire in 10 minutes
+        let exp = time::Duration::minutes(10);
+        let expiration_time = set_jwt_exp(exp);
+        //generate sample token
+        let sample_claim: JwtClaims = JwtClaims {
+            id: String::from("16260b1d-1554-5b6f-a221-56ff4b34199c"),
+            email: String::from("cout@lahpev.mg"),
+            fullname: String::from("Jesse Rodney"),
+            exp: expiration_time,
+        };
+        let token = sample_claim.generate_token();
+        // let token: String = token.unwrap();
+
+        //see if the length of the token is greater than 10
+        // println!("{}", &token);
+        // assert!(Some('e') == token.chars().next());
+        assert!(token.is_some());
+    }
+
+    #[test]
+    fn set_jwt_exp_should_return_the_exp_as_seconds_when_now_is_unix_epoch() {
+        let now = time::OffsetDateTime::UNIX_EPOCH;
+        let exp = time::Duration::minutes(42);
+
+        assert_eq!(_set_jwt_exp(now, exp) as f64, exp.as_seconds_f64());
+    }
+
+    #[test]
+    fn set_jwt_exp_should_return_the_seconds_between_unix_epoch_and_now_added_with_exp() {
+        let timestamp = 1_000_000_000;
+        let now = time::OffsetDateTime::from_unix_timestamp(timestamp).unwrap();
+        let exp = time::Duration::minutes(42);
+        let expected = timestamp as u64 + exp.as_seconds_f64() as u64;
+
+        assert_eq!(_set_jwt_exp(now, exp), expected);
+    }
 }
