@@ -3,7 +3,7 @@ use crate::models::emails::EmailPayload;
 use crate::models::users::{AccountStatus, ResetUserPassword, UserInformation, UserModel};
 use crate::utils::api_response::{ApiErrorResponse, ApiSuccessResponse, ValidatedRequest};
 use crate::utils::jwt::JWT_SECRET;
-use crate::utils::jwt::{set_jtw_exp, JwtClaims, JwtPayload};
+use crate::utils::jwt::{set_jwt_exp, JwtClaims, JwtPayload};
 use crate::utils::message_queue::MessageQueue;
 use crate::utils::otp_handler::Otp;
 use crate::utils::sql_query_builder::{Create, Find, FindByPk};
@@ -12,9 +12,10 @@ use jsonwebtoken::{encode, Algorithm, Header};
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::env;
+use time;
 
-const ACCESS_TOKEN_VALIDITY: u64 = 10; // the bearer token validity set to 10 minutes
-const REFRESH_TOKEN_VALIDITY: u64 = 25; // 25 minutes for refresh token validity
+const ACCESS_TOKEN_VALIDITY: time::Duration = time::Duration::minutes(10); // the bearer token validity set to 10 minutes
+const REFRESH_TOKEN_VALIDITY: time::Duration = time::Duration::minutes(25); // 25 minutes for refresh token validity
 
 /// create new user account
 pub async fn sign_up(
@@ -52,7 +53,7 @@ pub async fn sign_up(
         id: user_id.to_string(),
         email: email.as_ref().unwrap().to_string(),
         fullname: fullname.as_ref().unwrap().to_string(),
-        exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
+        exp: set_jwt_exp(ACCESS_TOKEN_VALIDITY), //set expirations
     };
 
     // build the JWT Token and create a new token
@@ -166,7 +167,7 @@ pub async fn request_new_otp(
         id: user_id.to_string(),
         email: email.as_ref().unwrap().to_string(),
         fullname: fullname.as_ref().unwrap().to_string(),
-        exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
+        exp: set_jwt_exp(ACCESS_TOKEN_VALIDITY), //set expirations
     };
 
     // build the JWT Token and create a new token
@@ -234,7 +235,7 @@ pub async fn request_account_verification(
         id: user_id.to_string(),
         email: email.as_ref().unwrap().to_string(),
         fullname: fullname.as_ref().unwrap().to_string(),
-        exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
+        exp: set_jwt_exp(ACCESS_TOKEN_VALIDITY), //set expirations
     };
 
     // build the JWT Token and create a new token
@@ -327,7 +328,7 @@ pub async fn login(
             .as_ref()
             .unwrap_or(&"default".to_string())
             .to_string(),
-        exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
+        exp: set_jwt_exp(ACCESS_TOKEN_VALIDITY), //set expirations
     };
     //fetch the JWT secret
     /*   let jwt_secret = crate::shared::jwt_schema::jwt_secret(); */
@@ -421,7 +422,7 @@ pub async fn request_password_reset(
             .as_ref()
             .unwrap_or(&"default".to_string())
             .to_string(),
-        exp: set_jtw_exp(ACCESS_TOKEN_VALIDITY), //set expirations
+        exp: set_jwt_exp(ACCESS_TOKEN_VALIDITY), //set expirations
     };
     let token = jwt_payload.generate_token().unwrap();
     let response: ApiSuccessResponse<JwtPayload> = ApiSuccessResponse::<JwtPayload> {
@@ -554,7 +555,7 @@ pub async fn get_refresh_token(
                 id: id.to_string(),
                 email: email.as_ref().unwrap().to_string(),
                 fullname: fullname.as_ref().unwrap().to_string(),
-                exp: set_jtw_exp(REFRESH_TOKEN_VALIDITY), //set expirations
+                exp: set_jwt_exp(REFRESH_TOKEN_VALIDITY), //set expirations
             };
             //fetch the JWT secret
             /*   let jwt_secret = crate::shared::jwt_schema::jwt_secret(); */
