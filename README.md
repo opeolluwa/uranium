@@ -34,6 +34,6 @@ To run the application in development mode, follow the steps below
 <!-- - [Application (logic) Documentation](https://opeolluwa.github.io/nitride/)  -->
 
 ## Roadmap 
-See the project roadmap listed [here](opeolluwa.github.io/chapter_03/index.html)
+See the project roadmap listed [here](https://opeolluwa.github.io/raccoon/chapter_03/index.html)
 ## License 
 The application is subjected to [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
