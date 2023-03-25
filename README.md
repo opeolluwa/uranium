@@ -1,8 +1,8 @@
-# Racoon 
+# Raccoon 
 
 _Authentication and Authorization Server for Microservices Architecture_
 
-![racoon](./racoon.jpg)
+![racoon](./raccoon.png)
 
 
 ## Overview 
