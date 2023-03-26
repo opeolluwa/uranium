@@ -52,4 +52,4 @@ tracing = "0.1.36"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 url = "2.3.1"
 uuid = { version = "1.1.2", features = ["serde", "v4"] }
-validator = { version = "0.16.0", features = ["derive"] }
+validator = { version = "0.16.0", features = ["derive", "phone"] }

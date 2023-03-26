@@ -250,12 +250,11 @@ pub struct ResetUserPassword {
 
 #[cfg(test)]
 mod tests {
-    use validator::ValidationErrorsKind;
-
     use super::*;
 
     fn gen_empty_user() -> UserInformation {
         UserInformation { firstname: None, lastname: None, middlename: None, fullname: None, username: None, email: None, account_status: None, date_of_birth: None, gender: None, avatar: None, phone_number: None, password: None, created_at: None, updated_at: None, last_available_at: None }
+
     }
 
     #[test]
@@ -265,11 +264,8 @@ mod tests {
         };
 
         if let Err(e) = user.validate() {
-            let errs = e.errors();
-            for (s, e) in errs.iter() {
-                assert!(matches!(e, ValidationErrorsKind::Field {..}));
-                assert_eq!(*s, String::from("email")); 
-            }
+            println!("Error: {}", e);
+            assert_eq!(true, false);
         }
     }
 }
