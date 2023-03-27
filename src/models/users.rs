@@ -92,7 +92,7 @@ impl UserModel {
     pub fn verify_pswd_hash(&self, raw_password: &str) -> bool {
         let stored_password = self.password.as_ref().unwrap();
         bcrypt::verify(raw_password, stored_password).ok().unwrap()
-        // racoon_debug!("the password is correct =>", Some(&correct_password)
+        // raccoon_debug!("the password is correct =>", Some(&correct_password)
     }
 }
 

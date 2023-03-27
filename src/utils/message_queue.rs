@@ -1,4 +1,4 @@
-// Copyright 2022 The Racoon Authors. All Rights Reserved.
+// Copyright 2022 The raccoon Authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 use std::fmt;
 
-use racoon_macros::racoon_debug;
+use raccoon_macros::raccoon_debug;
 
 ///To be used with message broker such as AMQP
 ///the function gets data and send it to a queue
@@ -40,7 +40,7 @@ impl<T: std::fmt::Display + std::fmt::Debug> MessageQueue<T> {
 
     pub fn enqueue(&self) {
         //TODO: add data to queue
-        racoon_debug!("added new data to queue", Some(&self.queue_name));
+        raccoon_debug!("added new data to queue", Some(&self.queue_name));
         println!(" data: {}, queue name: {}", self.data, self.queue_name)
     }
 }

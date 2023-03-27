@@ -1,4 +1,4 @@
-// Copyright 2022 The Racoon Authors. All Rights Reserved.
+// Copyright 2022 The raccoon Authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 use once_cell::sync::Lazy;
 use otp_rs::TOTP;
-use racoon_macros::racoon_error;
+use raccoon_macros::raccoon_error;
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
 use std::env;
@@ -83,7 +83,7 @@ impl Otp {
         .await;
 
         if otp.is_err() {
-            racoon_error!("An exception  was encountered while inserting OTP into the database");
+            raccoon_error!("An exception  was encountered while inserting OTP into the database");
             // println!("{otp:?}\n");
         }
         Self { ..otp.unwrap() }
@@ -99,7 +99,7 @@ impl Otp {
         .fetch_one(db_connection)
         .await;
         if linked_user.is_err() {
-            racoon_error!("An exception  was encountered while linking user Id to OTP");
+            raccoon_error!("An exception  was encountered while linking user Id to OTP");
             // println!("{linked_user:?}\n");
         }
         linked_user.ok().unwrap()
@@ -132,7 +132,7 @@ impl Otp {
         .fetch_one(db_connection)
         .await;
         if linked_user.is_err() {
-            racoon_error!("An exception  was encountered while unlinking user Id from OTP");
+            raccoon_error!("An exception  was encountered while unlinking user Id from OTP");
             println!("{linked_user:?}\n");
         }
         linked_user.ok().unwrap()

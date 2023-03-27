@@ -305,7 +305,7 @@ pub async fn login(
 
     //verify the password
     let is_correct_password: bool = user.verify_pswd_hash(&payload.password.unwrap());
-    // racoon_debug!("{}", &is_correct_password);
+    // raccoon_debug!("{}", &is_correct_password);
     if !is_correct_password {
         return Err(ApiErrorResponse::Unauthorized {
             message: String::from("Invalid email or password"),

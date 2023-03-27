@@ -3,10 +3,10 @@ authors = ["<Adeoye Adefemi adefemiadeoye@yahoo.com>"]
 language = "en"
 multilingual = false
 src = "src"
-title = "racoon"
+title = "raccoon"
 
 [output.html]
 default-theme = "light"
 git-repository-icon = "fa-github"
-git-repository-url = "https://github.com/opeolluwa/racoon"
+git-repository-url = "https://github.com/opeolluwa/raccoon"
 input-404 = "not-found.md"

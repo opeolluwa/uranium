@@ -2,7 +2,7 @@
 
 _Authentication and Authorization Server for Microservices Architecture_
 
-![racoon](./raccoon.png)
+![raccoon](./raccoon.png)
 
 
 ## Overview 
@@ -29,8 +29,8 @@ To run the application in development mode, follow the steps below
 5. use `SQL migrate add <migration_name>` to add a new migration
 
 
-##  Documentation 
--  [API Documentation](https://documenter.getpostman.com/view/22658417/2s83zgv5nW) 
+<!-- ##  Documentation  -->
+<!-- -  [API Documentation](https://documenter.getpostman.com/view/22658417/2s83zgv5nW)  -->
 <!-- - [Application (logic) Documentation](https://opeolluwa.github.io/nitride/)  -->
 
 ## Roadmap 

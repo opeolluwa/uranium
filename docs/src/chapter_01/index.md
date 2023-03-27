@@ -1,5 +1,5 @@
-## What is Racoon?
-Racoon is an experimental Identity and Access Management Service for Microservices.
+## What is raccoon?
+raccoon is an experimental Identity and Access Management Service for Microservices.
 
  The project is research work that focuses on enterprise-scale identity management for Microservices inspired by Google Applications Authentication Strategies
 

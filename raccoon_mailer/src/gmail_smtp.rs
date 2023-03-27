@@ -6,7 +6,7 @@ use lettre::{
     {Message, SmtpTransport, Transport},
 };
 use mailer_config::*;
-use racoon_macros::racoon_error;
+use raccoon_macros::raccoon_error;
 use serde::Deserialize;
 use serde::Serialize;
 use std::error::Error;
@@ -151,7 +151,7 @@ impl MailService {
         match mailer.send(&email) {
             Ok(_) => true,
             Err(err) => {
-                racoon_error!("Could not send mail due to ");
+                raccoon_error!("Could not send mail due to ");
                 print!("{err:?}");
                 false
             }
