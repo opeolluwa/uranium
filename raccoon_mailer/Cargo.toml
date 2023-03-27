@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
-name = "racoon_mailer"
-version = "0.1.0"
+name = "raccoon_mailer"
+version = "0.1.1"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 # [workspace]
@@ -13,7 +13,7 @@ version = "0.1.0"
 chrono = "0.4.23"
 lettre = "0.10.2"
 once_cell = "1.17.0"
-racoon_macros = {path = "../racoon_macros"}
+raccoon_macros = {path = "../raccoon_macros"}
 serde = { version = "1.0.152", features = ["derive"] }
 tinytemplate = "1.2.1"
 

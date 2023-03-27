@@ -1,4 +1,4 @@
-# Code of Conduct - Racoon
+# Code of Conduct - raccoon
 
 ## Our Pledge
 

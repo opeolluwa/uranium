@@ -16,7 +16,7 @@ use console::Style;
 
 /// debug message
 #[macro_export]
-macro_rules! racoon_debug {
+macro_rules! raccoon_debug {
     ($message:expr, $data:expr) => {
         $crate::_debug_print($message, $data)
     };
@@ -24,7 +24,7 @@ macro_rules! racoon_debug {
 
 /// error message
 #[macro_export]
-macro_rules! racoon_error {
+macro_rules! raccoon_error {
   ($first:tt $(,$rest:tt)*) => {
     $crate::_error_print(&concat!($first$(," ", $rest)*));
   }
@@ -32,7 +32,7 @@ macro_rules! racoon_error {
 
 ///informatory message
 #[macro_export]
-macro_rules! racoon_info {
+macro_rules! raccoon_info {
   ($first:tt $(,$rest:tt)*) => {
     $crate::_info_print(&concat!($first$(," ", $rest)*));
   }
