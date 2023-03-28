@@ -1,5 +1,6 @@
 use axum::handler::Handler;
 use axum::response::IntoResponse;
+use axum::routing::get;
 use axum::{extract::Extension, http::StatusCode, routing::get_service, Router};
 use dotenv::dotenv;
 use raccoon_macros::raccoon_info;
@@ -57,9 +58,8 @@ async fn main() {
         .allow_headers(Any);
 
     //mount the app routes and middleware
-    let app = Router::new()
+    let app = app()
         .fallback(static_files_service)
-        .nest("/v1/", routes::root::router())
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .layer(Extension(database));
@@ -111,11 +111,6 @@ async fn main() {
 }
 
 // 404 handler
-
-// async fn handler() -> axum::response::Html<&'static str> {
-//     axum::response::Html("<h1>Hello, World!</h1>")
-// }
-
 async fn handle_404() -> impl IntoResponse {
     (
         StatusCode::NOT_FOUND,
@@ -124,4 +119,42 @@ async fn handle_404() -> impl IntoResponse {
         "message":String::from("The requested resource does not exist on this server!"),
         })),
     )
+}
+
+// the main app
+// the app is moved here to allow sharing across test modules
+pub fn app() -> Router {
+    Router::new()
+        .route("/", get(|| async { "Hello, World!" }))
+        .nest("/v1/", routes::root::router())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::{
+        body::Body,
+        http::{Request, StatusCode},
+    };
+    use tower::ServiceExt;
+    // test the server base url
+    // for example ->  http://loccalhost:4835
+    // the index route should return hello world
+    #[tokio::test]
+    async fn test_base_url() {
+        let app = app();
+
+        let response = app
+            .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+
+        // response status code should be 200
+        assert_eq!(response.status(), StatusCode::OK);
+
+        // response body should be "Hello, World!"
+
+        let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+        assert_eq!(&body[..], b"Hello, World!");
+    }
 }

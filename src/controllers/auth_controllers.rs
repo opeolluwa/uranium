@@ -27,7 +27,7 @@ pub async fn sign_up(
         if error_message.to_string().to_lowercase()
             == *"no rows returned by a query that expected to return at least one row"
         {
-            return Err(ApiErrorResponse::ServerError {
+            return Err(ApiErrorResponse::ConflictError {
                 message: String::from("A user with provided email already exists"),
             });
         }
@@ -589,4 +589,11 @@ pub async fn get_refresh_token(
 /// it will add the token to the auth_token table
 pub async fn _logout() {
     todo!()
+}
+
+
+// tests
+#[cfg(test)]
+mod test {
+
 }
