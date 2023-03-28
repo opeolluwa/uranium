@@ -56,4 +56,5 @@ uuid = {version = "1.1.2", features = ["serde", "v4"]}
 validator = {version = "0.16.0", features = ["derive"]}
 
 [dev-dependencies]
+mime = "0.3.17"
 tower = {version = "0.4", features = ["util"]}

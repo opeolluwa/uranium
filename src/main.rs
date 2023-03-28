@@ -130,18 +130,19 @@ pub fn app() -> Router {
 }
 
 #[cfg(test)]
-mod tests {
+mod basic_endpoints {
     use super::*;
     use axum::{
         body::Body,
         http::{Request, StatusCode},
     };
+    // use serde_json::{json, Value};
     use tower::ServiceExt;
     // test the server base url
     // for example ->  http://loccalhost:4835
     // the index route should return hello world
     #[tokio::test]
-    async fn test_base_url() {
+    async fn base_url() {
         let app = app();
 
         let response = app
@@ -156,5 +157,39 @@ mod tests {
 
         let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
         assert_eq!(&body[..], b"Hello, World!");
+    }
+
+    // 404 path
+    #[tokio::test]
+    async fn not_found_handler() {
+        let app = app();
+
+        // the 404 handle should return this json
+        // it will return a NOT_FOUND  status code
+        // the test will test for the validity of  this.
+        /*  let expected_json_response = json!({
+        "success":false,
+        "message":String::from("The requested resource does not exist on this server!"),
+        }); */
+
+        // response from the test
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/not-found-error")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        // assert  the the status code is 404
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+        /*  let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
+        // let body: Value = serde_json::from_slice(&body).unwrap();
+
+        println!(" the body us {body:?}");
+        assert_eq!(body, expected_json_response); */
     }
 }
