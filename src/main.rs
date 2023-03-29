@@ -180,5 +180,6 @@ mod basic_endpoints {
 
         // assert  the the status code is 404
         assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        // println!(" the not-found-endpoint response is {response:?}");
     }
 }

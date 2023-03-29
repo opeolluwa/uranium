@@ -653,7 +653,7 @@ mod test {
             .await
             .unwrap();
 
-        println!("hey {response:?}");
+        println!("hey {:?}", response.body());
         assert_eq!(response.status(), StatusCode::CREATED);
     }
 }
