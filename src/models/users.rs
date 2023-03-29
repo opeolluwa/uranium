@@ -59,7 +59,7 @@ pub struct UserModel {
 
 ///the user information is derived from the user model
 /// it shall be responsible for providing the user information such as in JWT encryption
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct UserInformation {
     // pub id: Uuid,

@@ -10,6 +10,7 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+// use fake;
 
 mod controllers;
 mod models;
@@ -167,12 +168,6 @@ mod basic_endpoints {
         // the 404 handle should return this json
         // it will return a NOT_FOUND  status code
         // the test will test for the validity of  this.
-        /*  let expected_json_response = json!({
-        "success":false,
-        "message":String::from("The requested resource does not exist on this server!"),
-        }); */
-
-        // response from the test
         let response = app
             .oneshot(
                 Request::builder()
@@ -185,11 +180,5 @@ mod basic_endpoints {
 
         // assert  the the status code is 404
         assert_eq!(response.status(), StatusCode::NOT_FOUND);
-
-        /*  let body = hyper::body::to_bytes(response.into_body()).await.unwrap();
-        // let body: Value = serde_json::from_slice(&body).unwrap();
-
-        println!(" the body us {body:?}");
-        assert_eq!(body, expected_json_response); */
     }
 }
