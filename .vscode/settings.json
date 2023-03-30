@@ -12,6 +12,7 @@
         "jsonwebtoken",
         "lettre",
         "middlename",
+        "oneshot",
         "ormlite",
         "pkce",
         "pswd",

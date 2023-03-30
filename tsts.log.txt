@@ -1,0 +1,26 @@
+
+running 8 tests
+test utils::jwt::tests::set_jwt_exp_should_return_the_exp_as_seconds_when_now_is_unix_epoch ... ok
+test utils::jwt::tests::set_jwt_exp_should_return_the_seconds_between_unix_epoch_and_now_added_with_exp ... ok
+test utils::jwt::tests::test_jwt_encoder ... ok
+test basic_endpoints::base_url ... ok
+test basic_endpoints::not_found_handler ... ok
+test controllers::auth_controllers::test::create_a_new_user ... FAILED
+test utils::message_queue::tests::test_messenger ... ok
+test utils::otp_handler::test::otp_is_generated ... ok
+
+failures:
+
+---- controllers::auth_controllers::test::create_a_new_user stdout ----
+hey UnsyncBoxBody
+thread 'controllers::auth_controllers::test::create_a_new_user' panicked at 'assertion failed: `(left == right)`
+  left: `500`,
+ right: `201`', src/controllers/auth_controllers.rs:657:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    controllers::auth_controllers::test::create_a_new_user
+
+test result: FAILED. 7 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
