@@ -608,7 +608,6 @@ mod test {
     use hyper::{Body, Request, StatusCode};
     use serde_json::json;
     use tower::ServiceExt;
-    use uuid::Uuid;
 
     #[tokio::test]
     async fn create_a_new_user() {
@@ -622,7 +621,6 @@ mod test {
         let password: String = Password(8..25).fake();
         let avatar: String = IP().fake();
         let phone_number: String = PhoneNumber().fake();
-        let user_id = Uuid::new_v4();
 
         // the response
         let response = app
@@ -633,7 +631,6 @@ mod test {
                     .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
                     .body(Body::from(
                         serde_json::to_vec(&json!({
-                            "id":user_id,
                           "firstname":firstname,
                           "lastname":lastname,
                           "middlename":middlename,
