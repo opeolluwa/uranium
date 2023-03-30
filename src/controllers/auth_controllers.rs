@@ -27,7 +27,7 @@ pub async fn sign_up(
         if error_message.to_string().to_lowercase()
             == *"no rows returned by a query that expected to return at least one row"
         {
-            return Err(ApiErrorResponse::ServerError {
+            return Err(ApiErrorResponse::ConflictError {
                 message: String::from("A user with provided email already exists"),
             });
         }
@@ -589,4 +589,68 @@ pub async fn get_refresh_token(
 /// it will add the token to the auth_token table
 pub async fn _logout() {
     todo!()
+}
+
+// tests
+#[cfg(test)]
+mod test {
+    // use super::*;
+
+    use axum::http;
+    use fake::{
+        faker::{
+            internet::en::{Password, Username, IP},
+            name::en::{FirstName, LastName, Name},
+            phone_number::en::PhoneNumber,
+        },
+        Fake,
+    };
+    use hyper::{Body, Request, StatusCode};
+    use serde_json::json;
+    use tower::ServiceExt;
+
+    #[tokio::test]
+    async fn create_a_new_user() {
+        let app = crate::app();
+
+        // generate fake data
+        let firstname: String = FirstName().fake();
+        let lastname: String = LastName().fake();
+        let middlename: String = Name().fake();
+        let username: String = Username().fake();
+        let password: String = Password(8..25).fake();
+        let avatar: String = IP().fake();
+        let phone_number: String = PhoneNumber().fake();
+
+        // the response
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method(http::Method::POST)
+                    .uri("/v1/auth/sign-up")
+                    .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+                    .body(Body::from(
+                        serde_json::to_vec(&json!({
+                          "firstname":firstname,
+                          "lastname":lastname,
+                          "middlename":middlename,
+                          "username":username,
+                          "fullname":format!("{firstname} {middlename} {lastname}", ),
+                          "email":format!("{firstname}@mailer.com"),
+                          "password":password,
+                          "avatar":format!("{avatar}.jpg"),
+                          "gender":"Female",
+                          "dateOfBirth":"2002-06-09",
+                          "phoneNumber":phone_number
+                        }))
+                        .unwrap(),
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        println!("hey {:?}", response.body());
+        assert_eq!(response.status(), StatusCode::CREATED);
+    }
 }
