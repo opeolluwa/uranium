@@ -1,5 +1,5 @@
 # Project Overview
-The project is structured using a combination of Node.js/Typescript convections and Cargo workspace organization. 
+
 
 The project is organized into the following crates:
 
