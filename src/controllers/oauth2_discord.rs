@@ -38,7 +38,7 @@ pub async fn request_auth() -> impl IntoResponse {
         .url();
 
     // Redirect to Discord's oauth service
-    Redirect::to(&auth_url.to_string())
+    Redirect::to(auth_url.as_ref())
 }
 /// a function to login the user using the returned token
 pub async fn verify_auth(Query(query): Query<AuthRequest>) -> impl IntoResponse {

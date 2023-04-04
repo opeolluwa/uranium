@@ -39,7 +39,7 @@ pub async fn request_auth() -> impl IntoResponse {
         .url();
 
     // Redirect to google's oauth service
-    Redirect::to(&auth_url.to_string())
+    Redirect::to(auth_url.as_ref())
 }
 /// a function to login the user using the returned token
 pub async fn verify_auth(Query(query): Query<AuthRequest>) -> impl IntoResponse {
@@ -76,7 +76,6 @@ fn google_oauth_client() -> BasicClient {
         .unwrap_or_else(|_| "https://accounts.google.com/o/oauth2/v2/auth".to_string());
     let token_url = env::var("TOKEN_URL")
         .unwrap_or_else(|_| "https://www.googleapis.com/oauth2/v3/token".to_string());
-
 
     BasicClient::new(
         ClientId::new(client_id),
