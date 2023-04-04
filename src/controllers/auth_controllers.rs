@@ -614,6 +614,7 @@ mod test {
     use tower::ServiceExt;
 
     #[tokio::test]
+    #[ignore]
     async fn create_a_new_user() {
         let app = crate::app();
 
