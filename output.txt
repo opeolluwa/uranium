@@ -1,0 +1,27 @@
+
+running 11 tests
+test models::users::tests::empty_user_info_should_err ... ok
+test basic_endpoints::not_found_handler ... ok
+test basic_endpoints::base_url ... ok
+test utils::jwt::tests::set_jwt_exp_should_return_the_exp_as_seconds_when_now_is_unix_epoch ... ok
+test utils::jwt::tests::set_jwt_exp_should_return_the_seconds_between_unix_epoch_and_now_added_with_exp ... ok
+test utils::jwt::tests::test_jwt_encoder ... ok
+RACOON DEBUG: added new data to queue
+Some("mailer queue")
+ data: Activation, queue name: mailer queue
+test utils::message_queue::tests::test_messenger ... ok
+test utils::otp_handler::test::otp_is_generated ... ok
+Ok(())
+Err(ValidationErrors({"lastname": Field([ValidationError { code: "length", message: None, params: {"min": Number(1), "value": String("")} }]), "middlename": Field([ValidationError { code: "length", message: None, params: {"value": String(""), "min": Number(1)} }]), "firstname": Field([ValidationError { code: "length", message: None, params: {"value": String(""), "min": Number(1)} }]), "fullname": Field([ValidationError { code: "length", message: None, params: {"value": String(""), "min": Number(1)} }]), "username": Field([ValidationError { code: "length", message: None, params: {"min": Number(1), "value": String("")} }])}))
+hey UnsyncBoxBody
+test models::users::tests::user_info_should_be_valid ... ok
+test models::users::tests::names_should_have_min_length ... ok
+test controllers::auth_controllers::test::create_a_new_user ... FAILED
+
+failures:
+
+failures:
+    controllers::auth_controllers::test::create_a_new_user
+
+test result: FAILED. 10 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.28s
+

@@ -603,9 +603,8 @@ mod test {
     use axum::http;
     use fake::{
         faker::{
-            internet::en::{Password, Username, IP},
+            internet::en::{FreeEmail, Password, Username},
             name::en::{FirstName, LastName, Name},
-            phone_number::en::PhoneNumber,
         },
         Fake,
     };
@@ -614,7 +613,7 @@ mod test {
     use tower::ServiceExt;
 
     #[tokio::test]
-    #[ignore]
+    // #[ignore]
     async fn create_a_new_user() {
         let app = crate::app();
 
@@ -624,8 +623,9 @@ mod test {
         let middlename: String = Name().fake();
         let username: String = Username().fake();
         let password: String = Password(8..25).fake();
-        let avatar: String = IP().fake();
-        let phone_number: String = PhoneNumber().fake();
+        let phone_number = String::from("+34678903281");
+        let avatar = String::from("http://cdn.raccoon.com/exaample-user.jpg");
+        let email: String = FreeEmail().fake();
 
         // the response
         let response = app
@@ -636,6 +636,7 @@ mod test {
                     .header(http::header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
                     .body(Body::from(
                         serde_json::to_vec(&json!({
+                            "email":email,
                           "firstname":firstname,
                           "lastname":lastname,
                           "middlename":middlename,
@@ -643,10 +644,10 @@ mod test {
                           "fullname":format!("{firstname} {middlename} {lastname}", ),
                           "email":format!("{firstname}@mailer.com"),
                           "password":password,
-                          "avatar":format!("{avatar}.jpg"),
+                          "phoneNumber":phone_number,
+                          "avatar":avatar,
                           "gender":"Female",
                           "dateOfBirth":"2002-06-09",
-                          "phoneNumber":phone_number
                         }))
                         .unwrap(),
                     ))
@@ -655,7 +656,7 @@ mod test {
             .await
             .unwrap();
 
-        println!("hey {:?}", response.body());
+        println!("hey {:#?}", response.body());
         assert_eq!(response.status(), StatusCode::CREATED);
     }
 }
