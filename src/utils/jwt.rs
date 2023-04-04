@@ -1,13 +1,14 @@
 use crate::utils::api_response::ApiErrorResponse as AuthError;
-use axum::async_trait;
 use axum::extract::{FromRequest, RequestParts, TypedHeader};
 use axum::headers::{authorization::Bearer, Authorization};
+use axum::{async_trait, Extension};
 use jsonwebtoken::encode;
 use jsonwebtoken::{decode, Algorithm};
 use jsonwebtoken::{DecodingKey, EncodingKey};
 use jsonwebtoken::{Header, Validation};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+use sqlx::{PgPool, Pool, Postgres, Row};
 use std::fmt::Display;
 use std::ops::Add;
 use std::time::SystemTime;
@@ -52,6 +53,71 @@ impl JwtClaims {
         //build the user jwt token
         encode(&jwt_header, &self, &JWT_SECRET.encoding).ok()
     }
+
+    /// This generates a token identical to `generate_token` but also saves the token to the
+    /// database, so that later it can be marked as blacklisted/invalid if the user logs out
+    pub async fn generate_and_save_token(
+        &self,
+        db_connection: &Pool<Postgres>,
+    ) -> Result<Option<String>, sqlx::Error> {
+        let token = self.generate_token();
+        if let Some(ref token) = token {
+            let sql_query = r#"
+INSERT INTO
+    access_tokens (
+        id, token, is_blacklisted
+    ) VALUES ($1, $2, FALSE)"#;
+
+            sqlx::query(sql_query)
+                .bind(sqlx::types::Uuid::parse_str(&self.id).unwrap())
+                .bind(token)
+                .execute(db_connection)
+                .await?;
+        }
+
+        Ok(token)
+    }
+
+    pub async fn blacklist_token(
+        token: &str,
+        db_connection: &Pool<Postgres>,
+    ) -> Result<(), sqlx::Error> {
+        let query = r#"
+UPDATE access_tokens SET is_blacklisted = TRUE
+WHERE token = $1"#;
+
+        sqlx::query(query)
+            .bind(token)
+            .execute(db_connection)
+            .await?;
+
+        Ok(())
+    }
+
+    // check if a token is present in the database and not blacklisted
+    // returns a boolean indicating if the token should be considered valid
+    async fn check_token_validity(
+        token: &str,
+        db_connection: &Pool<Postgres>,
+    ) -> Result<bool, sqlx::Error> {
+        let query = r#"
+SELECT is_blacklisted FROM access_tokens
+WHERE token = $1"#;
+
+        let row = sqlx::query(query)
+            .bind(token)
+            .fetch_optional(db_connection)
+            .await?;
+
+        match row {
+            // if the token was not present, it is considered invalid
+            None => Ok(false),
+            Some(row) => {
+                let is_blacklisted: bool = row.get(0);
+                Ok(!is_blacklisted)
+            }
+        }
+    }
 }
 
 #[async_trait]
@@ -71,24 +137,40 @@ where
                 })?;
 
         /*
-         * Decode the user data
-         * the encoding uses a custom algorithm,
-         * reconfigure the jsonwebtoken crate to use the custom algorithm that was used for encryption
-         *
-         * typically, the decryption ought to be
-         * Validation::default())
-                .map_err(|err| AuthError::InvalidToken {
-                    error: err.to_string(),
-                })?;
+               * Decode the user data
+               * the encoding uses a custom algorithm,
+               * reconfigure the jsonwebtoken crate to use the custom algorithm that was used for encryption
+               *
+               * typically, the decryption ought to be
+               * Validation::default()
+        File "<stdin>", line 2)
+                      .map_err(|err| AuthError::InvalidToken {
+                          error: err.to_string(),
+                      })?;
 
-        * how ever we will be using a custom algorithm below
-         */
+              * how ever we will be using a custom algorithm below
+               */
         let validation = Validation::new(Algorithm::HS512);
         let token_data = decode::<JwtClaims>(bearer.token(), &JWT_SECRET.decoding, &validation)
             .map_err(|err| AuthError::InvalidToken {
                 message: err.to_string(),
             })?;
-        Ok(token_data.claims)
+
+        // we also need to check that the token has not been blacklisted, for that we need to
+        // extract a database handle and query
+        let Extension(db_connection): Extension<PgPool> = Extension::from_request(req)
+            .await
+            .expect("failed to get db connection");
+        if !Self::check_token_validity(bearer.token(), &db_connection)
+            .await
+            .expect("check token validitiy failed")
+        {
+            Err(AuthError::InvalidToken {
+                message: "token missing or logged out".into(),
+            })
+        } else {
+            Ok(token_data.claims)
+        }
     }
 }
 
