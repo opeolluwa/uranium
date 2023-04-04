@@ -63,18 +63,27 @@ pub struct UserModel {
 #[serde(rename_all = "camelCase")]
 pub struct UserInformation {
     // pub id: Uuid,
+    #[validate(required, length(min = 1))] 
     pub firstname: Option<String>,
+    #[validate(required, length(min = 1))] 
     pub lastname: Option<String>,
+    #[validate(required, length(min = 1))] 
     pub middlename: Option<String>,
+    #[validate(required, length(min = 1))] 
     pub fullname: Option<String>,
+    #[validate(required, length(min = 1))] 
     pub username: Option<String>,
+    #[validate(required, email)] 
     pub email: Option<String>,
     pub account_status: Option<AccountStatus>,
     pub date_of_birth: Option<NaiveDate>,
     pub gender: Option<UserGender>,
+    #[validate(url)]
     pub avatar: Option<String>,
+    #[validate(phone)]
     pub phone_number: Option<String>,
     #[serde(skip_serializing)]
+    #[validate(required, length(min = 8))] 
     pub password: Option<String>,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
@@ -121,6 +130,7 @@ impl Create for UserModel {
             password,
             ..
         } = fields;
+
         let sql_query = r#"
 INSERT INTO
     user_information (
@@ -242,4 +252,61 @@ impl Default for UserGender {
 pub struct ResetUserPassword {
     pub new_password: String,
     pub confirm_password: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn gen_empty_user() -> UserInformation {
+        UserInformation { firstname: None, lastname: None, middlename: None, fullname: None, username: None, email: None, account_status: None, date_of_birth: None, gender: None, avatar: None, phone_number: None, password: None, created_at: None, updated_at: None, last_available_at: None }
+    }
+
+    #[test]
+    fn empty_userinfo_should_err() {
+        let user: UserInformation = UserInformation { 
+            ..gen_empty_user()
+        };  
+        
+        assert!(user.validate().is_err())
+    }
+
+    #[test]
+    fn userinfo_should_be_valid()
+    {
+        let user: UserInformation = UserInformation { 
+            email: Some("email@e.mail".to_string()),
+            firstname: Some("1".to_string()),
+            middlename: Some("1".to_string()),
+            lastname: Some("1".to_string()),
+            username: Some("1".to_string()),
+            fullname: Some("1".to_string()),
+            phone_number: Some("+14152370800".to_string()),
+            password: Some("88888888".to_string()),
+            ..gen_empty_user()
+        };
+
+        println!("{:?}", user.validate());
+        assert!(user.validate().is_ok());
+    }
+
+
+    #[test]
+    fn names_should_have_min_length()
+    {
+        let user: UserInformation = UserInformation { 
+            email: Some("email@e.mail".to_string()),
+            firstname: Some("".to_string()),
+            middlename: Some("".to_string()),
+            lastname: Some("".to_string()),
+            username: Some("".to_string()),
+            fullname: Some("".to_string()),
+            phone_number: Some("+14152370800".to_string()),
+            password: Some("88888888".to_string()),
+            ..gen_empty_user()
+        };
+
+        println!("{:?}", user.validate());
+        assert!(user.validate().is_ok());
+    }
 }
