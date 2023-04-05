@@ -11,6 +11,7 @@ pub fn routes() -> axum::Router {
     Router::new()
         .route("/sign-up", post(handler::sign_up))
         .route("/login", post(handler::login))
+        .route("/logout", post(handler::logout))
         .route("/verify-email", post(handler::verify_email))
         .route(
             "/request-verification",

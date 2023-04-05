@@ -2,13 +2,13 @@ use crate::models::common::{EmailVerification, OneTimePassword};
 use crate::models::emails::EmailPayload;
 use crate::models::users::{AccountStatus, ResetUserPassword, UserInformation, UserModel};
 use crate::utils::api_response::{ApiErrorResponse, ApiSuccessResponse, ValidatedRequest};
-use crate::utils::jwt::JWT_SECRET;
 use crate::utils::jwt::{set_jwt_exp, JwtClaims, JwtPayload};
 use crate::utils::message_queue::MessageQueue;
 use crate::utils::otp_handler::Otp;
 use crate::utils::sql_query_builder::{Create, Find, FindByPk};
+use axum::TypedHeader;
 use axum::{http::StatusCode, Extension, Json};
-use jsonwebtoken::{encode, Algorithm, Header};
+use headers::{authorization::Bearer, Authorization};
 use raccoon_macros::raccoon_debug;
 use serde_json::{json, Value};
 use sqlx::PgPool;
@@ -334,22 +334,14 @@ pub async fn login(
             .to_string(),
         exp: set_jwt_exp(ACCESS_TOKEN_VALIDITY), //set expirations
     };
-    //fetch the JWT secret
-    /*   let jwt_secret = crate::shared::jwt_schema::jwt_secret(); */
-    //use a custom header
-    let jwt_header = Header {
-        alg: Algorithm::HS512,
-        ..Default::default()
-    };
+    let token = jwt_payload.generate_token().unwrap();
 
-    //build the user jwt token
-    let token = encode(&jwt_header, &jwt_payload, &JWT_SECRET.encoding);
     //construct and return a response
     let response: ApiSuccessResponse<JwtPayload> = ApiSuccessResponse::<JwtPayload> {
         success: true,
         message: String::from("user successfully logged in"),
         data: Some(JwtPayload {
-            token: token.unwrap(),
+            token,
             token_type: String::from("Bearer"),
         }),
     };
@@ -490,7 +482,7 @@ pub async fn reset_password(
 ///  Get the jwt token fom the header,
 ///  Validate the token then get the user_id from the validated token
 ///  go on to destructure the payload,
-///  use SQL COALESCE($1, a)  to update the fields  
+///  use SQL COALESCE($1, a)  to update the fields
 /// return the user details if no error else return the appropriate error code and response
 pub async fn update_user_profile(
     ValidatedRequest(payload): ValidatedRequest<UserInformation>,
@@ -561,16 +553,9 @@ pub async fn get_refresh_token(
                 fullname: fullname.as_ref().unwrap().to_string(),
                 exp: set_jwt_exp(REFRESH_TOKEN_VALIDITY), //set expirations
             };
-            //fetch the JWT secret
-            /*   let jwt_secret = crate::shared::jwt_schema::jwt_secret(); */
-            //use a custom header
-            let jwt_header = Header {
-                alg: Algorithm::HS512,
-                ..Default::default()
-            };
 
-            //build the user jwt token
-            let token = encode(&jwt_header, &jwt_payload, &JWT_SECRET.encoding);
+            let token = jwt_payload.generate_token();
+
             //construct and return a response
             let response_body: ApiSuccessResponse<JwtPayload> = ApiSuccessResponse::<JwtPayload> {
                 success: true,
@@ -588,11 +573,25 @@ pub async fn get_refresh_token(
     }
 }
 
-// /// logout controller
+/// logout controller
 /// the logout controller will accept the bearer token via query params
-/// it will add the token to the auth_token table
-pub async fn _logout() {
-    todo!()
+/// it will add the token to the `access_tokens` table, indicating it is no longer valid
+pub async fn logout(
+    // we arent using this value but having it here means we are
+    // checking that the token is currently valid. This might not be necessary
+    authenticated_user: JwtClaims,
+    TypedHeader(bearer): TypedHeader<Authorization<Bearer>>,
+    Extension(database): Extension<PgPool>,
+) -> Json<ApiSuccessResponse<()>> {
+    JwtClaims::invalidate_token(&authenticated_user.id, bearer.token(), &database)
+        .await
+        .expect("failed to invalidate token during logout");
+
+    Json(ApiSuccessResponse {
+        success: true,
+        message: "user successfully logged out".into(),
+        data: None,
+    })
 }
 
 // tests
