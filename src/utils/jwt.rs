@@ -8,7 +8,7 @@ use jsonwebtoken::{DecodingKey, EncodingKey};
 use jsonwebtoken::{Header, Validation};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Pool, Postgres, Row};
+use sqlx::{PgPool, Pool, Postgres};
 use std::fmt::Display;
 use std::ops::Add;
 use std::time::SystemTime;
@@ -54,68 +54,50 @@ impl JwtClaims {
         encode(&jwt_header, &self, &JWT_SECRET.encoding).ok()
     }
 
-    /// This generates a token identical to `generate_token` but also saves the token to the
-    /// database, so that later it can be marked as blacklisted/invalid if the user logs out
-    pub async fn generate_and_save_token(
-        &self,
-        db_connection: &Pool<Postgres>,
-    ) -> Result<Option<String>, sqlx::Error> {
-        let token = self.generate_token();
-        if let Some(ref token) = token {
-            let sql_query = r#"
-INSERT INTO
-    access_tokens (
-        id, token, is_blacklisted
-    ) VALUES ($1, $2, FALSE)"#;
-
-            sqlx::query(sql_query)
-                .bind(sqlx::types::Uuid::parse_str(&self.id).unwrap())
-                .bind(token)
-                .execute(db_connection)
-                .await?;
-        }
-
-        Ok(token)
-    }
-
-    pub async fn blacklist_token(
+    /// Mark a token as no longer valid, such as if a user logs out
+    /// Such tokens are written to the `access_tokens` table and will no longer be considered valid
+    pub async fn invalidate_token(
+        id: &str,
         token: &str,
         db_connection: &Pool<Postgres>,
     ) -> Result<(), sqlx::Error> {
         let query = r#"
-UPDATE access_tokens SET is_blacklisted = TRUE
-WHERE token = $1"#;
+INSERT INTO
+    access_tokens (
+        id, token, last_valid_at
+    ) VALUES ($1, $2, $3)"#;
 
         sqlx::query(query)
+            .bind(sqlx::types::Uuid::parse_str(id).unwrap())
             .bind(token)
+            .bind(chrono::Utc::now())
             .execute(db_connection)
             .await?;
 
         Ok(())
     }
 
-    // check if a token is present in the database and not blacklisted
-    // returns a boolean indicating if the token should be considered valid
+    // check if a token is present in the database, meaning it should no longer be considered
+    // valid, as the user has logged out or it has been deactivated for some other reason
+    // this returns a boolean indicating if the token should be considered valid
     async fn check_token_validity(
         token: &str,
         db_connection: &Pool<Postgres>,
     ) -> Result<bool, sqlx::Error> {
         let query = r#"
-SELECT is_blacklisted FROM access_tokens
-WHERE token = $1"#;
+SELECT TRUE FROM access_tokens
+WHERE token = $1
+LIMIT 1"#;
 
         let row = sqlx::query(query)
             .bind(token)
             .fetch_optional(db_connection)
             .await?;
 
+        // if we get results, that means the token was in the table and is no longer valid
         match row {
-            // if the token was not present, it is considered invalid
             None => Ok(false),
-            Some(row) => {
-                let is_blacklisted: bool = row.get(0);
-                Ok(!is_blacklisted)
-            }
+            Some(_) => Ok(true),
         }
     }
 }

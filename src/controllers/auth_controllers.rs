@@ -59,10 +59,7 @@ pub async fn sign_up(
     };
 
     // build the JWT Token and create a new token
-    let jwt_token = jwt_payload
-        .generate_and_save_token(&database)
-        .await
-        .unwrap();
+    let jwt_token = jwt_payload.generate_token().unwrap();
     let generated_otp = Otp::new().save(&database).await;
     generated_otp.link_to_user(*user_id, &database).await;
 
@@ -178,10 +175,7 @@ pub async fn request_new_otp(
     };
 
     // build the JWT Token and create a new token
-    let jwt_token = jwt_payload
-        .generate_and_save_token(&database)
-        .await
-        .unwrap();
+    let jwt_token = jwt_payload.generate_token().unwrap();
     let generated_otp = Otp::new().save(&database).await;
     generated_otp.link_to_user(*user_id, &database).await;
 
@@ -249,10 +243,7 @@ pub async fn request_account_verification(
     };
 
     // build the JWT Token and create a new token
-    let jwt_token = jwt_payload
-        .generate_and_save_token(&database)
-        .await
-        .unwrap();
+    let jwt_token = jwt_payload.generate_token().unwrap();
     let generated_otp = Otp::new().save(&database).await;
     generated_otp.link_to_user(*user_id, &database).await;
 
@@ -343,17 +334,14 @@ pub async fn login(
             .to_string(),
         exp: set_jwt_exp(ACCESS_TOKEN_VALIDITY), //set expirations
     };
-    let token = jwt_payload
-        .generate_and_save_token(&database)
-        .await
-        .unwrap();
+    let token = jwt_payload.generate_token().unwrap();
 
     //construct and return a response
     let response: ApiSuccessResponse<JwtPayload> = ApiSuccessResponse::<JwtPayload> {
         success: true,
         message: String::from("user successfully logged in"),
         data: Some(JwtPayload {
-            token: token.unwrap(),
+            token,
             token_type: String::from("Bearer"),
         }),
     };
@@ -587,19 +575,17 @@ pub async fn get_refresh_token(
 
 /// logout controller
 /// the logout controller will accept the bearer token via query params
-/// it will mark the token as blacklisted in the access_tokens table, if it exists
-/// TBD: should this add to the table if the token does not exist in the table? It could do that
-/// instead of adding to the table when the token is created
+/// it will add the token to the `access_tokens` table, indicating it is no longer valid
 pub async fn logout(
     // we arent using this value but having it here means we are
     // checking that the token is currently valid. This might not be necessary
-    _authenticated_user: JwtClaims,
+    authenticated_user: JwtClaims,
     TypedHeader(bearer): TypedHeader<Authorization<Bearer>>,
     Extension(database): Extension<PgPool>,
 ) -> Json<ApiSuccessResponse<()>> {
-    JwtClaims::blacklist_token(bearer.token(), &database)
+    JwtClaims::invalidate_token(&authenticated_user.id, bearer.token(), &database)
         .await
-        .expect("failed to blacklist token during logout");
+        .expect("failed to invalidate token during logout");
 
     Json(ApiSuccessResponse {
         success: true,
