@@ -59,22 +59,37 @@ pub struct UserModel {
 
 ///the user information is derived from the user model
 /// it shall be responsible for providing the user information such as in JWT encryption
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, Validate, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct UserInformation {
     // pub id: Uuid,
+    #[validate(required, length(min = 1))]
     pub firstname: Option<String>,
+    #[validate(required, length(min = 1))]
     pub lastname: Option<String>,
+    #[validate(required, length(min = 1))]
     pub middlename: Option<String>,
+    #[validate(required, length(min = 1))]
     pub fullname: Option<String>,
+    #[validate(required, length(min = 1))]
     pub username: Option<String>,
+    #[validate(required, email(message = "please use a valid email"))]
     pub email: Option<String>,
     pub account_status: Option<AccountStatus>,
     pub date_of_birth: Option<NaiveDate>,
     pub gender: Option<UserGender>,
+    #[validate(url(message = "invalid URL detected"))]
     pub avatar: Option<String>,
+    #[validate(phone(message = "please use a valid phone number"))]
     pub phone_number: Option<String>,
     #[serde(skip_serializing)]
+    #[validate(
+        required,
+        length(
+            min = 8,
+            message = "password may not be less than 8 characters in length"
+        )
+    )]
     pub password: Option<String>,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
@@ -121,6 +136,7 @@ impl Create for UserModel {
             password,
             ..
         } = fields;
+
         let sql_query = r#"
 INSERT INTO
     user_information (
@@ -242,4 +258,96 @@ impl Default for UserGender {
 pub struct ResetUserPassword {
     pub new_password: String,
     pub confirm_password: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use fake::{
+        faker::{
+            internet::en::{FreeEmail, Password, Username},
+            name::en::{FirstName, LastName, Name},
+        },
+        Fake,
+    };
+
+    fn gen_empty_user() -> UserInformation {
+        UserInformation {
+            firstname: None,
+            lastname: None,
+            middlename: None,
+            fullname: None,
+            username: None,
+            email: None,
+            account_status: None,
+            date_of_birth: None,
+            gender: None,
+            avatar: None,
+            phone_number: None,
+            password: None,
+            created_at: None,
+            updated_at: None,
+            last_available_at: None,
+        }
+    }
+
+    #[test]
+    fn empty_user_info_should_err() {
+        let user: UserInformation = UserInformation { ..gen_empty_user() };
+        assert!(user.validate().is_err())
+    }
+
+    #[test]
+    // create a fake user data
+    // see that the data conforms to the validation rules
+    fn user_info_should_be_valid() {
+        // generate fake data
+        let firstname: String = FirstName().fake();
+        let lastname: String = LastName().fake();
+        let middlename: String = Name().fake();
+        let username: String = Username().fake();
+        let fullname = format!("{firstname} {middlename} {lastname}");
+        let email: String = FreeEmail().fake();
+        let password: String = Password(8..12).fake();
+        let phone_number = String::from("+34678903281");
+        let avatar = String::from("http://cdn.raccoon.com/exaample-user.jpg");
+
+        // create sample  user
+        let user: UserInformation = UserInformation {
+            email: Some(email),
+            firstname: Some(firstname),
+            middlename: Some(middlename),
+            lastname: Some(lastname),
+            username: Some(username),
+            fullname: Some(fullname),
+            phone_number: Some(phone_number),
+            password: Some(password),
+            avatar: Some(avatar),
+            ..Default::default()
+        };
+
+        println!("{:?}", user.validate());
+        assert!(user.validate().is_ok());
+    }
+
+    #[test]
+    // create user information
+    // without conforming to the min length specification
+    // test should return error
+    fn names_should_have_min_length() {
+        let user: UserInformation = UserInformation {
+            email: Some("email@e.mail".to_string()),
+            firstname: Some("".to_string()),
+            middlename: Some("".to_string()),
+            lastname: Some("".to_string()),
+            username: Some("".to_string()),
+            fullname: Some("".to_string()),
+            phone_number: Some("+14152370800".to_string()),
+            password: Some("88888888".to_string()),
+            ..Default::default()
+        };
+
+        println!("{:?}", user.validate());
+        assert!(user.validate().is_err());
+    }
 }
