@@ -9,7 +9,6 @@ use crate::utils::sql_query_builder::{Create, Find, FindByPk};
 use axum::TypedHeader;
 use axum::{http::StatusCode, Extension, Json};
 use headers::{authorization::Bearer, Authorization};
-use raccoon_macros::raccoon_debug;
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::env;
@@ -25,7 +24,6 @@ pub async fn sign_up(
 ) -> Result<(StatusCode, Json<ApiSuccessResponse<Value>>), ApiErrorResponse> {
     let new_user = UserModel::create(payload, &database).await;
     if let Err(error_message) = new_user {
-        raccoon_debug!("error {}", Some(&error_message));
         if error_message.to_string().to_lowercase()
             == *"no rows returned by a query that expected to return at least one row"
         {

@@ -94,10 +94,10 @@ LIMIT 1"#;
             .fetch_optional(db_connection)
             .await?;
 
-        // if we get results, that means the token was in the table and is no longer valid
+        // if we get true as result, that means the token was in the table and is no longer valid
         match row {
-            None => Ok(false),
-            Some(_) => Ok(true),
+            None => Ok(true),
+            Some(_) => Ok(false),
         }
     }
 }
@@ -143,9 +143,10 @@ where
         let Extension(db_connection): Extension<PgPool> = Extension::from_request(req)
             .await
             .expect("failed to get db connection");
+        // raccoon_macros::raccoon_info!("connected to database");
         if !Self::check_token_validity(bearer.token(), &db_connection)
             .await
-            .expect("check token validitiy failed")
+            .expect("check token validity failed")
         {
             Err(AuthError::InvalidToken {
                 message: "token missing or logged out".into(),
