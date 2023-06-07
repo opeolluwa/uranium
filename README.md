@@ -1,39 +1,68 @@
-# Raccoon 
+# Raccoon
 
-_Authentication and Authorization Server for Microservices Architecture_
+Open source Identity and access management service
 
-![raccoon](./raccoon.png)
+## Table of Contents
 
+- [Description](#description)
+- [Getting Started](#getting-started)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Support](#support)
+- [License](#license)
 
-## Overview 
- This project is research work that focuses on enterprise-scale identity management for Microservices inspired by Google Applications Authentication Strategies
+## Description
 
-The solution is implemented with the [Rust programming language](https://www.rust-lang.org/tools/install) a memory-safe systems programming language for building fast and secure applications. The application also integrates with the [PostgreSQL](https://www.postgresql.org/download/)
-  database which is optimized for fast read and write database operations. 
+Provide a more detailed explanation of what your project does, its purpose, and any key features or benefits it offers.
 
+## Getting Started
 
-## Requirement
+To get started, clone the project and install dependencies
+
+```sh
+git clone https://github.com/opeolluwa/raccoon.git
+cd raccoon
+cargo build
+```
+
+## Prerequisites
+
 The following are required to run the application in development.
+
 - [Rust](https://www.rust-lang.org/tools/install) v1.63 or greater
 - [PostgreSQL](https://www.postgresql.org/download/) PostgreSQL server v14.5 or greater
 - [sqlx](https://crates.io/crates/sqlx) for interacting with the database,
 - [sqlx-cli](https://crates.io/crates/sqlx-cli), a command line tool for sqlx,
-- [cargo watch](https://crates.io/crates/cargo-watch), a tool for watching the project files and recompiling when they change,
+- [cargo watch](https://crates.io/crates/cargo-watch), a tool for watching the project files and recompiling when they change
 
-## Installation (development)
-To run the application in development mode, follow the steps below
-1. clone Repository
-2. copy and populate .env.example to .env `cp .env.example .env`, paying attention to the `SECRET` and `DATABASE_URL` variables
-3. Run `sqlx database create` to create the database from the specified `DATABASE_URL` Use `SQL database drop` to revert the change
-4. Run `SQL migrate run` to run the migrations
-5. use `SQL migrate add <migration_name>` to add a new migration
+## Installation
 
+Instructions on how to install and set up the project.
 
-<!-- ##  Documentation  -->
-<!-- -  [API Documentation](https://documenter.getpostman.com/view/22658417/2s83zgv5nW)  -->
-<!-- - [Application (logic) Documentation](https://opeolluwa.github.io/nitride/)  -->
+## Usage
 
-## Roadmap 
-See the project roadmap listed [here](https://opeolluwa.github.io/raccoon/chapter_03/index.html)
-## License 
-The application is subjected to [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+Run the following command in the project root to execute the annotated command
+
+- run the project
+
+```sh
+cargo run
+```
+
+- build the project and copy it to bin directory
+
+```sh
+mkdir bin
+cargo build --release
+cp target/release/raccoon ./raccoon/bin
+```
+
+## Support
+
+Information on how to get help and support for the project, including contact details for your company's support team.
+
+## License
+
+This project is proprietary software owned by [Adeoye Adefemi](https://github.com/opeolluwa) and distribution under [MIT]() license. For inquiries, please contact
+[Adeoye Adefemi](https://github.com/opeolluwa)
