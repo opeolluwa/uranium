@@ -2,6 +2,7 @@
 
 A powerful tool built in Rust that empowers frontend developers to seamlessly build a functional full-stack application with a fast and secure backend. With Uranium, developers can simply grab the project SDK and effortlessly integrate it into their web, mobile, or desktop application's client-side code.
 
+_⚠️ Some features are missing! The application is still in development, see the [issues](https://github.com/opeolluwa/send-file/issues) page to contribute_
 ## Table of Contents
 
 - [Description](#description)
