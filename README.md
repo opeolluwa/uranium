@@ -15,7 +15,7 @@ _⚠️ Some features are missing! The application is still in development, see 
 - [Support](#support)
 - [License](#license)
 
-## Overview
+
 
 ## Features
 
