@@ -1,13 +1,13 @@
 use axum::{
     async_trait,
-    extract::{FromRequestParts, Path, State},
+    extract::{FromRequestParts, Path},
     http::{request::Parts, StatusCode},
-    response::{Html, IntoResponse, Response},
+    response::{IntoResponse, Response},
     routing::get,
     RequestPartsExt, Router,
 };
 
-use migration::{sea_orm::DatabaseConnection, Migrator, MigratorTrait};
+// use migration::{sea_orm::DatabaseConnection, Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, Database};
 use std::{collections::HashMap, env, net::SocketAddr, time::Duration};
 use tower_http::{
@@ -17,6 +17,8 @@ use tower_http::{
 
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+mod handlers;
+mod router;
 #[derive(Clone)]
 struct AppState {
     database: sea_orm::DatabaseConnection,
@@ -66,10 +68,12 @@ pub async fn run() {
 
     // build our application with some routes
     let app = Router::new()
-        .route("/:version/foo", get(handler))
+        .route("/", get(health_check))
+        .nest("/:version/", router::root())
         .layer(trace)
         .layer(cors)
-        .with_state(state);
+        .fallback(handle_404);
+    // .with_state(state);
 
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
@@ -80,16 +84,26 @@ pub async fn run() {
         .unwrap();
 }
 
-async fn handler(version: Version) -> Html<&'static str> {
-    let _html = format!("<h1>received request with version {:?}<h1>", version);
-    Html("<h1>Hello, World!</h1>")
+///health check
+async fn health_check() -> &'static str {
+    "Service is healthy"
 }
 
+// 404 handler
+async fn handle_404() -> impl IntoResponse {
+    (
+        StatusCode::NOT_FOUND,
+        axum::response::Json(serde_json::json!({
+        "success":false,
+        "message":String::from("The requested resource does not exist on this server!"),
+        })),
+    )
+}
 #[derive(Debug)]
 enum Version {
     V1,
-    // V2,
-    // V3,
+    V2,
+    V3,
 }
 
 #[async_trait]
@@ -109,8 +123,8 @@ where
 
         match version.as_str() {
             "v1" => Ok(Version::V1),
-            // "v2" => Ok(Version::V2),
-            // "v3" => Ok(Version::V3),
+            "v2" => Ok(Version::V2),
+            "v3" => Ok(Version::V3),
             _ => Err((StatusCode::NOT_FOUND, "unknown version").into_response()),
         }
     }
