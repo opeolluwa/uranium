@@ -1,23 +1,26 @@
 use axum::{
     async_trait,
-    extract::State,
-    extract::{FromRequestParts, MatchedPath, Path},
-    http::{request::Parts, HeaderMap, Request, StatusCode},
+    extract::{FromRequestParts, Path, State},
+    http::{request::Parts, StatusCode},
     response::{Html, IntoResponse, Response},
     routing::get,
     RequestPartsExt, Router,
 };
-use migration::{Migrator, MigratorTrait};
+
+use migration::{sea_orm::DatabaseConnection, Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, Database};
 use std::{collections::HashMap, env, net::SocketAddr, time::Duration};
 use tower_http::{
-    classify::ServerErrorsFailureClass,
     cors::{Any, CorsLayer},
     trace::TraceLayer,
 };
-use tracing::{info_span, Span};
+
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+#[derive(Clone)]
+struct AppState {
+    database: sea_orm::DatabaseConnection,
+}
 // simple_logger::init().unwrap();
 // simple_logger::SimpleLogger::new().env().init().unwrap();
 pub async fn run() {
@@ -35,7 +38,6 @@ pub async fn run() {
 
     let database_connection_string =
         env::var("DATABASE_URL").expect("database URL is not provided in env variable");
-    println!("the database conn is {}", database_connection_string);
 
     let mut opt = ConnectOptions::new(database_connection_string);
     opt.max_connections(100)
@@ -51,9 +53,9 @@ pub async fn run() {
     let connection = Database::connect(opt)
         .await
         .expect("error connecting to database ");
-    /*   Migrator::up(&connection, None)
-    .await
-    .expect("error running database migrations"); */
+    let state = AppState {
+        database: connection,
+    };
     //initialize cors layer
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -66,7 +68,8 @@ pub async fn run() {
     let app = Router::new()
         .route("/:version/foo", get(handler))
         .layer(trace)
-        .layer(cors);
+        .layer(cors)
+        .with_state(state);
 
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
@@ -78,7 +81,7 @@ pub async fn run() {
 }
 
 async fn handler(version: Version) -> Html<&'static str> {
-    let html = format!("<h1>received request with version {:?}<h1>", version);
+    let _html = format!("<h1>received request with version {:?}<h1>", version);
     Html("<h1>Hello, World!</h1>")
 }
 
