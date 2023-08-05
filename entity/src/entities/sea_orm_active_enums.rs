@@ -21,8 +21,6 @@ pub enum Gender {
     Female,
     #[sea_orm(string_value = "male")]
     Male,
-    #[sea_orm(string_value = "others")]
-    Others,
     #[sea_orm(string_value = "unspecified")]
     Unspecified,
 }
