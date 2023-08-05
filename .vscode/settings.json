@@ -1,5 +1,4 @@
 {
-    "workbench.colorCustomizations": {},
     "cSpell.words": [
         "ASBH",
         "bson",
@@ -23,5 +22,10 @@
         "tbody",
         "tinytemplate",
         "TOTP"
-    ]
+    ],
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#390584",
+        "titleBar.activeBackground": "#5008B9",
+        "titleBar.activeForeground": "#FCFAFF"
+    }
 }
