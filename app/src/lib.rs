@@ -21,7 +21,7 @@ mod handlers;
 mod router;
 #[derive(Clone)]
 struct AppState {
-    database: sea_orm::DatabaseConnection,
+    // database: sea_orm::DatabaseConnection,
 }
 // simple_logger::init().unwrap();
 // simple_logger::SimpleLogger::new().env().init().unwrap();
@@ -55,9 +55,9 @@ pub async fn run() {
     let connection = Database::connect(opt)
         .await
         .expect("error connecting to database ");
-    let state = AppState {
+    /*  let state = AppState {
         database: connection,
-    };
+    }; */
     //initialize cors layer
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -66,22 +66,36 @@ pub async fn run() {
 
     let trace = TraceLayer::new_for_http();
 
-    // build our application with some routes
-    let app = Router::new()
-        .route("/", get(health_check))
-        .nest("/:version/", router::root())
-        .layer(trace)
-        .layer(cors)
-        .fallback(handle_404);
+    // // build our application with some routes
+    // let app = Router::new()
+    //     .route("/", get(health_check))
+    //     .nest("/:version/", router::root())
+    //     .layer(trace)
+    //     .layer(cors)
+    //     .fallback(handle_404);
     // .with_state(state);
+
+    fn routes<S>(state: AppState) -> Router<S> {
+        Router::new()
+            .route("/", get(|_: axum::extract::State<AppState>| async {}))
+            .with_state(state)
+    }
+
+    let routes = Router::new()
+        .nest("/api", routes(AppState {}))
+        .nest("/:version", router::root());
 
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     println!("listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
+    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
+        .serve(routes.into_make_service())
         .await
         .unwrap();
+    /*  axum::Server::bind(&addr)
+    .serve(app.into_make_service())
+    .await
+    .unwrap(); */
 }
 
 ///health check
