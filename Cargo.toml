@@ -8,16 +8,18 @@ version = "0.1.3"
 
 [workspace]
 exclude = ["sandbox"]
-members = ["raccoon_macros", "raccoon_mailer", "app", "entity", "migration"]
+members = [".", "app", "entity", "migration"]
 
 [dependencies]
-app = {path = "./app"}
+app = {path = "app"}
 entity = {path = "entity"}
 migration = {path = "migration"}# depends on your needs
 sea-orm = {version = "0.12.2", features = ["macros", "debug-print", "with-uuid", "sqlx-postgres", "runtime-tokio-rustls"]}
 tokio = {version = "1.20.1", features = ["full"]}
 
 [workspace.package]
+description = "identity and access manager service for microservices"
 name = "uranium"
 version = "0.1.3"
-description = "identity and access manager service for microservices"
+
+
