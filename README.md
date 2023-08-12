@@ -1,57 +1,62 @@
 # Uranium
 
-A powerful tool built in Rust that empowers frontend developers to seamlessly build a functional full-stack application with a fast and secure backend. With Uranium, developers can simply grab the project SDK and effortlessly integrate it into their web, mobile, or desktop application's client-side code.
-
-_⚠️ Some features are missing! The application is still in development, see the [issues](https://github.com/opeolluwa/send-file/issues) page to contribute_
-## Table of Contents
+Central authentication/authorization for microservices using gRPC transport layer
 
 - [Description](#description)
-- [Features](#features)
-- [Getting Started](#getting-started)
 - [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Svelte](https://svelte.dev/)
-- [Support](#support)
+- [Getting Started](#getting-started)
+  - [Dependencies](#dependencies)
+  - [Installing](#installing)
+  - [Executing program](#executing-program)
+- [Documentation](#documentation)
+- [Help](#help)
+- [Authors](#authors)
+- [Version History](#version-history)
 - [License](#license)
+- [Acknowledgments](#acknowledgments)
 
+## Description
 
-
-## Features
-
-- **Fast and Secure Backend**: Uranium provides a high-performance and secure backend infrastructure, ensuring the reliability and efficiency of your application.
-- **Simplified Integration**: With the project SDK, integration into your existing client-side code becomes a breeze, enabling you to focus on building your application's unique features.
-- **Full-Stack Functionality**: Uranium empowers front-end developers to handle both the client-side and server-side aspects of their applications, enabling end-to-end control and flexibility.
-- **Cross-Platform Compatibility**: Build applications for the web, mobile, or desktop platforms using Uranium, enabling your projects to reach a broader audience.
-
-## Getting Started
-
-Integration guides are planned for the following technologies: see the road map for progress
-
-- [React](https://reactjs.org/)
-- [React Native](https://reactnative.dev/)
-- [Electron](https://www.electronjs.org/)
-- [Flutter](https://flutter.dev/)
-- [Vue](https://vuejs.org/)
-- [Python](https://www.python.org/)
-- [Rust](https://www.rust-lang.org/)
-- [Deno](https://deno.land/)
+Uranium is an open-source central authentication &amp; authorization service built on the [Rust programming language](https://rust-lang.org) and SQL databases.
 
 ## Prerequisites
 
-The following are required to run the application in development.
+To run the application with minimal setup, [Docker](#) and [Docker compose](#) is required.
+Otherwise, the run the application without docker, see the [Dependencies](#dependencies) section
 
-- [Rust](https://www.rust-lang.org/tools/install) v1.63 or greater
-- [PostgreSQL](https://www.postgresql.org/download/) PostgreSQL server v14.5 or greater
-- [sqlx](https://crates.io/crates/sqlx) for interacting with the database,
-- [sqlx-cli](https://crates.io/crates/sqlx-cli), a command line tool for sqlx,
-- [cargo watch](https://crates.io/crates/cargo-watch), a tool for watching the project files and recompiling when they change
+## Getting Started
 
-## Installation
+To get started as soon as possible
 
-Instructions on how to install and set up the project.
+- clone the project `git clone https://github.com/opeolluwa/uranium `
+- run `docker-compose up` to start the application
 
-## Usage
+### Dependencies
+
+- Rust
+- ProgreSQL
+- watchexec or cargo watch
+
+### Installing
+
+- How/where to download your program
+- Any modifications needed to be made to files/folders
+
+### Executing program
+
+- How to run the program
+- Step-by-step bullets
+
+```
+code blocks for commands
+```
+
+## Documentation
+
+Describe any special instructions that are necessary to install a software package on your computer (if applicable).
+
+### Executing the program
+
 
 Run the following command in the project root to execute the annotated command
 
@@ -88,22 +93,32 @@ cargo run --release
 cargo test
 ```
 
-## Road map
+## Help
 
-- [ ] Build the core server
-- [ ] Add support for custom databases such as `MySQL`, `SQLite` etc...
-- [ ] Add SDK for `Python`
-- [ ] Add support to `Node.js`
-- [ ] Add SDK for `Rust`
-- [ ] Add support for other languages such as `Go`, `Java` etc...
-- [ ] Add support for other frameworks such as `React`, `Vue`, `Svelte` etc...
-- [ ] Add support for other platforms such as `Flutter`, `Electron` etc...
-- [ ] Integrate Admin dashboard
+Any advise for common problems or issues.
 
-## Support
+```
+command to run if program contains helper info
+```
 
-If you have any questions about this repository, please join the [discussion](https://github.com/opeolluwa/uranium/discussions)
+## Authors
+
+Contributors names and contact info
+
+ex. Dominique Pizzie  
+ex. [@DomPizzie](https://twitter.com/dompizzie)
+
+## Version History
+
+- 0.2
+  - Various bug fixes and optimizations
+  - See [commit change]() or See [release history]()
+- 0.1
+  - Initial Release
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+This project is licensed under the Apache License 2.0 License - see the [LICENSE](./LICENSE) file for details
+
+## Acknowledgments
+
