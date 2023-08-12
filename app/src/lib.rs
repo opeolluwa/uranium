@@ -1,5 +1,6 @@
 use axum::{
     async_trait,
+    extract::State,
     extract::{FromRequestParts, Path},
     http::{request::Parts, StatusCode},
     response::{IntoResponse, Response},
@@ -69,11 +70,11 @@ pub async fn run() {
     // build our application with some routes
     let app = Router::new()
         .route("/", get(health_check))
-        .nest("/:version/", router::root())
+        .nest("/:version/", router::routes())
         .layer(trace)
         .layer(cors)
         .fallback(handle_404);
-    // .with_state(state);
+        // .with_state(state);
 
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));

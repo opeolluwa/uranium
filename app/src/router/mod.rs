@@ -1,5 +1,8 @@
+mod auth;
 mod users;
 
-pub fn root() -> axum::Router {
-    axum::Router::new().nest("/users", users::router())
+pub fn routes() -> axum::Router {
+    axum::Router::new()
+        .nest("/users", users::router())
+        .nest("/auth", auth::auth_routes())
 }
