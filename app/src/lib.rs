@@ -1,6 +1,5 @@
 use axum::{
     async_trait,
-    extract::State,
     extract::{FromRequestParts, Path},
     http::{request::Parts, StatusCode},
     response::{IntoResponse, Response},
@@ -20,12 +19,9 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod handlers;
 mod router;
-#[derive(Clone)]
-struct AppState {
-    database: sea_orm::DatabaseConnection,
-}
-// simple_logger::init().unwrap();
-// simple_logger::SimpleLogger::new().env().init().unwrap();
+mod config;
+
+
 pub async fn run() {
     dotenvy::dotenv().ok();
     tracing_subscriber::registry()
@@ -53,12 +49,10 @@ pub async fn run() {
         .sqlx_logging_level(log::LevelFilter::Info)
         .set_schema_search_path("my_schema".to_owned()); // Setting default PostgreSQL schema
 
-    let connection = Database::connect(opt)
+    let _ = Database::connect(opt)
         .await
         .expect("error connecting to database ");
-    let state = AppState {
-        database: connection,
-    };
+
     //initialize cors layer
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -74,7 +68,7 @@ pub async fn run() {
         .layer(trace)
         .layer(cors)
         .fallback(handle_404);
-        // .with_state(state);
+    // .with_state(state);
 
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
