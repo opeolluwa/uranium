@@ -13,7 +13,7 @@ services:
     environment:
       # see the .env.exmple in the repository for details of the environment variablesp
       - PORt=8000
-      - DATABASE_URL=
+      - DATABASE_URL=postgre://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@localhost:5432/${DATABASE_NAME}
       - DATABASE_USERNAME=postgres
       - DATABASE_PASSWORD=postgres
       - DATABASE_NAME=postgrres
