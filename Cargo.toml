@@ -12,7 +12,7 @@ path = "src/main.rs"
 
 [workspace]
 exclude = ["sandbox"]
-members = [".", "app", "entity", "migration"]
+members = [".", "app", "entity", "migration", "mailer"]
 
 [dependencies]
 app = {path = "app"}
