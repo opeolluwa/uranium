@@ -10,8 +10,6 @@ services:
     depends_on:
       postgres:
         condition: service_started
-    env_file:
-      - .env
     environment:
       # see the .env.exmple in the repository for details of the environment variablesp
       - PORt=8000
