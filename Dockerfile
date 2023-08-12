@@ -3,6 +3,8 @@ WORKDIR /usr/src/app
 COPY . .
 
 
+RUN apk add protoc musl-dev
+
 RUN cargo build --release
 
 RUN rm ./target/release/deps
