@@ -1,7 +1,20 @@
-target
+#dotfiles 
+.git
+.gitignore
 .vscode
+.github
 .env
 .env.example
-sandbox.rs
-.gitignore
-README.md
+.dockerignore
+
+#traget
+target
+
+#sandbox 
+sandbox
+docs
+
+# others
+*.md
+Dockerfile
+docker-compose.yml

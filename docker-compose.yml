@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '8000:8000' # Adjust the port mapping as needed
+    depends_on:
+      postgres:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      # see the .env.exmple in the repository for details of the environment variablesp
+      - PORt=8000
+      - DATABASE_URL=
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=postgres
+      - DATABASE_NAME=postgrres
+      - JWT=
+  postgres:
+    image: 'postgres:15-alpine'
+    restart: always
+    ports:
+      - '5434:5432' # Adjust the port mapping as needed
+    environment:
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
