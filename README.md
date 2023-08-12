@@ -55,6 +55,44 @@ code blocks for commands
 
 Describe any special instructions that are necessary to install a software package on your computer (if applicable).
 
+### Executing the program
+
+
+Run the following command in the project root to execute the annotated command
+
+- run the project
+
+```sh
+cargo run
+```
+
+- build the project and copy it to bin directory
+
+```sh
+mkdir bin # make a directory ot keep the binary
+cargo build --release # build the application
+cp target/release/uranium ./bin/app # copy the executable into  the created folder
+./app # run the app on Linux based system or open app.exe on Windows Operating System
+```
+
+- run the application in development mode
+
+```sh
+cargo watch -x run
+```
+
+- run the project in release mode
+
+```sh
+cargo run --release
+```
+
+- run unit tests
+
+```sh
+cargo test
+```
+
 ## Help
 
 Any advise for common problems or issues.
