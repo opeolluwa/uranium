@@ -1,6 +1,6 @@
 use axum::{routing::get, Router};
 
-use crate::{handlers::users::UserInformationHandler,config::app_state::AppState, };
+use crate::{config::app_state::AppState, handlers::users::UserInformationHandler};
 
 pub fn router<S>(state: AppState) -> axum::Router<S> {
     Router::new()
