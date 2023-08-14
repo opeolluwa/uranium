@@ -7,6 +7,7 @@ use axum::{
     RequestPartsExt, Router,
 };
 
+use migration::{Migrator, MigratorTrait};
 // use migration::{sea_orm::DatabaseConnection, Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, Database};
 use std::{collections::HashMap, env, net::SocketAddr, time::Duration};
@@ -22,6 +23,7 @@ use crate::config::app_state::AppState;
 mod config;
 mod handlers;
 mod router;
+mod utils;
 
 pub async fn run() {
     dotenvy::dotenv().ok();
@@ -72,6 +74,8 @@ pub async fn run() {
         .layer(cors)
         .fallback(handle_404);
 
+    // run the migration
+    Migrator::up(&connection, None).await.unwrap();
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     println!("listening on {}", addr);
