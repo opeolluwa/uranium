@@ -1,4 +1,4 @@
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct AppState {
-    // pub database: sea_orm::DatabaseConnection,
+    pub database: sea_orm::DatabaseConnection,
 }

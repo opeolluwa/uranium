@@ -17,10 +17,11 @@ use tower_http::{
 
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+use crate::config::app_state::AppState;
+
+mod config;
 mod handlers;
 mod router;
-mod config;
-
 
 pub async fn run() {
     dotenvy::dotenv().ok();
@@ -49,7 +50,7 @@ pub async fn run() {
         .sqlx_logging_level(log::LevelFilter::Info)
         .set_schema_search_path("my_schema".to_owned()); // Setting default PostgreSQL schema
 
-    let _ = Database::connect(opt)
+    let connection = Database::connect(opt)
         .await
         .expect("error connecting to database ");
 
@@ -60,15 +61,16 @@ pub async fn run() {
         .allow_headers(Any);
 
     let trace = TraceLayer::new_for_http();
-
+    let state = AppState {
+        database: connection,
+    };
     // build our application with some routes
     let app = Router::new()
         .route("/", get(health_check))
-        .nest("/:version/", router::routes())
+        .nest("/:version/", router::routes(&state))
         .layer(trace)
         .layer(cors)
         .fallback(handle_404);
-    // .with_state(state);
 
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));

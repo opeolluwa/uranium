@@ -22,7 +22,7 @@ services:
     image: 'postgres:15-alpine'
     restart: always
     ports:
-      - '5434:5432' # Adjust the port mapping as needed
+      - '5400:5432' # Adjust the port mapping as needed
     environment:
       POSTGRES_USER: ${DATABASE_USERNAME}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
