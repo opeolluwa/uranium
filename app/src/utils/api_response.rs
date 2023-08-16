@@ -32,13 +32,13 @@ pub struct ApiResponse<Data> {
 /// accepts message and data from handle/controller
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SuccessResponse<D> {
+pub struct SuccessResponse<D: Serialize> {
     pub success: bool,
     pub message: String,
     pub data: Option<D>,
 }
 
-impl<D> SuccessResponse<D> {
+impl<D: Serialize> SuccessResponse<D> {
     pub async fn new(message: &str, data: D) -> SuccessResponse<D> {
         Self {
             success: true,

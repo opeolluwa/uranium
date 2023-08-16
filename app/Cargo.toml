@@ -9,6 +9,7 @@ version = "0.1.0"
 async-trait = "0.1.73"
 axum = { version = "0.6.20", features = ["json"] }
 bcrypt = "0.15.0"
+chrono = "0.4.26"
 dotenv = "0.15.0"
 dotenvy = "0.15.7"
 entity = {path = "../entity"}
