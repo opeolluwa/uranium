@@ -29,6 +29,5 @@ docs/book
 sandbox
 
 book
-app/src/handlers
 
 mailer/templates/dist
