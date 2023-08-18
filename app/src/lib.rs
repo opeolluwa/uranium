@@ -76,7 +76,6 @@ pub async fn run() {
 
     // run the migration
     // Migrator::up(&connection, None).await.unwrap();
-    // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     println!("listening on {}", addr);
     axum::Server::bind(&addr)

@@ -1,8 +1,10 @@
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Response;
+use axum::Error;
 use axum::Json;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 /// the API response is supposed to be an enum of two variants
 /// ApiResponse::Success<D:Data> and ApiResponse::Error<E:Error>
@@ -50,7 +52,7 @@ impl<D: Serialize> SuccessResponse<D> {
 
 /// the error content should be returned as an error of string
 #[allow(dead_code)]
-pub enum ErrorResponse {
+pub enum ErrorResponse<D> {
     /// wrong authorization payload e.g incorrect username and password
     WrongCredentials { message: String },
     /// missing or wrong fields in API request
@@ -65,10 +67,26 @@ pub enum ErrorResponse {
     NotFound { message: String },
     /// authorization error
     Unauthorized { message: String },
+    /// generic response
+    Generic {
+        message: String,
+        data: Option<D>,
+        success: bool,
+    },
 }
 
+/// error response constructor
+impl<D> ErrorResponse<D> {
+    pub fn new(message: &str, data: Option<D>) -> Self {
+        Self::Generic {
+            message: message.to_string(),
+            data,
+            success: false,
+        }
+    }
+}
 ///implement into response trait for API error
-impl IntoResponse for ErrorResponse {
+impl<D> IntoResponse for ErrorResponse<D> {
     fn into_response(self) -> Response {
         let (status_code, error_message) = match self {
             ErrorResponse::WrongCredentials { message } => {
@@ -85,6 +103,20 @@ impl IntoResponse for ErrorResponse {
             ErrorResponse::ConflictError { message } => (StatusCode::CONFLICT, message),
             //not found error
             ErrorResponse::NotFound { message } => (StatusCode::NOT_FOUND, message),
+            /// generic response
+            ErrorResponse::Generic {
+                message,
+                data,
+                success,
+            } => (
+                StatusCode::BAD_REQUEST,
+                json!({
+                    "success": success,
+                    "message": message,
+                    "data": data,
+
+                }),
+            ),
         };
         //build the response body using the ApiResponse struct
         let response_body: ApiResponse<String> = ApiResponse::<String> {
