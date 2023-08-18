@@ -17,8 +17,7 @@ impl UserAuthenticationHandler {
     pub async fn sign_up(
         state: State<AppState>, // must alway be first argument
         Json(payload): Json<CreateUser>,
-    ) -> Result<(StatusCode, Json<SuccessResponse<Value>>), ErrorResponse<()>> {
-        println!("{:?}", payload);
+    ) -> Result<(StatusCode, Json<SuccessResponse<Value>>), ErrorResponse<'static>> {
         // see if the user exists
         let user = UserInformation::find()
             .select_only()
@@ -31,7 +30,7 @@ impl UserAuthenticationHandler {
             .unwrap();
 
         if user.is_some() {
-            return Err(ErrorResponse::new("user information already exist", None));
+            return Err(ErrorResponse::BadRequest("user information already exist"));
         }
         //build the response
         let response = SuccessResponse::new(
