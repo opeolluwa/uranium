@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package uranium;
+
+
+
+service Uranium {
+    /* Returns the current health of the Uranium service. */
+    rpc HealthCheck (HealthCheckRequest) returns (HealthCheckResponse) {}
+}
+
+
+// the health check request recives no request body
+message HealthCheckRequest {
+}
+
+
+// the health check response returns the current health of the service
+message HealthCheckResponse {
+    // the current health of the service
+    string status = 1;
+}
+
+
