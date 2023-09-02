@@ -118,7 +118,17 @@ pub async fn run() {
 
     // run the migration
     // Migrator::up(&connection, None).await.unwrap();
-    let addr = SocketAddr::from(([0, 0, 0, 0], 53467));
+    /*    let port: u32 = std::env::var("PORT")
+    .unwrap_or(53467.to_string())
+    .parse::<u32>()
+    .ok(); */
+
+    let port = std::env::var("PORT")
+        .ok()
+        .expect("HTTP port not specified")
+        .parse::<u16>()
+        .unwrap_or(43467);
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
     println!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())

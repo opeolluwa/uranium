@@ -13,6 +13,6 @@ pub mod uranium {
 #[tokio::main]
 async fn main() {
     // run the server
-    let _ = app::grpc_server().await;
+    // let _ = app::grpc_server().await;
     app::run().await;
 }
