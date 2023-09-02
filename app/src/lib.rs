@@ -7,9 +7,15 @@ use axum::{
     RequestPartsExt, Router,
 };
 
-use crate::common::uranium::uranium_server::{Uranium, UraniumServer};
-use crate::common::uranium::{HealthCheckRequest, HealthCheckResponse};
-use tonic::{transport::Server, Request, Response as GrpcResponse, Status};
+use crate::{
+    common::uranium::uranium_server::{Uranium, UraniumServer},
+    config::multiplexer::Multiplexers,
+};
+use crate::{
+    common::uranium::{HealthCheckRequest, HealthCheckResponse},
+    config::app_state::AppState,
+};
+use tonic::{transport::Server, Response as GrpcResponse};
 
 // use migration::{sea_orm::DatabaseConnection, Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, Database};
@@ -21,8 +27,6 @@ use tower_http::{
 
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::config::app_state::AppState;
-
 mod common;
 mod config;
 mod extractors;
@@ -30,12 +34,16 @@ mod handlers;
 mod router;
 mod utils;
 
+mod proto {
+    pub(crate) const FILE_DESCRIPTOR_SET: &[u8] = include_bytes!("./common/uranium.rs");
+}
+
 /// the grpc server
 #[derive(Debug, Default)]
-pub struct UraniumCore;
+pub struct GrpcService;
 
 #[tonic::async_trait]
-impl Uranium for UraniumCore {
+impl Uranium for GrpcService {
     #[doc = " Returns the current health of the Uranium service."]
     #[must_use]
     #[allow(clippy::type_complexity, clippy::type_repetition_in_bounds)]
@@ -54,7 +62,7 @@ impl Uranium for UraniumCore {
 /// the grpc server
 pub async fn grpc_server() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "[::1]:50051".parse()?;
-    let server = UraniumCore::default();
+    let server = GrpcService::default();
 
     Server::builder()
         .add_service(UraniumServer::new(server))
@@ -74,12 +82,13 @@ pub async fn run() {
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
                 // axum logs rejections from built-in extractors with the `axum::rejection`
                 // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
-                "example_tracing_aka_logging=debug,tower_http=debug,axum::rejection=trace".into()
+                "uranium_trace=debug,tower_http=debug,axum::rejection=trace".into()
             }),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    // configure the service
     let database_connection_string =
         env::var("DATABASE_URL").expect("database URL is not provided in env variable");
 
@@ -109,7 +118,7 @@ pub async fn run() {
         database: connection,
     };
     // build our application with some routes
-    let app = Router::new()
+    let rest = Router::new()
         .route("/", get(health_check))
         .nest("/:version/", router::routes(&state))
         .layer(trace)
@@ -118,10 +127,22 @@ pub async fn run() {
 
     // run the migration
     // Migrator::up(&connection, None).await.unwrap();
-    /*    let port: u32 = std::env::var("PORT")
-    .unwrap_or(53467.to_string())
-    .parse::<u32>()
-    .ok(); */
+
+    // configure the grpc service
+
+    // build the grpc service
+    let reflection_service = tonic_reflection::server::Builder::configure()
+        .register_encoded_file_descriptor_set(proto::FILE_DESCRIPTOR_SET)
+        .build()
+        .unwrap();
+
+    let grpc = tonic::transport::Server::builder()
+        .add_service(reflection_service)
+        .add_service(UraniumServer::new(GrpcService::default()))
+        .into_service();
+
+    // combine them into one service
+    let service = Multiplexers::new(rest, grpc);
 
     let port = std::env::var("PORT")
         .ok()
@@ -131,7 +152,8 @@ pub async fn run() {
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     println!("listening on {}", addr);
     axum::Server::bind(&addr)
-        .serve(app.into_make_service())
+        .serve(tower::make::Shared::new(service))
+        // .serve(app.into_make_service())
         .await
         .unwrap();
 }
