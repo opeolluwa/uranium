@@ -14,6 +14,7 @@
     "oneshot",
     "ormlite",
     "pkce",
+    "proto",
     "pswd",
     "reqwest",
     "singlepart",
