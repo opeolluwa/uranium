@@ -14,6 +14,7 @@
     "oneshot",
     "ormlite",
     "pkce",
+    "proto",
     "pswd",
     "reqwest",
     "singlepart",
@@ -22,10 +23,5 @@
     "tbody",
     "tinytemplate",
     "TOTP"
-  ],
-  "workbench.colorCustomizations": {
-    "activityBar.background": "#390584",
-    "titleBar.activeBackground": "#5008B9",
-    "titleBar.activeForeground": "#FCFAFF"
-  }
+  ]
 }

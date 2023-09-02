@@ -39,30 +39,28 @@ impl Uranium for UraniumCore {
     #[doc = " Returns the current health of the Uranium service."]
     #[must_use]
     #[allow(clippy::type_complexity, clippy::type_repetition_in_bounds)]
-    async fn health_check(
-        &self,
+   /*  async fn health_check(
+        self,
         request: tonic::Request<HealthCheckRequest>,
-    ) -> std::result::Result<tonic::Response<HealthCheckResponse>, tonic::Status> {
+    ) -> Result<tonic::Response<HealthCheckResponse>, Status> {
         let status = HealthCheckResponse {
             status: "Service Healthy\n".to_string(),
         };
 
-        Ok(GrpcResponse::new(status))
-    }
-}
+        /*
 
-/// the grpc server
-pub async fn grpc_server() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "[::1]:50051".parse()?;
-    let server = UraniumCore::default();
+        mismatched types
+        expected struct `Pin<Box<(dyn Future<Output = Result<tonic::Response<HealthCheckResponse>, Status>> + Send + 'async_trait)>>`
+             found enum `Result<(tonic::Response<HealthCheckResponse>, Status), _>`rustcClick for full compiler diagnostic
+        lib.rs(45, 10): expected `Pin<Box<(dyn Future<Output = Result<tonic::Response<HealthCheckResponse>, Status>> + Send + 'async_trait)>>` because of return type
 
-    Server::builder()
-        .add_service(UraniumServer::new(server))
-        .serve(addr)
-        .await?;
+                 *
 
-    println!("Uranium gRPC server running on  {:?}", addr);
-    Ok(())
+        Ok((
+            GrpcResponse::new(status),
+            Status::new(tonic::Code::Ok, "all goog"),
+        ))
+    } */
 }
 // pub struct Uranium;
 // impl Uranium {
