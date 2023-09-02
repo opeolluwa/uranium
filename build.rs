@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .protoc_arg("--experimental_allow_proto3_optional") // for older systems
         // .build_client(true) // don't compile the client code
         .build_server(true)
-        .file_descriptor_set_path(out_dir.join("store_descriptor.bin"))
+        .file_descriptor_set_path(out_dir.join("uranium_descriptor.bin"))
         .out_dir("./app/src/common")
         .compile(&[proto_file], &["proto"])?;
 

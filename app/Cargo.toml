@@ -17,9 +17,11 @@ error = "0.1.9"
 fake = "2.6.1"
 futures = "0.3.28"
 http-body = "0.4.5"
+hyper = {workspace = true}
 jsonwebtoken = "8.3.0"
 log = "0.4.19"
 migration = {path = "../migration"}
+prost = {workspace = true}
 sea-orm = {version = "0.12.2", features = ["macros", "debug-print", "with-uuid", "sqlx-postgres", "runtime-tokio-rustls"]}
 serde = "1.0.181"
 serde_json = "1.0.104"
@@ -27,10 +29,11 @@ simple_logger = "4.2.0"
 this = "0.3.0"
 thiserror = "1.0.44"
 tokio = {version = "1.29.1", features = ["full"]}
+tonic = {workspace = true}
+tonic-reflection = {workspace = true}
+tower = {workspace = true}
 tower-http = {version = "0.4.3", features = ["cors", "trace"]}
 tracing = "0.1.37"
 tracing-subscriber = {version = "0.3.17", features = ["env-filter"]}
 uuid = "1.4.1"
 validator = {version = "0.16.1", features = ["derive"]}
-prost = {workspace = true}
-tonic = {workspace = true}

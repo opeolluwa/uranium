@@ -5,14 +5,7 @@
 /// SMTP - for email transporter
 /// AMQP - for message queue  system
 /// HTTPS - the HTTP is used for
-
-pub mod uranium {
-    tonic::include_proto!("uranium");
-}
-
 #[tokio::main]
 async fn main() {
-    // run the server
-    // let _ = app::grpc_server().await;
     app::run().await;
 }
