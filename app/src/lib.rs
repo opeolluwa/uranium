@@ -39,31 +39,15 @@ impl Uranium for UraniumCore {
     #[doc = " Returns the current health of the Uranium service."]
     #[must_use]
     #[allow(clippy::type_complexity, clippy::type_repetition_in_bounds)]
-    fn health_check<'life0, 'async_trait>(
-        &'life0 self,
+    async fn health_check(
+        &self,
         request: tonic::Request<HealthCheckRequest>,
-    ) -> ::core::pin::Pin<
-        Box<
-            dyn ::core::future::Future<
-                    Output = std::result::Result<
-                        tonic::Response<HealthCheckResponse>,
-                        tonic::Status,
-                    >,
-                > + ::core::marker::Send
-                + 'async_trait,
-        >,
-    >
-    where
-        'life0: 'async_trait,
-        Self: 'async_trait,
-    {
-        /// construct the response
+    ) -> std::result::Result<tonic::Response<HealthCheckResponse>, tonic::Status> {
         let status = HealthCheckResponse {
             status: "Service Healthy\n".to_string(),
         };
 
-        // Ok(Response::new(status))
-        status.into()
+        Ok(GrpcResponse::new(status))
     }
 }
 // pub struct Uranium;
