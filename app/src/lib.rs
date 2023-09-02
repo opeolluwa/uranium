@@ -7,6 +7,9 @@ use axum::{
     RequestPartsExt, Router,
 };
 
+use crate::common::uranium::uranium_server::{Uranium, UraniumServer};
+use crate::common::uranium::{HealthCheckRequest, HealthCheckResponse};
+use tonic::{transport::Server, Request, Response as GrpcResponse, Status};
 
 // use migration::{sea_orm::DatabaseConnection, Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, Database};
@@ -20,11 +23,52 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::config::app_state::AppState;
 
+mod common;
 mod config;
-mod handlers;
 mod extractors;
+mod handlers;
 mod router;
 mod utils;
+
+/// the grpc server
+#[derive(Debug, Default)]
+pub struct UraniumCore;
+
+#[tonic::async_trait]
+impl Uranium for UraniumCore {
+    #[doc = " Returns the current health of the Uranium service."]
+    #[must_use]
+    #[allow(clippy::type_complexity, clippy::type_repetition_in_bounds)]
+    fn health_check<'life0, 'async_trait>(
+        &'life0 self,
+        request: tonic::Request<HealthCheckRequest>,
+    ) -> ::core::pin::Pin<
+        Box<
+            dyn ::core::future::Future<
+                    Output = std::result::Result<
+                        tonic::Response<HealthCheckResponse>,
+                        tonic::Status,
+                    >,
+                > + ::core::marker::Send
+                + 'async_trait,
+        >,
+    >
+    where
+        'life0: 'async_trait,
+        Self: 'async_trait,
+    {
+        /// construct the response
+        let status = HealthCheckResponse {
+            status: "Service Healthy\n".to_string(),
+        };
+
+        // Ok(Response::new(status))
+        status.into()
+    }
+}
+// pub struct Uranium;
+// impl Uranium {
+/// Create a new instance of the application. This will load configuration and setup logging as well
 pub async fn run() {
     dotenvy::dotenv().ok();
     tracing_subscriber::registry()
@@ -50,7 +94,7 @@ pub async fn run() {
         .max_lifetime(Duration::from_secs(8))
         .sqlx_logging(true)
         .sqlx_logging_level(log::LevelFilter::Info)
-        .set_schema_search_path("my_schema".to_owned()); // Setting default PostgreSQL schema
+        .set_schema_search_path("uranium".to_owned());
 
     let connection = Database::connect(opt)
         .await
@@ -76,20 +120,27 @@ pub async fn run() {
 
     // run the migration
     // Migrator::up(&connection, None).await.unwrap();
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 53467));
     println!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
         .unwrap();
 }
+// }
 
-///health check
+/// #health check
+/// the health check is typically bounded to the server base URL to check the status of the app
+/// this can b eeasliy done with cURl
+/// for example
+/// ```sh
+/// curl 0.0.0.0:53467
+/// ```
 async fn health_check() -> &'static str {
-    "Service is healthy"
+    "Service is healthy\n"
 }
 
-// 404 handler
+/// 404 handler
 async fn handle_404() -> impl IntoResponse {
     (
         StatusCode::NOT_FOUND,
