@@ -1,29 +1,8 @@
 # Uranium
 
-Central authentication/authorization for microservices using gRPC transport layer
+Free deployable central authorization system for small and enterprise scale application 
 
-- [Description](#description)
-- [Prerequisites](#prerequisites)
-- [Getting Started](#getting-started)
-  - [Dependencies](#dependencies)
-  - [Installing](#installing)
-  - [Executing program](#executing-program)
-- [Documentation](#documentation)
-- [Help](#help)
-- [Authors](#authors)
-- [Version History](#version-history)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
-
-## Description
-
-Uranium is an open-source central authentication &amp; authorization service built on the [Rust programming language](https://rust-lang.org) and SQL databases.
-
-## Prerequisites
-
-To run the application with minimal setup, [Docker](#) and [Docker compose](#) is required.
-Otherwise, the run the application without docker, see the [Dependencies](#dependencies) section
-
+_⚠️ the application is a work in progress, please see the [roadmap](#roadmap) for the progress_
 ## Getting Started
 
 To get started as soon as possible
@@ -34,8 +13,9 @@ To get started as soon as possible
 ### Dependencies
 
 - Rust
-- ProgreSQL
-- watchexec or cargo watch
+- PostgreSQL
+- Docker 
+- Nodejs 
 
 ### Installing
 
