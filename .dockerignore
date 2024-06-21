@@ -1,0 +1,21 @@
+#dotfiles 
+.git
+.gitignore
+.vscode
+.github
+.env
+.env.example
+.dockerignore
+
+#traget
+target
+
+#sandbox 
+sandbox
+docs
+
+# others
+*.md
+Dockerfile
+docker-compose.yml
+LICENSE
