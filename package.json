@@ -1,0 +1,15 @@
+{
+  "name": "uranium",
+  "version": "1.0.0",
+  "description": "Free deployable central authorization system for small and enterprise scale application",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
