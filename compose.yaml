@@ -1,0 +1,26 @@
+
+services:
+  server:
+    build:
+      context: .
+      target: final
+    ports:
+      - 50051:50051
+    depends_on:
+      database: 
+        condition: service_started
+    environment:
+      - GRPC_SERVICE_PORT=50051
+      - PORT=50051
+      - JWT_SIGNING_KEY=myRogRsiUJPCozunL2R4NbUl6deGzX3t1j4ImS2mXbtHc
+      - DATABASE_URL=postgres://kingmaker:valhalla@database:5432/bookmark.db
+
+
+  database:
+    image: postgres:15-alpine 
+    restart: always
+    environment:
+      - POSTGRES_USER=kingmaker
+      - POSTGRES_PASSWORD=valhalla
+      - POSTGRES_DB=bookmark.db
+

@@ -1,24 +1,28 @@
 [package]
-authors = ["adeoye adefemi <adefemiadeoye@yahoo.com>"]
-edition = "2021"
-name = "migration"
+name = "uranium_migration"
+version = { workspace = true }
+edition = { workspace = true }
+description = { workspace = true }
 publish = false
-version = "0.1.0"
-license-file ="./"
 
 [lib]
 name = "migration"
 path = "src/lib.rs"
 
 [dependencies]
-async-std = {version = "1", features = ["attributes", "tokio1"]}
+async-std = { version = "1", features = ["attributes", "tokio1"] }
+tokio = { version = "1", features = ["full"] }
 
 [dependencies.sea-orm-migration]
+version = "1.0.0"
 features = [
   # Enable at least one `ASYNC_RUNTIME` and `DATABASE_DRIVER` feature if you want to run migration via CLI.
   # View the list of supported features at https://www.sea-ql.org/SeaORM/docs/install-and-config/database-and-async-runtime.
   # e.g.
   "runtime-tokio-rustls", # `ASYNC_RUNTIME` feature
-  "sqlx-postgres", # `DATABASE_DRIVER` feature
+  "sqlx-postgres",
+  "sqlx-sqlite",
+  # `DATABASE_DRIVER` feature
 ]
-version = "0.11.0"
+
+[dev-dependencies]
