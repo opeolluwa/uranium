@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::adapters::email_templates::EmailBuilder;
 use crate::adapters::email_templates::EmailTemplates;
-use crate::adapters::kafka::Kafka;
+// use crate::adapters::kafka::Kafka;
 use crate::database_connection::DatabaseConnection;
 use crate::jwt::JwtClaims;
 use crate::proto::authentication::authentication_server::Authentication;
@@ -82,7 +82,7 @@ impl Authentication for AuthenticationImplementation {
             ]))
             .to_bytes();
 
-        let _ = Kafka::producer().send(&Record::from_value("bookmark", email_payload));
+        // let _ = Kafka::producer().send(&Record::from_value("bookmark", email_payload));
         Ok(Response::new(SignUpResponse {
             message: "Account Successfully Created".into(),
             status: RequestStatus::Ok.into(),
