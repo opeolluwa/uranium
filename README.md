@@ -3,7 +3,7 @@
 Uranium is a free nd cistomizable central authorization system. It is made of
 supporting code bases, also built in Rust.
 
-_Please note that the project is currently 90% done_
+_⚠️ Please note that the project is currently 90% done_
 
 ## Getting started
 
@@ -19,7 +19,7 @@ available
 The quickest way to get started is to use the
 [Uranum CLI](https://crates.io/uranium_cli),
 
-_The CLI is a work in progress_
+_⚠️ The CLI is a work in progress_
 
 ```sh
 ucli new <path>
