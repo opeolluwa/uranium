@@ -9,13 +9,14 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::time::Duration;
 
 use self::config::CONFIG;
-use bookmark_database_codegen::migration::{Migrator, MigratorTrait};
+
 use grpc_service::authentication::AuthenticationImplementation;
 
 use grpc_service::health_check::HealthCheckImplementation;
 use grpc_service::user_profile::UserProfileImplementation;
 use interceptors::authentication::check_and_validate_jwt;
 
+use migration::{Migrator, MigratorTrait};
 use proto::authentication::authentication_server::AuthenticationServer;
 use proto::health_check::health_check_server::HealthCheckServer;
 use proto::user_profile::user_profile_server::UserProfileServer;

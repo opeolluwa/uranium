@@ -11,11 +11,10 @@ use crate::proto::authentication::LoginResponse;
 use crate::proto::authentication::SignUpRequest;
 use crate::proto::authentication::SignUpResponse;
 use crate::proto::authentication::Status as RequestStatus;
+use uranium_entities::prelude::UserInformation;
 
 use bcrypt::{verify, DEFAULT_COST};
-use bookmark_database_codegen::entities::bookmark_collection;
-use bookmark_database_codegen::entities::prelude::*;
-use bookmark_database_codegen::entities::user_information::{self};
+use uranium_entities::user_information;
 
 use kafka::producer::Record;
 use sea_orm::ColumnTrait;
@@ -36,6 +35,7 @@ impl Authentication for AuthenticationImplementation {
     ) -> std::result::Result<tonic::Response<SignUpResponse>, tonic::Status> {
         let db_connection = &DatabaseConnection::new().await;
         let payload = request.into_inner();
+        let user_id = Uuid::new_v4();
 
         if UserInformation::find()
             .filter(user_information::Column::Email.eq(&payload.email))
@@ -51,15 +51,6 @@ impl Authentication for AuthenticationImplementation {
         let password = bcrypt::hash(payload.password, DEFAULT_COST).map_err(|_| {
             tonic::Status::unknown("The server couldn't process the request at this time")
         })?;
-
-        let user_id = Uuid::new_v4();
-        let default_vault = bookmark_collection::ActiveModel {
-            id: Set(Uuid::new_v4()),
-            name: Set("default".into()),
-            description: Set("default collection".into()),
-            user_id: Set(user_id),
-            ..Default::default()
-        };
 
         let new_user = user_information::ActiveModel {
             id: Set(user_id),
@@ -80,17 +71,7 @@ impl Authentication for AuthenticationImplementation {
                 ))
             })?;
 
-        let _ = bookmark_collection::Entity::insert(default_vault)
-            .exec(db_connection)
-            .await
-            .map_err(|err| {
-                tonic::Status::unknown(format!(
-                    "The server couldn't process the request at this time due to err {}",
-                    err.to_string()
-                ))
-            })?;
-
-        // send email
+        //todo: send email
 
         let email_payload = EmailBuilder::new("Confirm email")
             .use_template(EmailTemplates::Signup)

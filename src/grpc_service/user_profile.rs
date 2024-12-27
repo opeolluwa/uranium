@@ -8,8 +8,7 @@ use crate::{
 };
 use sea_orm::{ActiveModelTrait, EntityTrait, Set};
 use tonic::async_trait;
-use bookmark_database_codegen::entities::prelude::*;
-use bookmark_database_codegen::entities::user_information::{self};
+use uranium_entities::{prelude::UserInformation, user_information};
 
 #[derive(Default)]
 pub struct UserProfileImplementation {}
