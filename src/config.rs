@@ -10,7 +10,7 @@ pub struct Config {
     pub jwt_signing_key: String,
     pub database_connection_string: String,
     pub database_connection_retries: u16,
-    pub kafka_url: String,
+    // pub kafka_url: String,
 }
 
 impl Config {
@@ -23,13 +23,13 @@ impl Config {
             std::env::var("JWT_SIGNING_KEY").expect("Couldn't parse JWT_SIGNING_KEY env");
         let database_connection_string =
             std::env::var("DATABASE_URL").expect("Couldn't parse DATABASE_URL env");
-        let kafka_url = std::env::var("KAFKA_URL").expect("Couldn't parse KAFKA_URL env");
+        // let kafka_url = std::env::var("KAFKA_URL").expect("Couldn't parse KAFKA_URL env");
 
         Self {
             port,
             jwt_signing_key,
             database_connection_string,
-            kafka_url,
+            // kafka_url,
             ..Default::default()
         }
     }
@@ -42,7 +42,7 @@ impl Default for Config {
             jwt_signing_key: "".to_string(),
             database_connection_string: "".to_string(),
             database_connection_retries: 5,
-            kafka_url: "".to_string(),
+            // kafka_url: "".to_string(),
         }
     }
 }
