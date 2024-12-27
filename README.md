@@ -1,104 +1,41 @@
-# Uranium
+# Uranium Core
 
-Free deployable central authorization system for small and enterprise scale application 
+Uranium is a free nd cistomizable central authorization system. It is made of
+supporting code bases, also built in Rust.
 
-_⚠️ the application is a work in progress, please see the [roadmap](#roadmap) for the progress_
-## Getting Started
+_⚠️ Please note that the project is currently 90% done_
 
-To get started as soon as possible
+## Getting started
 
-- clone the project `git clone https://github.com/opeolluwa/uranium `
-- run `docker-compose up` to start the application
+To run the appliction locally, ensure the following prerequsites are made
+available
 
-### Dependencies
+- [Rust](https://rust-lang.org)
+- [just](https://just.systems)
+- [Docker](https://docker.com)
 
-- Rust
-- PostgreSQL
-- Docker 
-- Nodejs 
+### Local development
 
-### Installing
+The quickest way to get started is to use the
+[Uranum CLI](https://crates.io/uranium_cli),
 
-- How/where to download your program
-- Any modifications needed to be made to files/folders
-
-### Executing program
-
-- How to run the program
-- Step-by-step bullets
-
-```
-code blocks for commands
-```
-
-## Documentation
-
-Describe any special instructions that are necessary to install a software package on your computer (if applicable).
-
-### Executing the program
-
-
-Run the following command in the project root to execute the annotated command
-
-- run the project
+_⚠️ The CLI is a work in progress_
 
 ```sh
-cargo run
+ucli new <path>
 ```
 
-- build the project and copy it to bin directory
+Follow the prompt, this would clone the necessary repositories and create a
+`.uranium` mich contains the Docker files and a bash script to run you
+application from end to end.
 
-```sh
-mkdir bin # make a directory ot keep the binary
-cargo build --release # build the application
-cp target/release/uranium ./bin/app # copy the executable into  the created folder
-./app # run the app on Linux based system or open app.exe on Windows Operating System
-```
+### Related Repositories
 
-- run the application in development mode
-
-```sh
-cargo watch -x run
-```
-
-- run the project in release mode
-
-```sh
-cargo run --release
-```
-
-- run unit tests
-
-```sh
-cargo test
-```
+- [Uranium gRPC Codegen](https://github.com/opeolluwa/uranium_grpc_codegen)
+- [Uranium HTTP->GRPC proxy server](https://github.com/opeolluwa/uranium_proxy)
+- [Uranium CLI](https://github.com/opeolluwa/uranium_cli)
 
 ## Help
 
-Any advise for common problems or issues.
-
-```
-command to run if program contains helper info
-```
-
-## Authors
-
-Contributors names and contact info
-
-ex. Dominique Pizzie  
-ex. [@DomPizzie](https://twitter.com/dompizzie)
-
-## Version History
-
-- 0.2
-  - Various bug fixes and optimizations
-  - See [commit change]() or See [release history]()
-- 0.1
-  - Initial Release
-
-## License
-
-This project is licensed under the Apache License 2.0 License - see the [LICENSE](./LICENSE) file for details
-
-## Acknowledgments
-
+For help and assitance, consider crating a discussion at
+[https://github.com/opeolluwa/uranium/discussions](https://github.com/opeolluwa/uranium/discussions)
