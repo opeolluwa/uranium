@@ -1,67 +1,54 @@
-pub mod adapters;
-pub mod config;
-pub mod database_connection;
-pub mod grpc_service;
-pub mod interceptors;
-pub mod jwt;
+use errors::app_error::AppError;
+use routes::router::load_routes;
+use shared::extract_env::extract_env;
+use sqlx::postgres::PgPoolOptions;
+use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::time::Duration;
-
-use self::config::CONFIG;
-
-use grpc_service::authentication::AuthenticationImplementation;
-
-use grpc_service::health_check::HealthCheckImplementation;
-use grpc_service::user_profile::UserProfileImplementation;
-use interceptors::authentication::check_and_validate_jwt;
-
-use migration::{Migrator, MigratorTrait};
-use proto::authentication::authentication_server::AuthenticationServer;
-use proto::health_check::health_check_server::HealthCheckServer;
-use proto::user_profile::user_profile_server::UserProfileServer;
-use tonic::service::interceptor;
-use tonic::transport::Server;
-use tonic::Request;
-use tracing::Level;
-use tracing_subscriber::FmtSubscriber;
-use uranium_grpc_codegen::server_stub as proto;
+mod adapters;
+mod config;
+mod controllers;
+mod entities;
+mod errors;
+mod middlewares;
+mod repositories;
+mod routes;
+mod services;
+mod shared;
+mod states;
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    let subscriber = FmtSubscriber::builder()
-        .with_max_level(Level::INFO)
-        .pretty()
-        .finish();
+async fn main() -> Result<(), AppError> {
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                format!(
+                    "{}=debug,tower_http=debug,axum::rejection=trace",
+                    env!("CARGO_CRATE_NAME")
+                )
+                .into()
+            }),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 
-    tracing::subscriber::set_global_default(subscriber)
-        .expect("Error setting global tracing subscriber");
+    let database_url = extract_env::<String>("DATABASE_URL")?;
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&database_url)
+        .await
+        .map_err(|err| AppError::StartupError(err.to_string()))?;
 
-    let connection = sea_orm::Database::connect(&CONFIG.database_connection_string).await?;
-    Migrator::up(&connection, None).await?;
+    let app = load_routes(pool);
+    let ip_address = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, 3000));
+    log::info!("Application listening on {}", ip_address);
 
-    let address = SocketAddr::new(IpAddr::from(Ipv4Addr::UNSPECIFIED), CONFIG.port);
-
-    let authentication_service = AuthenticationServer::new(AuthenticationImplementation::default());
-    let health_check_service = HealthCheckServer::new(HealthCheckImplementation::default());
-
-    let user_profile = UserProfileImplementation::default();
-    let user_profile_service =
-        UserProfileServer::with_interceptor(user_profile, check_and_validate_jwt);
-
-    tracing::info!(message = "Starting server.", %address);
-    Server::builder()
-        .layer(interceptor(|request: Request<()>| {
-            tracing::info!(">>>> incoming request {:#?}", request);
-            Ok(request)
-        }))
-        .trace_fn(|_| tracing::info_span!("{:?}"))
-        .timeout(Duration::from_secs(5))
-        .add_service(authentication_service)
-        .add_service(health_check_service)
-        .add_service(user_profile_service)
-        .serve(address)
-        .await?;
+    let listener = tokio::net::TcpListener::bind(ip_address)
+        .await
+        .map_err(|err| AppError::OperationFailed(err.to_string()))?;
+    axum::serve(listener, app)
+        .await
+        .map_err(|err| AppError::OperationFailed(err.to_string()))?;
 
     Ok(())
 }
