@@ -1,2 +1,3 @@
-pub mod kafka;
-pub mod email_templates;
+pub mod requests;
+pub mod response;
+pub mod dto;
