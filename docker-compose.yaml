@@ -3,6 +3,7 @@ services:
   server:
     build:
       context: .
+      dockerfile: docker/${ENV}/Dockerfile
       target: final
     ports:
       - 50051:50051
@@ -14,6 +15,7 @@ services:
       - PORT=50051
       - JWT_SIGNING_KEY=myRogRsiUJPCozunL2R4NbUl6deGzX3t1j4ImS2mXbtHc
       - DATABASE_URL=postgres://kingmaker:valhalla@database:5432/bookmark.db
+      - ENV=dev
 
 
   database:

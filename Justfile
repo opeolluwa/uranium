@@ -1,6 +1,6 @@
 alias w:= watch
 alias b:= build
-alias install := install-dependencies
+
 
 set dotenv-required
 set dotenv-load := true
@@ -13,8 +13,6 @@ default:
 [doc('Install the application dependencies')]
 init platform: 
     @echo "preparing "
-  
-
 
 fmt:
     cargo fmt && cargo fix 
