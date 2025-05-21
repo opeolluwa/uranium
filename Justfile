@@ -11,9 +11,10 @@ default:
     @just --list --list-heading $'Available commands\n'
 
 [doc('Install the application dependencies')]
-install-dependencies: 
-    @echo "Installing backend dependencies"
-    cd backend && cargo build 
+init platform: 
+    @echo "preparing "
+  
+
 
 fmt:
     cargo fmt && cargo fix 
