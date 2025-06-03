@@ -1,0 +1,23 @@
+
+services:
+  server:
+    build:
+      context: docker/${ENVIRONMENT}/Dockerfile
+      target: final
+    ports:
+      - ${PORT}:${PORT}
+    env_file:
+      - .env.local
+      - .env
+    depends_on:
+      database: 
+        condition: service_started
+
+  database:
+    image: postgres:15-alpine 
+    restart: always
+    environment:
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_DB=${DATABASE_NAME}
+

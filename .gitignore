@@ -24,4 +24,4 @@ Cargo.lock
 
 /target
 .env.production
-.env*
+.env.local
