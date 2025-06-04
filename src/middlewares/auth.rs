@@ -5,7 +5,10 @@ use axum_extra::{
 };
 use jsonwebtoken::{DecodingKey, EncodingKey, Validation, decode};
 
-use crate::{adapters::dto::jwt::AuthenticatedUser, errors::auth_error::AuthError};
+use crate::{
+    adapters::dto::jwt::AuthenticatedUser, errors::auth_error::AuthError,
+    shared::extract_env::extract_env,
+};
 
 struct Keys {
     encoding: EncodingKey,
@@ -28,6 +31,10 @@ where
     type Rejection = AuthError;
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        let secret = extract_env::<String>("JWT_SIGNING_KEY")
+            .map_err(|err| AuthError::ServerError(err.to_string()))?;
+
+        let decoding_key = Keys::new(secret.as_bytes()).decoding;
         // Extract the token from the authorization header
         let TypedHeader(Authorization(bearer)) = parts
             .extract::<TypedHeader<Authorization<Bearer>>>()
@@ -35,7 +42,7 @@ where
             .map_err(|_| AuthError::InvalidToken)?;
         // Decode the user data
         let token_data =
-            decode::<AuthenticatedUser>(bearer.token(), &KEYS.decoding, &Validation::default())
+            decode::<AuthenticatedUser>(bearer.token(), &decoding_key, &Validation::default())
                 .map_err(|_| AuthError::InvalidToken)?;
 
         Ok(token_data.claims)

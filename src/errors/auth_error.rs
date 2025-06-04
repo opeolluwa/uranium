@@ -1,19 +1,15 @@
 use axum::{
-    Json,
     http::StatusCode,
     response::{IntoResponse, Response},
 };
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug)]
 pub enum AuthError {
-    #[error("Failed to start up service due to: Err -> ")]
     WrongCredentials,
-    #[error("Failed to start up service due to: Err -> ")]
     MissingCredentials,
-    #[error("Failed to start up service due to: Err -> ")]
     TokenCreation,
-    #[error("Failed to start up service due to: Err ->")]
     InvalidToken,
+    ServerError(String),
 }
 
 impl IntoResponse for AuthError {
@@ -23,6 +19,9 @@ impl IntoResponse for AuthError {
             AuthError::MissingCredentials => (StatusCode::BAD_REQUEST, "Missing credentials"),
             AuthError::TokenCreation => (StatusCode::INTERNAL_SERVER_ERROR, "Token creation error"),
             AuthError::InvalidToken => (StatusCode::BAD_REQUEST, "Invalid token"),
+            AuthError::ServerError(err) => {
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error")
+            }
         };
 
         (status, error_message).into_response()

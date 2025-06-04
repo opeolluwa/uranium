@@ -5,15 +5,17 @@ use crate::{
         requests::auth::{
             CreateUserRequest, ForgottenPasswordRequest, LoginRequest, SetNewPasswordRequest,
         },
-        response::auth::VerifyAccountResponse,
+        response::auth::{CreateUserResponse, VerifyAccountResponse},
     },
+    errors::service_error::ServiceError,
     services::auth_service::AuthenticationService,
 };
 
 pub async fn sign_up(
     State(auth_service): State<AuthenticationService>,
     Json(request): Json<CreateUserRequest>,
-) {
+) -> Result<CreateUserResponse, ServiceError> {
+    todo!()
 }
 pub async fn login(
     State(auth_service): State<AuthenticationService>,

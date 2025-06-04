@@ -25,7 +25,7 @@ async fn main() -> Result<(), AppError> {
     let database_url = extract_env::<String>("DATABASE_URL")?;
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(&database_url)
+        .connect("postgres://uranium:uranium@postgres/uranium")
         .await
         .map_err(|err| AppError::StartupError(err.to_string()))?;
 
