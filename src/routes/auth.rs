@@ -10,7 +10,7 @@ use crate::{
     states::services_state::ServicesState,
 };
 
-pub(super) fn authentication_routes(state:ServicesState) -> Router {
+pub(super) fn authentication_routes(state: ServicesState) -> Router {
     Router::new()
         .route("/signup", post(sign_up))
         .route("/login", post(login))

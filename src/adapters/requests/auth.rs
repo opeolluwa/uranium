@@ -26,7 +26,6 @@ pub struct SetNewPasswordRequest {}
 #[serde(rename_all = "camelCase")]
 pub struct VerifyAccountRequest {}
 
-
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 

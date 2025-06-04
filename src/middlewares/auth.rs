@@ -3,7 +3,7 @@ use axum_extra::{
     TypedHeader,
     headers::{Authorization, authorization::Bearer},
 };
-use jsonwebtoken::{decode, DecodingKey, EncodingKey, Validation};
+use jsonwebtoken::{DecodingKey, EncodingKey, Validation, decode};
 
 use crate::{adapters::dto::jwt::AuthenticatedUser, errors::auth_error::AuthError};
 

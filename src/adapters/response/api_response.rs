@@ -16,6 +16,4 @@ impl<T: Serialize> ApiResponse<T> {
     }
 }
 
-
-
 pub type HandlerResponse<T> = Json<ApiResponse<T>>;

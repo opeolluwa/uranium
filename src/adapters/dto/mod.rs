@@ -1,3 +1,3 @@
-pub mod user;
-pub mod otp;
 pub mod jwt;
+pub mod otp;
+pub mod user;

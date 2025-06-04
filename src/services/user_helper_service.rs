@@ -2,8 +2,7 @@ use crate::errors::user_service::UserServiceError;
 use crate::services::user_service::UserService;
 
 #[derive(Clone)]
-pub struct UserHelperService {
-}
+pub struct UserHelperService {}
 
 impl UserHelperService {
     pub fn init() -> Self {
@@ -13,7 +12,7 @@ impl UserHelperService {
 
 pub trait UserHelperServiceTrait {
     async fn hash_password(&self, raw_password: &String) -> Result<String, UserServiceError>;
-    
+
     async fn validate_password(
         &self,
         raw_password: &String,

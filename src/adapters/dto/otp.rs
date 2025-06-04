@@ -1,4 +1,7 @@
-use std::{fmt::{write, Display}, str::FromStr};
+use std::{
+    fmt::{Display, write},
+    str::FromStr,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -18,4 +21,3 @@ impl Display for OtpKind {
         }
     }
 }
-
