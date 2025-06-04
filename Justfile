@@ -1,28 +1,40 @@
 alias w:= watch
+alias k:= kill
 alias b:= build
+alias l:= logs
 alias install := install-dependencies
+alias r:= restart
+
 
 set dotenv-required
 set dotenv-load := true
 set dotenv-path := "./.env.local"
 set export :=  true
 
-default: 
+@default: 
     @just --list --list-heading $'Available commands\n'
 
 [doc('Install the application dependencies')]
-install-dependencies: 
+@install-dependencies: 
     @echo "Installing backend dependencies"
-    cd backend && cargo build 
 
-fmt:
+
+@fmt:
     cargo fmt && cargo fix 
 
-[group('watch')]
-watch: 
-    docker compose up -d
-    docker logs -f app
+@watch: 
+    docker compose up -d 
+    @just l
 
-[group('build')]
+@logs:
+    docker compose logs -f --tail='30' app
+
 build:
     cargo run build --release 
+
+@kill:  
+    docker compose down 
+
+@restart:
+    @just kill
+    @just watch

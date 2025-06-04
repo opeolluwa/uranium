@@ -30,7 +30,8 @@ async fn main() -> Result<(), AppError> {
         .map_err(|err| AppError::StartupError(err.to_string()))?;
 
     let app = load_routes(pool);
-    let ip_address = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, 3000));
+    let port = extract_env::<u16>("PORT")?;
+    let ip_address = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, port));
     log::info!("Application listening on {}", ip_address);
 
     let listener = tokio::net::TcpListener::bind(ip_address)

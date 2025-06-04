@@ -13,6 +13,7 @@ impl UserHelperService {
 
 pub trait UserHelperServiceTrait {
     async fn hash_password(&self, raw_password: &String) -> Result<String, UserServiceError>;
+    
     async fn validate_password(
         &self,
         raw_password: &String,
