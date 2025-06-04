@@ -2,7 +2,7 @@ use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
 use crate::adapters::dto::user::UserDto;
-use crate::adapters::requests::user::CreateUserRequest;
+use crate::adapters::requests::auth::CreateUserRequest;
 use crate::errors::user_service::UserServiceError;
 use crate::repositories::user_repository::UserRepository;
 

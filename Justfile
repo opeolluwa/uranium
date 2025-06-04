@@ -20,7 +20,8 @@ fmt:
 
 [group('watch')]
 watch: 
-    cargo watch -qcx run 
+    docker compose up -d
+    docker logs -f app
 
 [group('build')]
 build:

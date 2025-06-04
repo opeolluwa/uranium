@@ -3,7 +3,6 @@ use routes::router::load_routes;
 use shared::extract_env::extract_env;
 use sqlx::postgres::PgPoolOptions;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod adapters;
 mod config;
@@ -19,17 +18,8 @@ mod states;
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-                format!(
-                    "{}=debug,tower_http=debug,axum::rejection=trace",
-                    env!("CARGO_CRATE_NAME")
-                )
-                .into()
-            }),
-        )
-        .with(tracing_subscriber::fmt::layer())
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::DEBUG)
         .init();
 
     let database_url = extract_env::<String>("DATABASE_URL")?;

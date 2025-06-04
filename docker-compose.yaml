@@ -2,13 +2,13 @@
 services:
   server:
     build:
-      context: docker/${ENVIRONMENT}/Dockerfile
-      target: final
+      context: .
+      dockerfile: docker/${ENVIRONMENT}/Dockerfile
+      # target: final
     ports:
       - ${PORT}:${PORT}
     env_file:
       - .env.local
-      - .env
     depends_on:
       database: 
         condition: service_started
@@ -16,6 +16,7 @@ services:
   database:
     image: postgres:15-alpine 
     restart: always
+    container_name: uranium
     environment:
       - POSTGRES_USER=${DATABASE_USER}
       - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
