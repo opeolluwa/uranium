@@ -12,8 +12,8 @@ use crate::{
             SetNewPasswordResponse, VerifyAccountResponse,
         },
     },
-    errors::service_error::ServiceError,
-    repositories::user_repository::UserRepository,
+    errors::{database_error::DatabaseError, service_error::ServiceError},
+    repositories::user_repository::{UserRepository, UserRepositoryTrait},
 };
 
 #[derive(Clone)]
@@ -29,7 +29,10 @@ impl AuthenticationService {
     }
 }
 pub trait AuthenticationServiceTrait {
-    async fn sign_up(request: &CreateUserRequest) -> Result<CreateUserResponse, ServiceError>;
+    async fn sign_up(
+        &self,
+        request: &CreateUserRequest,
+    ) -> Result<CreateUserResponse, ServiceError>;
 
     async fn login(request: &LoginRequest) -> Result<LoginResponse, ServiceError>;
 
@@ -52,7 +55,19 @@ pub trait AuthenticationServiceTrait {
 }
 
 impl AuthenticationServiceTrait for AuthenticationService {
-    async fn sign_up(request: &CreateUserRequest) -> Result<CreateUserResponse, ServiceError> {
+    async fn sign_up(
+        &self,
+        request: &CreateUserRequest,
+    ) -> Result<CreateUserResponse, ServiceError> {
+        if self
+            .user_repository
+            .find_by_email(&request.email)
+            .await
+            .is_some()
+        {
+            return Err(ServiceError::from(DatabaseError::ConflictError));
+        }
+        
         todo!()
     }
 

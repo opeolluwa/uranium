@@ -10,6 +10,7 @@ axum = { version = "0.8.3", features = ["tracing"] }
 axum-extra = { version = "0.10.1", features = ["typed-header"] }
 jsonwebtoken = "9.3.1"
 log = "0.4.27"
+logs = "0.7.1"
 serde = { version = "1.0.219", features = ["derive"] }
 sqlx = { version = "0.8", features = [
     "runtime-tokio",
@@ -23,7 +24,7 @@ tower-http = { version = "0.6.1", features = ["trace"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1.16.0", features = ["serde", "v4"] }
-validator = "0.20.0"
+validator = { version = "0.20.0", features = ["derive"] }
 
 [dev-dependencies]
 axum = { version = "0.8.3", features = ["macros"] }

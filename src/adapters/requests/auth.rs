@@ -1,11 +1,16 @@
 use serde::{Deserialize, Serialize};
+use validator::{Validate, ValidationError};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateUserRequest {
+    #[validate(email)]
     pub email: String,
+    #[validate(length(min = 1))]
     pub password: String,
+    #[validate(length(min = 1))]
     pub first_name: String,
+    #[validate(length(min = 1))]
     pub last_name: String,
 }
 

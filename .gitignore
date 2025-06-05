@@ -25,3 +25,4 @@ Cargo.lock
 /target
 .env.production
 .env.local
+zzzsandbox
