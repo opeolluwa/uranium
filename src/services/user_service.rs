@@ -3,10 +3,12 @@ use uuid::Uuid;
 
 use crate::adapters::dto::user::UserDto;
 use crate::adapters::requests::auth::CreateUserRequest;
-use crate::errors::user_service::UserServiceError;
-use crate::repositories::user_repository::UserRepository;
+use crate::errors::shared_service_error::ServiceError;
+use crate::errors::user_service_error::UserServiceError;
+use crate::repositories::user_repository::{UserRepository, UserRepositoryTrait};
+use crate::services::user_helper_service;
 
-use super::user_helper_service::UserHelperService;
+use super::user_helper_service::{UserHelperService, UserHelperServiceTrait};
 
 #[derive(Clone)]
 pub struct UserService {
@@ -27,7 +29,7 @@ trait UserServiceTrait {
     async fn create_user_account(
         &self,
         request: &CreateUserRequest,
-    ) -> Result<bool, UserServiceError>;
+    ) -> Result<(), UserServiceError>;
 
     async fn fetch_user_data(&self, user_identifier: Uuid) -> Result<UserDto, UserServiceError>;
 }
@@ -36,8 +38,30 @@ impl UserServiceTrait for UserService {
     async fn create_user_account(
         &self,
         request: &CreateUserRequest,
-    ) -> Result<bool, UserServiceError> {
-        todo!()
+    ) -> Result<(), UserServiceError> {
+        if self
+            .user_repository
+            .find_by_email(&request.email)
+            .await
+            .is_some()
+        {
+            return Err(UserServiceError::ConflictError(
+                "User already exists".to_owned(),
+            ));
+        }
+
+        let password_hash = self.user_helper_service.hash_password(&request.password)?;
+        let user = CreateUserRequest {
+            password: password_hash,
+            first_name: request.first_name.to_owned(),
+            email: request.email.to_owned(),
+            last_name: request.last_name.to_owned(),
+        };
+
+        self.user_repository
+            .create_user(user)
+            .await
+            .map_err(|err| UserServiceError::from(err))
     }
 
     async fn fetch_user_data(&self, user_identifier: Uuid) -> Result<UserDto, UserServiceError> {

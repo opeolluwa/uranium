@@ -4,8 +4,12 @@ use sqlx::{Pool, Postgres, query_as};
 use uuid::Uuid;
 
 use crate::{
+    adapters::requests::auth::CreateUserRequest,
     entities::user::UserEntity,
-    errors::{database_error::DatabaseError, service_error::ServiceError, user_service::UserServiceError},
+    errors::{
+        self, database_error::DatabaseError, shared_service_error::ServiceError,
+        user_service_error::UserServiceError,
+    },
 };
 
 #[derive(Clone)]
@@ -29,9 +33,24 @@ pub trait UserRepositoryTrait {
     async fn save(&self, identifier: &Uuid) -> Result<(), ServiceError>;
 
     async fn update_account_status(&self, identifier: &Uuid) -> Result<(), ServiceError>;
+
+    async fn create_user(&self, user: CreateUserRequest) -> Result<(), UserServiceError>;
 }
 
 impl UserRepositoryTrait for UserRepository {
+    async fn create_user(&self, user: CreateUserRequest) -> Result<(), UserServiceError> {
+        let _ =
+            sqlx::query(r#"INSERT INTO user (identifier, first_name, last_name,email,password"#)
+                .bind(uuid::Uuid::new_v4().to_string())
+                .bind(user.first_name)
+                .bind(user.last_name)
+                .bind(user.email)
+                .bind(user.password)
+                .execute(self.pool.as_ref())
+                .await
+                .map_err(|err| UserServiceError::OperationFailed(err.to_string()))?;
+        Ok(())
+    }
     async fn find_by_identifier(&self, identifier: &Uuid) -> Option<UserEntity> {
         sqlx::query_as::<_, UserEntity>("SELECT * FROM users WHERE identifier = ?")
             .bind(identifier.to_string())
@@ -59,13 +78,7 @@ impl UserRepositoryTrait for UserRepository {
                 .bind(identifier.to_string())
                 .fetch_one(self.pool.as_ref())
                 .await
-                .map_err(|err| {
-                    log::error!(
-                        "error setting the account status due to {}",
-                        err.to_string()
-                    );
-                    DatabaseError::from(err)
-                })?;
+                .map_err(|err| UserServiceError::OperationFailed(err.to_string()));
 
         Ok(())
     }

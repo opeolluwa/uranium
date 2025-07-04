@@ -1,4 +1,5 @@
 use axum::{Json, extract::State};
+use serde_json::{Value, json};
 
 use crate::{
     adapters::{
@@ -7,16 +8,18 @@ use crate::{
         },
         response::auth::{CreateUserResponse, VerifyAccountResponse},
     },
-    errors::service_error::ServiceError,
+    errors::{auth_service_error::AuthenticationServiceError, shared_service_error::ServiceError},
     services::auth_service::{AuthenticationService, AuthenticationServiceTrait},
 };
 
-pub async fn sign_up(
+pub async fn create_account(
     State(auth_service): State<AuthenticationService>,
     Json(request): Json<CreateUserRequest>,
-) -> Result<Json<CreateUserResponse>, ServiceError> {
-    let resp = auth_service.sign_up(&request).await?;
-    Ok(Json(resp))
+) -> Result<Json<Value>, AuthenticationServiceError> {
+    let _ = auth_service.create_account(&request).await?;
+    Ok(Json(json!({
+        "message":"account created successfully"
+    })))
 }
 pub async fn login(
     State(auth_service): State<AuthenticationService>,

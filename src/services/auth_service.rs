@@ -12,91 +12,109 @@ use crate::{
             SetNewPasswordResponse, VerifyAccountResponse,
         },
     },
-    errors::{database_error::DatabaseError, service_error::ServiceError},
+    errors::{
+        auth_service_error::AuthenticationServiceError, user_service_error::UserServiceError,
+    },
     repositories::user_repository::{UserRepository, UserRepositoryTrait},
+    services::user_helper_service::{UserHelperService, UserHelperServiceTrait},
 };
 
 #[derive(Clone)]
 pub struct AuthenticationService {
     user_repository: UserRepository,
+    user_helper_service: UserHelperService,
 }
 
 impl AuthenticationService {
     pub fn init(pool: &Pool<Postgres>) -> Self {
         Self {
             user_repository: UserRepository::init(pool),
+            user_helper_service: UserHelperService::init(),
         }
     }
 }
 pub trait AuthenticationServiceTrait {
-    async fn sign_up(
+    async fn create_account(
         &self,
         request: &CreateUserRequest,
-    ) -> Result<CreateUserResponse, ServiceError>;
+    ) -> Result<(), AuthenticationServiceError>;
 
-    async fn login(request: &LoginRequest) -> Result<LoginResponse, ServiceError>;
+    async fn login(request: &LoginRequest) -> Result<LoginResponse, AuthenticationServiceError>;
 
     async fn forgotten_password(
         request: &ForgottenPasswordRequest,
-    ) -> Result<ForgottenPasswordResponse, ServiceError>;
+    ) -> Result<ForgottenPasswordResponse, AuthenticationServiceError>;
 
     async fn set_new_password(
         request: &SetNewPasswordRequest,
-    ) -> Result<SetNewPasswordResponse, ServiceError>;
+    ) -> Result<SetNewPasswordResponse, AuthenticationServiceError>;
 
     async fn verify_account(
         request: &VerifyAccountRequest,
-    ) -> Result<VerifyAccountResponse, ServiceError>;
+    ) -> Result<VerifyAccountResponse, AuthenticationServiceError>;
 
     async fn refresh_otp(
         otp_kind: &OtpKind,
         request: &RefreshOtpRequest,
-    ) -> Result<RefreshOtpResponse, ServiceError>;
+    ) -> Result<RefreshOtpResponse, AuthenticationServiceError>;
 }
 
 impl AuthenticationServiceTrait for AuthenticationService {
-    async fn sign_up(
+    async fn create_account(
         &self,
         request: &CreateUserRequest,
-    ) -> Result<CreateUserResponse, ServiceError> {
+    ) -> Result<(), AuthenticationServiceError> {
         if self
             .user_repository
             .find_by_email(&request.email)
             .await
             .is_some()
         {
-            return Err(ServiceError::from(DatabaseError::ConflictError));
+            return Err(AuthenticationServiceError::from(
+                UserServiceError::ConflictError("User with the email already exists".to_string()),
+            ));
         }
-        
-        todo!()
+
+        let password_hash = self.user_helper_service.hash_password(&request.password)?;
+        let user = CreateUserRequest {
+            password: password_hash,
+            first_name: request.first_name.to_owned(),
+            email: request.email.to_owned(),
+            last_name: request.last_name.to_owned(),
+        };
+
+        self.user_repository
+            .create_user(user)
+            .await
+            .map_err(|err| AuthenticationServiceError::from(err))
     }
 
-    async fn login(request: &LoginRequest) -> Result<LoginResponse, ServiceError> {
+    async fn login(request: &LoginRequest) -> Result<LoginResponse, AuthenticationServiceError> {
         todo!()
     }
 
     async fn forgotten_password(
         request: &ForgottenPasswordRequest,
-    ) -> Result<ForgottenPasswordResponse, ServiceError> {
+    ) -> Result<ForgottenPasswordResponse, AuthenticationServiceError> {
         todo!()
     }
 
     async fn set_new_password(
         request: &SetNewPasswordRequest,
-    ) -> Result<SetNewPasswordResponse, ServiceError> {
+    ) -> Result<SetNewPasswordResponse, AuthenticationServiceError> {
         todo!()
     }
 
     async fn verify_account(
         request: &VerifyAccountRequest,
-    ) -> Result<VerifyAccountResponse, ServiceError> {
+    ) -> Result<VerifyAccountResponse, AuthenticationServiceError> {
         todo!()
     }
 
     async fn refresh_otp(
         otp_kind: &OtpKind,
         request: &RefreshOtpRequest,
-    ) -> Result<RefreshOtpResponse, ServiceError> {
+    ) -> Result<RefreshOtpResponse, AuthenticationServiceError> {
         todo!()
     }
 }

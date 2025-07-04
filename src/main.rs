@@ -25,14 +25,15 @@ async fn main() -> Result<(), AppError> {
     let database_url = extract_env::<String>("DATABASE_URL")?;
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect("postgres://uranium:uranium@postgres/uranium")
+        .connect(&database_url)
         .await
         .map_err(|err| AppError::StartupError(err.to_string()))?;
+    log::info!("Database initialized");
 
     let app = load_routes(pool);
     let port = extract_env::<u16>("PORT")?;
     let ip_address = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, port));
-    log::info!("Application listening on {}", ip_address);
+    log::info!("Application listening on http://{}", ip_address);
 
     let listener = tokio::net::TcpListener::bind(ip_address)
         .await

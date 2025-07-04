@@ -2,7 +2,7 @@ use axum::{http::StatusCode, response::IntoResponse};
 
 use crate::errors::database_error::DatabaseError;
 
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Debug, Clone,)]
 pub enum ServiceError {
     #[error("Failed to start up service")]
     InitializationFailed,

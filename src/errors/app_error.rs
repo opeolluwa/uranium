@@ -1,6 +1,6 @@
 use axum::{http::StatusCode, response::IntoResponse};
 
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Debug, Clone)]
 pub enum AppError {
     #[error("App failed to start up due to {0}")]
     StartupError(String),

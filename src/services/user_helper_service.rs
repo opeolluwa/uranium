@@ -1,5 +1,6 @@
-use crate::errors::user_service::UserServiceError;
+use crate::errors::user_service_error::UserServiceError;
 use crate::services::user_service::UserService;
+use bcrypt::{DEFAULT_COST, hash, verify};
 
 #[derive(Clone)]
 pub struct UserHelperService {}
@@ -11,24 +12,18 @@ impl UserHelperService {
 }
 
 pub trait UserHelperServiceTrait {
-    async fn hash_password(&self, raw_password: &String) -> Result<String, UserServiceError>;
+    fn hash_password(&self, raw_password: &str) -> Result<String, UserServiceError>;
 
-    async fn validate_password(
-        &self,
-        raw_password: &String,
-        hash: &String,
-    ) -> Result<bool, UserServiceError>;
+    fn validate_password(&self, raw_password: &str, hash: &str) -> Result<bool, UserServiceError>;
 }
 
-impl UserHelperServiceTrait for UserService {
-    async fn hash_password(&self, raw_password: &String) -> Result<String, UserServiceError> {
-        todo!()
+impl UserHelperServiceTrait for UserHelperService {
+    fn hash_password(&self, raw_password: &str) -> Result<String, UserServiceError> {
+        hash(raw_password.trim(), DEFAULT_COST)
+            .map_err(|err| UserServiceError::OperationFailed(err.to_string()))
     }
-    async fn validate_password(
-        &self,
-        raw_password: &String,
-        hash: &String,
-    ) -> Result<bool, UserServiceError> {
-        todo!()
+    fn validate_password(&self, raw_password: &str, hash: &str) -> Result<bool, UserServiceError> {
+        verify(raw_password.trim(), &hash)
+            .map_err(|err| UserServiceError::OperationFailed(err.to_string()))
     }
 }
