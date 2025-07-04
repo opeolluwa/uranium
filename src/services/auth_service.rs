@@ -8,7 +8,7 @@ use crate::{
             SetNewPasswordRequest, VerifyAccountRequest,
         },
         response::auth::{
-            CreateUserResponse, ForgottenPasswordResponse, LoginResponse, RefreshOtpResponse,
+            ForgottenPasswordResponse, LoginResponse, RefreshOtpResponse,
             SetNewPasswordResponse, VerifyAccountResponse,
         },
     },
@@ -86,7 +86,7 @@ impl AuthenticationServiceTrait for AuthenticationService {
         self.user_repository
             .create_user(user)
             .await
-            .map_err(|err| AuthenticationServiceError::from(err))
+            .map_err(AuthenticationServiceError::from)
     }
 
     async fn login(request: &LoginRequest) -> Result<LoginResponse, AuthenticationServiceError> {

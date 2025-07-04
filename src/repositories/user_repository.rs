@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
-use sqlx::{Pool, Postgres, query_as};
+use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
 use crate::{
     adapters::requests::auth::CreateUserRequest,
     entities::user::UserEntity,
     errors::{
-        self, database_error::DatabaseError, shared_service_error::ServiceError,
+        shared_service_error::ServiceError,
         user_service_error::UserServiceError,
     },
 };

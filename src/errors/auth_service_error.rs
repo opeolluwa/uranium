@@ -34,8 +34,8 @@ impl IntoResponse for AuthenticationServiceError {
             AuthenticationServiceError::InvalidToken => StatusCode::BAD_REQUEST,
 
             AuthenticationServiceError::ServiceError(err) => {
-                let status  =  err.to_owned().into_response().status();
-                status
+                
+                err.to_owned().into_response().status()
             }
 
             AuthenticationServiceError::UserServiceError(err) => {

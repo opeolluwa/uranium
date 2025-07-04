@@ -6,9 +6,9 @@ use crate::{
         requests::auth::{
             CreateUserRequest, ForgottenPasswordRequest, LoginRequest, SetNewPasswordRequest,
         },
-        response::auth::{CreateUserResponse, VerifyAccountResponse},
+        response::auth::VerifyAccountResponse,
     },
-    errors::{auth_service_error::AuthenticationServiceError, shared_service_error::ServiceError},
+    errors::auth_service_error::AuthenticationServiceError,
     services::auth_service::{AuthenticationService, AuthenticationServiceTrait},
 };
 
@@ -16,7 +16,7 @@ pub async fn create_account(
     State(auth_service): State<AuthenticationService>,
     Json(request): Json<CreateUserRequest>,
 ) -> Result<Json<Value>, AuthenticationServiceError> {
-    let _ = auth_service.create_account(&request).await?;
+    auth_service.create_account(&request).await?;
     Ok(Json(json!({
         "message":"account created successfully"
     })))

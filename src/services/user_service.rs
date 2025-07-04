@@ -3,10 +3,8 @@ use uuid::Uuid;
 
 use crate::adapters::dto::user::UserDto;
 use crate::adapters::requests::auth::CreateUserRequest;
-use crate::errors::shared_service_error::ServiceError;
 use crate::errors::user_service_error::UserServiceError;
 use crate::repositories::user_repository::{UserRepository, UserRepositoryTrait};
-use crate::services::user_helper_service;
 
 use super::user_helper_service::{UserHelperService, UserHelperServiceTrait};
 
@@ -61,7 +59,6 @@ impl UserServiceTrait for UserService {
         self.user_repository
             .create_user(user)
             .await
-            .map_err(|err| UserServiceError::from(err))
     }
 
     async fn fetch_user_data(&self, user_identifier: Uuid) -> Result<UserDto, UserServiceError> {

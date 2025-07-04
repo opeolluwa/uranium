@@ -1,8 +1,7 @@
-use std::sync::Arc;
 
 use axum::{
     Router,
-    routing::{get, post},
+    routing::post,
 };
 
 use crate::{

@@ -1,5 +1,4 @@
 use crate::errors::user_service_error::UserServiceError;
-use crate::services::user_service::UserService;
 use bcrypt::{DEFAULT_COST, hash, verify};
 
 #[derive(Clone)]
@@ -23,7 +22,7 @@ impl UserHelperServiceTrait for UserHelperService {
             .map_err(|err| UserServiceError::OperationFailed(err.to_string()))
     }
     fn validate_password(&self, raw_password: &str, hash: &str) -> Result<bool, UserServiceError> {
-        verify(raw_password.trim(), &hash)
+        verify(raw_password.trim(), hash)
             .map_err(|err| UserServiceError::OperationFailed(err.to_string()))
     }
 }

@@ -1,5 +1,4 @@
 use axum::{http::StatusCode, response::IntoResponse};
-use bcrypt::BcryptError;
 
 use crate::errors::shared_service_error::ServiceError;
 
