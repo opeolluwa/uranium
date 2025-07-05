@@ -23,6 +23,8 @@ pub enum AuthenticationServiceError {
     UserServiceError(#[from] UserServiceError),
     #[error(transparent)]
     AppError(#[from] AppError),
+    #[error("error processing authorization token")]
+    JwtError(#[from] jsonwebtoken::errors::Error),
 }
 
 impl IntoResponse for AuthenticationServiceError {
@@ -34,7 +36,6 @@ impl IntoResponse for AuthenticationServiceError {
             AuthenticationServiceError::InvalidToken => StatusCode::BAD_REQUEST,
 
             AuthenticationServiceError::ServiceError(err) => {
-                
                 err.to_owned().into_response().status()
             }
 
@@ -42,6 +43,7 @@ impl IntoResponse for AuthenticationServiceError {
                 err.to_owned().into_response().status()
             }
             AuthenticationServiceError::AppError(err) => err.to_owned().into_response().status(),
+            AuthenticationServiceError::JwtError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
         (status, self.to_string()).into_response()

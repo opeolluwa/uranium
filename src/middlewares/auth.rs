@@ -9,20 +9,7 @@ use crate::{
     adapters::dto::jwt::AuthenticatedUser, errors::auth_service_error::AuthenticationServiceError,
     shared::extract_env::extract_env,
 };
-
-struct Keys {
-    encoding: EncodingKey,
-    decoding: DecodingKey,
-}
-
-impl Keys {
-    fn new(secret: &[u8]) -> Self {
-        Self {
-            encoding: EncodingKey::from_secret(secret),
-            decoding: DecodingKey::from_secret(secret),
-        }
-    }
-}
+use crate::adapters::dto::jwt::Keys;
 
 impl<S> FromRequestParts<S> for AuthenticatedUser
 where

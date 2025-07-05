@@ -1,5 +1,6 @@
+use crate::adapters::dto::jwt::JwtCredentials;
 use crate::errors::user_service_error::UserServiceError;
-use bcrypt::{DEFAULT_COST, hash, verify};
+use bcrypt::{hash, verify, DEFAULT_COST};
 
 #[derive(Clone)]
 pub struct UserHelperService {}
@@ -12,7 +13,6 @@ impl UserHelperService {
 
 pub trait UserHelperServiceTrait {
     fn hash_password(&self, raw_password: &str) -> Result<String, UserServiceError>;
-
     fn validate_password(&self, raw_password: &str, hash: &str) -> Result<bool, UserServiceError>;
 }
 
@@ -25,4 +25,6 @@ impl UserHelperServiceTrait for UserHelperService {
         verify(raw_password.trim(), hash)
             .map_err(|err| UserServiceError::OperationFailed(err.to_string()))
     }
+
+   
 }

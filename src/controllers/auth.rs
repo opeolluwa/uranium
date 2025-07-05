@@ -1,30 +1,40 @@
-use axum::{Json, extract::State};
-use serde_json::{Value, json};
-
+use crate::adapters::response::api_response::ApiResponseBuilder;
 use crate::{
     adapters::{
         requests::auth::{
             CreateUserRequest, ForgottenPasswordRequest, LoginRequest, SetNewPasswordRequest,
         },
-        response::auth::VerifyAccountResponse,
+        response::{
+            api_response::ApiResponse,
+            auth::{CreateUserResponse, LoginResponse, VerifyAccountResponse},
+        },
     },
     errors::auth_service_error::AuthenticationServiceError,
     services::auth_service::{AuthenticationService, AuthenticationServiceTrait},
 };
+use axum::http::StatusCode;
+use axum::{extract::State, Json};
 
 pub async fn create_account(
     State(auth_service): State<AuthenticationService>,
     Json(request): Json<CreateUserRequest>,
-) -> Result<Json<Value>, AuthenticationServiceError> {
+) -> Result<ApiResponse<CreateUserResponse>, AuthenticationServiceError> {
     auth_service.create_account(&request).await?;
-    Ok(Json(json!({
-        "message":"account created successfully"
-    })))
+
+    Ok(ApiResponseBuilder::new()
+        .status_code(StatusCode::CREATED)
+        .message("Account created successfully")
+        .build())
 }
 pub async fn login(
     State(auth_service): State<AuthenticationService>,
     Json(request): Json<LoginRequest>,
-) {
+) -> Result<ApiResponse<LoginResponse>, AuthenticationServiceError> {
+    let login_response = auth_service.login(&request).await?;
+    Ok(ApiResponseBuilder::new()
+        .status_code(StatusCode::OK)
+        .data(login_response)
+        .build())
 }
 pub async fn verify_account(
     State(auth_service): State<AuthenticationService>,

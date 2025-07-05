@@ -1,5 +1,6 @@
 use sqlx::{Pool, Postgres};
 
+use crate::adapters::dto::jwt::JwtCredentials;
 use crate::{
     adapters::{
         dto::otp::OtpKind,
@@ -8,8 +9,8 @@ use crate::{
             SetNewPasswordRequest, VerifyAccountRequest,
         },
         response::auth::{
-            ForgottenPasswordResponse, LoginResponse, RefreshOtpResponse,
-            SetNewPasswordResponse, VerifyAccountResponse,
+            ForgottenPasswordResponse, LoginResponse, RefreshOtpResponse, SetNewPasswordResponse,
+            VerifyAccountResponse,
         },
     },
     errors::{
@@ -39,7 +40,10 @@ pub trait AuthenticationServiceTrait {
         request: &CreateUserRequest,
     ) -> Result<(), AuthenticationServiceError>;
 
-    async fn login(request: &LoginRequest) -> Result<LoginResponse, AuthenticationServiceError>;
+    async fn login(
+        &self,
+        request: &LoginRequest,
+    ) -> Result<LoginResponse, AuthenticationServiceError>;
 
     async fn forgotten_password(
         request: &ForgottenPasswordRequest,
@@ -89,8 +93,25 @@ impl AuthenticationServiceTrait for AuthenticationService {
             .map_err(AuthenticationServiceError::from)
     }
 
-    async fn login(request: &LoginRequest) -> Result<LoginResponse, AuthenticationServiceError> {
-        todo!()
+    async fn login(
+        &self,
+        request: &LoginRequest,
+    ) -> Result<LoginResponse, AuthenticationServiceError> {
+        let Some(user) = self.user_repository.find_by_email(&request.email).await else {
+            return Err(AuthenticationServiceError::WrongCredentials);
+        };
+
+        let valid_password = self
+            .user_helper_service
+            .validate_password(&user.password, &request.password)?;
+        if !valid_password {
+            return Err(AuthenticationServiceError::WrongCredentials);
+        }
+
+        let token =
+            JwtCredentials::new(&user.email, &user.identifier.to_string()).generate_token()?;
+
+        Ok(LoginResponse { token })
     }
 
     async fn forgotten_password(

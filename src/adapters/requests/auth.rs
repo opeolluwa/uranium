@@ -6,17 +6,22 @@ use validator::Validate;
 pub struct CreateUserRequest {
     #[validate(email)]
     pub email: String,
-    #[validate(length(min = 1))]
+    #[validate(length(min = 1, message= "password is required"))]
     pub password: String,
-    #[validate(length(min = 1))]
+    #[validate(length(min = 1, message="first name cannot be empty"))]
     pub first_name: String,
-    #[validate(length(min = 1))]
+    #[validate(length(min = 1, message = "last name cannot be empty "))]
     pub last_name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
-pub struct LoginRequest {}
+pub struct LoginRequest {
+    #[validate(email)]
+    pub email: String,
+    #[validate(length(min = 1, message = "password cannot be empty"))]
+    pub password: String,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
