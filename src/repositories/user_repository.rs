@@ -42,16 +42,18 @@ pub trait UserRepositoryTrait {
 
 impl UserRepositoryTrait for UserRepository {
     async fn create_user(&self, user: CreateUserRequest) -> Result<(), UserServiceError> {
-        let _ =
-            sqlx::query(r#"INSERT INTO users (identifier, first_name, last_name, email, password) VALUES (?, ?, ?, ?, ?);"#)
-                .bind(uuid::Uuid::new_v4().to_string())
-                .bind(user.first_name)
-                .bind(user.last_name)
-                .bind(user.email)
-                .bind(user.password)
-                .execute(self.pool.as_ref())
-                .await
-                .map_err(|err| UserServiceError::OperationFailed(err.to_string()))?;
+        sqlx::query(
+    "INSERT INTO users (identifier, first_name, last_name, email, password) VALUES ($1, $2, $3, $4, $5)"
+)
+.bind(uuid::Uuid::new_v4())
+.bind(user.first_name)
+.bind(user.last_name)
+.bind(user.email)
+.bind(user.password)
+.execute(self.pool.as_ref())
+.await
+.map_err(|err| UserServiceError::OperationFailed(err.to_string()))?;
+
         Ok(())
     }
     async fn find_by_identifier(&self, identifier: &Uuid) -> Option<UserEntity> {

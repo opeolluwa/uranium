@@ -96,6 +96,7 @@ impl AuthenticationServiceTrait for AuthenticationService {
             log::error!("{}", err.to_string());
             AuthenticationServiceError::from(err)
         })
+
     }
 
     async fn login(
