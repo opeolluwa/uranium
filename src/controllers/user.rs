@@ -16,5 +16,8 @@ pub async fn retrieve_information(
 ) -> Result<ApiResponse<UserDto>, UserServiceError> {
     let user_data = user_service.retrieve_information(claim.identifier).await?;
 
-    Ok(ApiResponseBuilder::new().data(user_data).build())
+    Ok(ApiResponseBuilder::new()
+        .data(user_data)
+        .message("User's profile fetched successfully")
+        .build())
 }

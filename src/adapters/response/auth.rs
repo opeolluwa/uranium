@@ -17,7 +17,9 @@ pub struct LoginResponse {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ForgottenPasswordResponse {}
+pub struct ForgottenPasswordResponse {
+    pub token: String,
+}
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SetNewPasswordResponse {}

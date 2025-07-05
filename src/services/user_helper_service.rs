@@ -20,8 +20,7 @@ impl UserHelperServiceTrait for UserHelperService {
         hash(raw_password.trim(), DEFAULT_COST)
             .map_err(|err| UserServiceError::OperationFailed(err.to_string()))
     }
-    fn validate_password(&self, raw_password: &str, hash: &str) -> Result<bool, UserServiceError> {
-        verify(raw_password.trim(), hash)
-            .map_err(|err| UserServiceError::OperationFailed(err.to_string()))
+    fn validate_password(&self, password: &str, hash: &str) -> Result<bool, UserServiceError> {
+        verify(password, hash).map_err(|err| UserServiceError::OperationFailed(err.to_string()))
     }
 }

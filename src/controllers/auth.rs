@@ -1,9 +1,7 @@
 use crate::adapters::dto::jwt::Claims;
 use crate::adapters::requests::auth::VerifyAccountRequest;
 use crate::adapters::response::api_response::ApiResponseBuilder;
-use crate::adapters::response::auth::{
-    ForgottenPasswordResponse, RefreshTokenResponse, SetNewPasswordResponse,
-};
+use crate::adapters::response::auth::{ForgottenPasswordResponse, RefreshTokenResponse};
 use crate::middlewares::validator::ValidatedRequest;
 use crate::{
     adapters::{
@@ -40,6 +38,7 @@ pub async fn login(
     Ok(ApiResponseBuilder::new()
         .status_code(StatusCode::OK)
         .data(login_response)
+        .message("logged in successfully")
         .build())
 }
 pub async fn verify_account(
@@ -61,12 +60,7 @@ pub async fn forgotten_password(
 
     Ok(ApiResponseBuilder::new()
         .data(forgotten_password_response)
-        .message(
-            /*
-             * TODO: Set the response instructions
-             */
-            "",
-        )
+        .message("account retrival instructions has been sent to the registered email address")
         .build())
 }
 
@@ -74,11 +68,12 @@ pub async fn set_new_password(
     State(auth_service): State<AuthenticationService>,
     claims: Claims,
     ValidatedRequest(request): ValidatedRequest<SetNewPasswordRequest>,
-) -> Result<ApiResponse<SetNewPasswordResponse>, AuthenticationServiceError> {
-    let set_new_password_response = auth_service.set_new_password(&request, &claims).await?;
+) -> Result<ApiResponse<()>, AuthenticationServiceError> {
+    let _ = auth_service.set_new_password(&request, &claims).await?;
 
     Ok(ApiResponseBuilder::new()
-        .data(set_new_password_response)
+        .data(())
+        .message("password updated successfully")
         .build())
 }
 
@@ -90,5 +85,6 @@ pub async fn request_refresh_token(
 
     Ok(ApiResponseBuilder::new()
         .data(refresh_token_response)
+        .message("token updated successfully")
         .build())
 }

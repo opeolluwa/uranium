@@ -6,9 +6,9 @@ use axum::{http::StatusCode, response::IntoResponse};
 
 #[derive(Debug, thiserror::Error)]
 pub enum AuthenticationServiceError {
-    #[error("Wrong credentials")]
+    #[error("Invalid email or password")]
     WrongCredentials,
-    #[error("Missing credentials")]
+    #[error("Missing authorization headers")]
     MissingCredentials,
     #[error("Invalid token")]
     InvalidToken,

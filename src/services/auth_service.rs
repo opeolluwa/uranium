@@ -1,6 +1,7 @@
 use sqlx::{Pool, Postgres};
 
 use crate::adapters::dto::jwt::{Claims, JwtCredentials, TEN_MINUTES, TWENTY_FIVE_MINUTES};
+use crate::entities::user::UserEntity;
 use crate::{
     adapters::{
         requests::auth::{
@@ -96,7 +97,6 @@ impl AuthenticationServiceTrait for AuthenticationService {
             log::error!("{}", err.to_string());
             AuthenticationServiceError::from(err)
         })
-
     }
 
     async fn login(
@@ -109,7 +109,7 @@ impl AuthenticationServiceTrait for AuthenticationService {
 
         let valid_password = self
             .user_helper_service
-            .validate_password(&user.password, &request.password)?;
+            .validate_password(&request.password, &user.password)?;
         if !valid_password {
             return Err(AuthenticationServiceError::WrongCredentials);
         }
@@ -131,7 +131,12 @@ impl AuthenticationServiceTrait for AuthenticationService {
 
         tokio::task::spawn(async move { todo!("send account retrival email") });
 
-        Ok(ForgottenPasswordResponse {})
+        let UserEntity {
+            email, identifier, ..
+        } = user.unwrap();
+
+        let token = JwtCredentials::new(&email, &identifier).generate_token(TEN_MINUTES)?;
+        Ok(ForgottenPasswordResponse { token })
     }
 
     async fn set_new_password(
@@ -140,7 +145,7 @@ impl AuthenticationServiceTrait for AuthenticationService {
         claims: &Claims,
     ) -> Result<SetNewPasswordResponse, AuthenticationServiceError> {
         let new_password = self.user_helper_service.hash_password(&request.password)?;
-
+    
         if self
             .user_repository
             .find_by_identifier(&claims.identifier)
