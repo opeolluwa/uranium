@@ -43,9 +43,7 @@ pub trait UserRepositoryTrait {
 impl UserRepositoryTrait for UserRepository {
     async fn create_user(&self, user: CreateUserRequest) -> Result<(), UserServiceError> {
         let _ =
-            sqlx::query(r#"INSERT INTO users (identifier, first_name, last_name, email, password)
-VALUES ('550e8400-e29b-41d4-a716-446655440000', 'John', 'Doe', 'john.doe@example.com', 'secureHashedPassword123');
-"#)
+            sqlx::query(r#"INSERT INTO users (identifier, first_name, last_name, email, password) VALUES (?, ?, ?, ?, ?);"#)
                 .bind(uuid::Uuid::new_v4().to_string())
                 .bind(user.first_name)
                 .bind(user.last_name)
