@@ -6,10 +6,7 @@ use uuid::Uuid;
 use crate::{
     adapters::requests::auth::CreateUserRequest,
     entities::user::UserEntity,
-    errors::{
-        shared_service_error::ServiceError,
-        user_service_error::UserServiceError,
-    },
+    errors::{shared_service_error::ServiceError, user_service_error::UserServiceError},
 };
 
 #[derive(Clone)]

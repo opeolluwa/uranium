@@ -15,14 +15,14 @@ use crate::{
     services::auth_service::{AuthenticationService, AuthenticationServiceTrait},
 };
 use axum::http::StatusCode;
-use axum::{extract::State, Json};
+use axum::{Json, extract::State};
 
 pub async fn create_account(
     State(auth_service): State<AuthenticationService>,
     ValidatedRequest(request): ValidatedRequest<CreateUserRequest>,
 ) -> Result<ApiResponse<CreateUserResponse>, AuthenticationServiceError> {
     auth_service.create_account(&request).await?;
-    
+
     Ok(ApiResponseBuilder::new()
         .status_code(StatusCode::CREATED)
         .message("Account created successfully")

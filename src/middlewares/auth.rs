@@ -5,11 +5,11 @@ use axum_extra::{
 };
 use jsonwebtoken::{DecodingKey, EncodingKey, Validation, decode};
 
+use crate::adapters::dto::jwt::Keys;
 use crate::{
     adapters::dto::jwt::AuthenticatedUser, errors::auth_service_error::AuthenticationServiceError,
     shared::extract_env::extract_env,
 };
-use crate::adapters::dto::jwt::Keys;
 
 impl<S> FromRequestParts<S> for AuthenticatedUser
 where
@@ -18,8 +18,8 @@ where
     type Rejection = AuthenticationServiceError;
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        let secret = extract_env::<String>("JWT_SIGNING_KEY")
-            .map_err(AuthenticationServiceError::from)?;
+        let secret =
+            extract_env::<String>("JWT_SIGNING_KEY").map_err(AuthenticationServiceError::from)?;
 
         let decoding_key = Keys::new(secret.as_bytes()).decoding;
         // Extract the token from the authorization header

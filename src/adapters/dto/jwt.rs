@@ -1,8 +1,10 @@
-use crate::errors::auth_service_error::AuthenticationServiceError;
-use crate::shared::extract_env::extract_env;
+use std::time::Duration;
+
 use jsonwebtoken::{encode, DecodingKey, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
+
+use crate::errors::auth_service_error::AuthenticationServiceError;
+use crate::shared::extract_env::extract_env;
 
 const JWT_VALIDITY: Duration = Duration::from_secs(10 * 60 * 60); // 10 minutes in seconds
 #[derive(Debug, Serialize, Deserialize)]

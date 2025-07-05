@@ -56,9 +56,7 @@ impl UserServiceTrait for UserService {
             last_name: request.last_name.to_owned(),
         };
 
-        self.user_repository
-            .create_user(user)
-            .await
+        self.user_repository.create_user(user).await
     }
 
     async fn fetch_user_data(&self, user_identifier: Uuid) -> Result<UserDto, UserServiceError> {

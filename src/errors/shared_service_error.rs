@@ -1,8 +1,9 @@
-use crate::adapters::response::api_response::ApiResponseBuilder;
-use crate::errors::database_error::DatabaseError;
 use axum::extract::rejection::FormRejection;
 use axum::response::Response;
 use axum::{http::StatusCode, response::IntoResponse};
+
+use crate::adapters::response::api_response::ApiResponseBuilder;
+use crate::errors::database_error::DatabaseError;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ServiceError {
