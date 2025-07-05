@@ -1,3 +1,5 @@
+#![warn(unused_extern_crates)]
+
 use errors::app_error::AppError;
 use routes::router::load_routes;
 use shared::extract_env::extract_env;

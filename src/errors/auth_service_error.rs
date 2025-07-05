@@ -2,10 +2,7 @@ use crate::adapters::response::api_response::ApiResponseBuilder;
 use crate::errors::{
     app_error::AppError, common_service_error::ServiceError, user_service_error::UserServiceError,
 };
-use axum::{
-    http::StatusCode,
-    response::{IntoResponse, },
-};
+use axum::{http::StatusCode, response::IntoResponse};
 
 #[derive(Debug, thiserror::Error)]
 pub enum AuthenticationServiceError {
@@ -30,7 +27,7 @@ impl AuthenticationServiceError {
         match self {
             AuthenticationServiceError::WrongCredentials => StatusCode::UNAUTHORIZED,
             AuthenticationServiceError::MissingCredentials => StatusCode::BAD_REQUEST,
-   
+
             AuthenticationServiceError::InvalidToken => StatusCode::UNAUTHORIZED,
             AuthenticationServiceError::ServiceError(err) => err.status_code(),
             AuthenticationServiceError::UserServiceError(err) => err.status_code(),

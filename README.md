@@ -1,6 +1,6 @@
 # Uranium Core
 
-Free Identitity and access management system build on Rust and Axum
+Free Identitity and access management system built on Rust and Axum
 
 ## Getting started
 
@@ -18,3 +18,4 @@ git clone https://githib.com/opeolluwa/uranium
 cp .env.example .env.local
 just w
 ```
+

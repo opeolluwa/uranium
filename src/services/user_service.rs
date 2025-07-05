@@ -33,6 +33,8 @@ impl UserServiceTrait for UserService {
         &self,
         user_identifier: Uuid,
     ) -> Result<UserDto, UserServiceError> {
-        self.user_repository.retrieve_information(&user_identifier).await
+        self.user_repository
+            .retrieve_information(&user_identifier)
+            .await
     }
 }
