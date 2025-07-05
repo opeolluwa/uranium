@@ -9,17 +9,12 @@ impl RootService {
     }
 }
 pub trait RootServiceTrait {
-    fn shut_down(&self) -> Result<(), AppError>;
     fn health_check(&self) -> Result<(), AppError>;
 }
 
 impl RootServiceTrait for RootService {
-    fn shut_down(&self) -> Result<(), AppError> {
-        log::info!("shutting down ...");
-        std::process::exit(0);
-    }
     fn health_check(&self) -> Result<(), AppError> {
-        log::info!("application healthy ...");
+        log::info!("application is healthy ...");
         Ok(())
     }
 }

@@ -1,15 +1,14 @@
 use sqlx::{Pool, Postgres};
 
-use crate::adapters::dto::jwt::JwtCredentials;
+use crate::adapters::dto::jwt::{Claims, JwtCredentials, TEN_MINUTES, TWENTY_FIVE_MINUTES};
 use crate::{
     adapters::{
-        dto::otp::OtpKind,
         requests::auth::{
-            CreateUserRequest, ForgottenPasswordRequest, LoginRequest, RefreshOtpRequest,
+            CreateUserRequest, ForgottenPasswordRequest, LoginRequest, RefreshTokenRequest,
             SetNewPasswordRequest, VerifyAccountRequest,
         },
         response::auth::{
-            ForgottenPasswordResponse, LoginResponse, RefreshOtpResponse, SetNewPasswordResponse,
+            ForgottenPasswordResponse, LoginResponse, RefreshTokenResponse, SetNewPasswordResponse,
             VerifyAccountResponse,
         },
     },
@@ -46,23 +45,27 @@ pub trait AuthenticationServiceTrait {
     ) -> Result<LoginResponse, AuthenticationServiceError>;
 
     async fn forgotten_password(
+        &self,
+
         request: &ForgottenPasswordRequest,
     ) -> Result<ForgottenPasswordResponse, AuthenticationServiceError>;
 
     async fn set_new_password(
+        &self,
         request: &SetNewPasswordRequest,
+        claims: &Claims,
     ) -> Result<SetNewPasswordResponse, AuthenticationServiceError>;
 
     async fn verify_account(
         &self,
+        claims: &Claims,
         request: &VerifyAccountRequest,
     ) -> Result<VerifyAccountResponse, AuthenticationServiceError>;
 
-    async fn refresh_otp(
+    async fn request_refresh_token(
         &self,
-        otp_kind: &OtpKind,
-        request: &RefreshOtpRequest,
-    ) -> Result<RefreshOtpResponse, AuthenticationServiceError>;
+        request: &RefreshTokenRequest,
+    ) -> Result<RefreshTokenResponse, AuthenticationServiceError>;
 }
 
 impl AuthenticationServiceTrait for AuthenticationService {
@@ -111,35 +114,78 @@ impl AuthenticationServiceTrait for AuthenticationService {
         }
 
         let token =
-            JwtCredentials::new(&user.email, &user.identifier.to_string()).generate_token()?;
+            JwtCredentials::new(&user.email, &user.identifier).generate_token(TEN_MINUTES)?;
 
         Ok(LoginResponse { token })
     }
 
     async fn forgotten_password(
+        &self,
         request: &ForgottenPasswordRequest,
     ) -> Result<ForgottenPasswordResponse, AuthenticationServiceError> {
-        todo!()
+        let user = self.user_repository.find_by_email(&request.email).await;
+        if user.is_none() {
+            return Err(AuthenticationServiceError::WrongCredentials);
+        };
+
+        tokio::task::spawn(async move { todo!("send account retrival email") });
+
+        Ok(ForgottenPasswordResponse {})
     }
 
     async fn set_new_password(
+        &self,
         request: &SetNewPasswordRequest,
+        claims: &Claims,
     ) -> Result<SetNewPasswordResponse, AuthenticationServiceError> {
-        todo!()
+        let new_password = self.user_helper_service.hash_password(&request.password)?;
+
+        if self
+            .user_repository
+            .find_by_identifier(&claims.identifier)
+            .await
+            .is_none()
+        {
+            return Err(AuthenticationServiceError::InvalidToken);
+        };
+
+        self.user_repository
+            .update_password(&claims.identifier, &new_password)
+            .await?;
+
+        Ok(SetNewPasswordResponse {})
     }
 
     async fn verify_account(
         &self,
-        request: &VerifyAccountRequest,
+        claims: &Claims,
+        _request: &VerifyAccountRequest,
     ) -> Result<VerifyAccountResponse, AuthenticationServiceError> {
-        todo!()
+        if self
+            .user_repository
+            .find_by_identifier(&claims.identifier)
+            .await
+            .is_none()
+        {
+            return Err(AuthenticationServiceError::InvalidToken);
+        };
+
+        //todo: validate account credentials
+        self.user_repository
+            .update_account_status(&claims.identifier)
+            .await?;
+        Ok(VerifyAccountResponse {})
     }
 
-    async fn refresh_otp(
+    async fn request_refresh_token(
         &self,
-        otp_kind: &OtpKind,
-        request: &RefreshOtpRequest,
-    ) -> Result<RefreshOtpResponse, AuthenticationServiceError> {
-        todo!()
+        request: &RefreshTokenRequest,
+    ) -> Result<RefreshTokenResponse, AuthenticationServiceError> {
+        let refresh_token = JwtCredentials::new(&request.email, &request.identifier)
+            .generate_token(TWENTY_FIVE_MINUTES)?;
+
+        Ok(RefreshTokenResponse {
+            token: refresh_token,
+        })
     }
 }

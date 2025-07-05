@@ -31,4 +31,6 @@ pub struct VerifyAccountResponse {}
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 
-pub struct RefreshOtpResponse {}
+pub struct RefreshTokenResponse {
+    pub token: String,
+}

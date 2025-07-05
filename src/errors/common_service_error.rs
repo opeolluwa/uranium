@@ -3,18 +3,13 @@ use axum::response::Response;
 use axum::{http::StatusCode, response::IntoResponse};
 
 use crate::adapters::response::api_response::ApiResponseBuilder;
-use crate::errors::database_error::DatabaseError;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ServiceError {
-    #[error("Failed to start up service")]
-    InitializationFailed,
     #[error("an internal database error has occurred")]
-    DatabaseError(#[from] DatabaseError),
+    DatabaseError(#[from] sqlx::error::Error),
     #[error(transparent)]
     ValidationError(#[from] validator::ValidationErrors),
-    #[error("failed to perform operation")]
-    OperationFailed(String),
     #[error(transparent)]
     AxumFormRejection(#[from] FormRejection),
 }
@@ -22,11 +17,9 @@ pub enum ServiceError {
 impl ServiceError {
     pub fn status_code(&self) -> StatusCode {
         match self {
-            ServiceError::InitializationFailed
-            | ServiceError::DatabaseError(_)
-            | ServiceError::OperationFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
             ServiceError::ValidationError(_) => StatusCode::BAD_REQUEST,
             ServiceError::AxumFormRejection(_) => StatusCode::BAD_REQUEST,
+            ServiceError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }

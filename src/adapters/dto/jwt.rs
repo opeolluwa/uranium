@@ -1,22 +1,23 @@
 use std::time::Duration;
 
-use jsonwebtoken::{encode, DecodingKey, EncodingKey, Header};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, encode};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::errors::auth_service_error::AuthenticationServiceError;
 use crate::shared::extract_env::extract_env;
 
-const JWT_VALIDITY: Duration = Duration::from_secs(10 * 60 * 60); // 10 minutes in seconds
-#[derive(Debug, Serialize, Deserialize)]
-pub struct AuthenticatedUser {
-    pub identifier: String,
-}
+pub const _FIVE_MINUTES: Duration = Duration::from_secs(5 * 60 * 60);
+pub const TWENTY_FIVE_MINUTES: Duration = Duration::from_secs(26 * 60 * 60);
+pub const TEN_MINUTES: Duration = Duration::from_secs(10 * 60 * 60);
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JwtCredentials {
     pub email: String,
-    pub identifier: String,
+    pub identifier: Uuid,
 }
+
+pub type Claims = JwtCredentials;
 
 pub struct Keys {
     encoding: EncodingKey,
@@ -41,20 +42,20 @@ struct Claim {
 }
 
 impl JwtCredentials {
-    pub fn new(email: &str, identifier: &str) -> Self {
+    pub fn new(email: &str, identifier: &Uuid) -> Self {
         Self {
             email: email.to_string(),
-            identifier: identifier.to_string(),
+            identifier: identifier.to_owned(),
         }
     }
 
-    pub fn generate_token(&self) -> Result<String, AuthenticationServiceError> {
+    pub fn generate_token(&self, validity: Duration) -> Result<String, AuthenticationServiceError> {
         let now = chrono::Utc::now().timestamp();
         let claim = Claim {
             email: self.email.to_string(),
             identifier: self.identifier.to_string(),
             iat: now,
-            exp: now + JWT_VALIDITY.as_secs() as i64,
+            exp: now + validity.as_secs() as i64,
         };
 
         let secret =

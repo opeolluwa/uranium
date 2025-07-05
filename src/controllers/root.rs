@@ -3,15 +3,6 @@ use crate::services::root_service::RootServiceTrait;
 use crate::{errors::app_error::AppError, services::root_service::RootService};
 use axum::extract::State;
 
-pub async fn shut_down(
-    State(root_service): State<RootService>,
-) -> Result<ApiResponse<()>, AppError> {
-    root_service.shut_down()?;
-    Ok(ApiResponseBuilder::new()
-        .message("service is shutting down")
-        .build())
-}
-
 pub async fn health_check(
     State(root_service): State<RootService>,
 ) -> Result<ApiResponse<()>, AppError> {

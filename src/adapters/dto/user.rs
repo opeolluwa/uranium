@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+use sqlx::prelude::FromRow;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct UserDto {
     pub email: String,
     pub password: String,
@@ -9,9 +9,3 @@ pub struct UserDto {
     pub last_name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AuthenticatedUser {
-    pub identifier: Uuid,
-    pub email: String,
-}

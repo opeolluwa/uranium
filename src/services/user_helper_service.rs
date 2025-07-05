@@ -1,4 +1,3 @@
-use crate::adapters::dto::jwt::JwtCredentials;
 use crate::errors::user_service_error::UserServiceError;
 use bcrypt::{DEFAULT_COST, hash, verify};
 

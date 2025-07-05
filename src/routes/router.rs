@@ -2,7 +2,7 @@ use axum::Router;
 use sqlx::{Pool, Postgres};
 
 use crate::{
-    routes::{auth::authentication_routes, public::public_routes},
+    routes::{auth::authentication_routes, public::public_routes, users::user_routes},
     services::{
         auth_service::AuthenticationService, root_service::RootService, user_service::UserService,
     },
@@ -19,4 +19,5 @@ pub fn load_routes(pool: Pool<Postgres>) -> Router {
     Router::new()
         .merge(public_routes(state.clone()))
         .merge(authentication_routes(state.clone()))
+        .nest("/users", user_routes(state.clone()))
 }
