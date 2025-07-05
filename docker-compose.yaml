@@ -19,8 +19,8 @@ services:
       DATABASE_HOST: postgres
       DATABASE_URL: postgres://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
       JWT_SIGNING_KEY: fXUuojVKfWgVi3qLgQl8GjPWHsihf33aExhi
-    env_file:
-      - .env.local
+    # env_file:
+    #   - .env.local
     depends_on:
       database: 
         condition: service_started

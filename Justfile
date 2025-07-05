@@ -33,7 +33,7 @@ build:
     cargo run build --release 
 
 @kill:  
-    docker compose down 
+    docker compose down -v 
 
 @restart:
     @just kill

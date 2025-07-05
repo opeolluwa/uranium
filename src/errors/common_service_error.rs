@@ -1,4 +1,4 @@
-use axum::extract::rejection::FormRejection;
+use axum::extract::rejection::{FormRejection, JsonRejection};
 use axum::response::Response;
 use axum::{http::StatusCode, response::IntoResponse};
 
@@ -12,6 +12,8 @@ pub enum ServiceError {
     ValidationError(#[from] validator::ValidationErrors),
     #[error(transparent)]
     AxumFormRejection(#[from] FormRejection),
+    #[error(transparent)]
+    AxumJsonRejection(#[from] JsonRejection),
 }
 
 impl ServiceError {
@@ -20,6 +22,7 @@ impl ServiceError {
             ServiceError::ValidationError(_) => StatusCode::BAD_REQUEST,
             ServiceError::AxumFormRejection(_) => StatusCode::BAD_REQUEST,
             ServiceError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ServiceError::AxumJsonRejection(_) => StatusCode::BAD_REQUEST,
         }
     }
 }

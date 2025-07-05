@@ -92,10 +92,10 @@ impl AuthenticationServiceTrait for AuthenticationService {
             last_name: request.last_name.to_owned(),
         };
 
-        self.user_repository
-            .create_user(user)
-            .await
-            .map_err(AuthenticationServiceError::from)
+        self.user_repository.create_user(user).await.map_err(|err| {
+            log::error!("{}", err.to_string());
+            AuthenticationServiceError::from(err)
+        })
     }
 
     async fn login(

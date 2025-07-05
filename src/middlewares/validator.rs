@@ -1,5 +1,5 @@
 use crate::errors::common_service_error::ServiceError;
-use axum::Form;
+use axum::{Form, Json};
 use axum::extract::rejection::FormRejection;
 use axum::extract::{FromRequest, Request};
 use serde::de::DeserializeOwned;
@@ -17,9 +17,9 @@ where
     type Rejection = ServiceError;
 
     async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
-        let Form(value) = Form::<T>::from_request(req, state)
+        let Json(value) = Json::<T>::from_request(req, state)
             .await
-            .map_err(ServiceError::AxumFormRejection)?;
+            .map_err(ServiceError::AxumJsonRejection)?;
         value.validate()?;
         Ok(ValidatedRequest(value))
     }
