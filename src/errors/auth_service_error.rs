@@ -1,13 +1,13 @@
+use crate::adapters::response::api_response::ApiResponseBuilder;
+use crate::errors::{
+    app_error::AppError, shared_service_error::ServiceError, user_service_error::UserServiceError,
+};
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
 
-use crate::errors::{
-    app_error::AppError, shared_service_error::ServiceError, user_service_error::UserServiceError,
-};
-
-#[derive(Debug, thiserror::Error, Clone)]
+#[derive(Debug, thiserror::Error)]
 pub enum AuthenticationServiceError {
     #[error("Wrong credentials")]
     WrongCredentials,
@@ -27,25 +27,26 @@ pub enum AuthenticationServiceError {
     JwtError(#[from] jsonwebtoken::errors::Error),
 }
 
-impl IntoResponse for AuthenticationServiceError {
-    fn into_response(self) -> Response {
-        let status = match &self {
+impl AuthenticationServiceError {
+    fn status_code(&self) -> StatusCode {
+        match self {
             AuthenticationServiceError::WrongCredentials => StatusCode::UNAUTHORIZED,
             AuthenticationServiceError::MissingCredentials => StatusCode::BAD_REQUEST,
             AuthenticationServiceError::TokenCreation => StatusCode::INTERNAL_SERVER_ERROR,
-            AuthenticationServiceError::InvalidToken => StatusCode::BAD_REQUEST,
-
-            AuthenticationServiceError::ServiceError(err) => {
-                err.to_owned().into_response().status()
-            }
-
-            AuthenticationServiceError::UserServiceError(err) => {
-                err.to_owned().into_response().status()
-            }
-            AuthenticationServiceError::AppError(err) => err.to_owned().into_response().status(),
+            AuthenticationServiceError::InvalidToken => StatusCode::UNAUTHORIZED,
+            AuthenticationServiceError::ServiceError(err) => err.status_code(),
+            AuthenticationServiceError::UserServiceError(err) => err.status_code(),
+            AuthenticationServiceError::AppError(err) => err.status_code(),
             AuthenticationServiceError::JwtError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        };
-
-        (status, self.to_string()).into_response()
+        }
+    }
+}
+impl IntoResponse for AuthenticationServiceError {
+    fn into_response(self) -> axum::response::Response {
+        ApiResponseBuilder::<()>::new()
+            .status_code(self.status_code())
+            .message(&self.to_string())
+            .build()
+            .into_response()
     }
 }

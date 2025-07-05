@@ -32,9 +32,11 @@ pub struct ForgottenPasswordRequest {}
 #[serde(rename_all = "camelCase")]
 pub struct SetNewPasswordRequest {}
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
-pub struct VerifyAccountRequest {}
+pub struct VerifyAccountRequest {
+   pub otp: String,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

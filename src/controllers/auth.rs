@@ -1,4 +1,6 @@
+use crate::adapters::requests::auth::VerifyAccountRequest;
 use crate::adapters::response::api_response::ApiResponseBuilder;
+use crate::middlewares::validator::ValidatedRequest;
 use crate::{
     adapters::{
         requests::auth::{
@@ -17,10 +19,10 @@ use axum::{extract::State, Json};
 
 pub async fn create_account(
     State(auth_service): State<AuthenticationService>,
-    Json(request): Json<CreateUserRequest>,
+    ValidatedRequest(request): ValidatedRequest<CreateUserRequest>,
 ) -> Result<ApiResponse<CreateUserResponse>, AuthenticationServiceError> {
     auth_service.create_account(&request).await?;
-
+    
     Ok(ApiResponseBuilder::new()
         .status_code(StatusCode::CREATED)
         .message("Account created successfully")
@@ -28,7 +30,7 @@ pub async fn create_account(
 }
 pub async fn login(
     State(auth_service): State<AuthenticationService>,
-    Json(request): Json<LoginRequest>,
+    ValidatedRequest(request): ValidatedRequest<LoginRequest>,
 ) -> Result<ApiResponse<LoginResponse>, AuthenticationServiceError> {
     let login_response = auth_service.login(&request).await?;
     Ok(ApiResponseBuilder::new()
@@ -38,8 +40,13 @@ pub async fn login(
 }
 pub async fn verify_account(
     State(auth_service): State<AuthenticationService>,
-    Json(request): Json<VerifyAccountResponse>,
-) {
+    ValidatedRequest(request): ValidatedRequest<VerifyAccountRequest>,
+) -> Result<ApiResponse<VerifyAccountResponse>, AuthenticationServiceError> {
+    let verify_account_response = auth_service.verify_account(&request).await?;
+    Ok(ApiResponseBuilder::new()
+        .status_code(StatusCode::OK)
+        .data(verify_account_response)
+        .build())
 }
 pub async fn forgotten_password(
     State(auth_service): State<AuthenticationService>,

@@ -54,10 +54,12 @@ pub trait AuthenticationServiceTrait {
     ) -> Result<SetNewPasswordResponse, AuthenticationServiceError>;
 
     async fn verify_account(
+        &self,
         request: &VerifyAccountRequest,
     ) -> Result<VerifyAccountResponse, AuthenticationServiceError>;
 
     async fn refresh_otp(
+        &self,
         otp_kind: &OtpKind,
         request: &RefreshOtpRequest,
     ) -> Result<RefreshOtpResponse, AuthenticationServiceError>;
@@ -127,12 +129,14 @@ impl AuthenticationServiceTrait for AuthenticationService {
     }
 
     async fn verify_account(
+        &self,
         request: &VerifyAccountRequest,
     ) -> Result<VerifyAccountResponse, AuthenticationServiceError> {
         todo!()
     }
 
     async fn refresh_otp(
+        &self,
         otp_kind: &OtpKind,
         request: &RefreshOtpRequest,
     ) -> Result<RefreshOtpResponse, AuthenticationServiceError> {

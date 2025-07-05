@@ -12,9 +12,7 @@ pub struct ApiResponse<T: Serialize> {
     status_code: StatusCode,
 }
 
-
-
-
+pub type EmptyResponseBody = ();
 
 #[derive(Debug)]
 pub struct ApiResponseBuilder<T: Serialize> {

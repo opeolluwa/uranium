@@ -1,28 +1,36 @@
+use crate::adapters::response::api_response::ApiResponseBuilder;
+use crate::errors::shared_service_error::ServiceError;
 use axum::{http::StatusCode, response::IntoResponse};
 
-use crate::errors::shared_service_error::ServiceError;
-
-#[derive(thiserror::Error, Debug, Clone)]
+#[derive(thiserror::Error, Debug)]
 pub enum UserServiceError {
-    #[error("Invalid password")]
+    #[error("invalid password")]
     InvalidPassword,
     #[error("{0}")]
     OperationFailed(String),
-    #[error("Dulicate record: {0}")]
-    ConflictError(String),   
+    #[error("duplicate record: {0}")]
+    ConflictError(String),
     #[error(transparent)]
-    ServiceError(#[from]  ServiceError),
+    ServiceError(#[from] ServiceError),
+}
+
+impl UserServiceError {
+    pub fn status_code(&self) -> StatusCode {
+        match self {
+            Self::InvalidPassword => StatusCode::UNAUTHORIZED,
+            Self::OperationFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::ConflictError(_) => StatusCode::CONFLICT,
+            Self::ServiceError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
 }
 
 impl IntoResponse for UserServiceError {
     fn into_response(self) -> axum::response::Response {
-        let status = match self {
-            UserServiceError::InvalidPassword => StatusCode::UNAUTHORIZED,
-            UserServiceError::OperationFailed(_)
-            | UserServiceError::ServiceError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            UserServiceError::ConflictError(_) => StatusCode::CONFLICT,
-        };
-
-        (status, self.to_string()).into_response()
+        ApiResponseBuilder::<()>::new()
+            .status_code(self.status_code())
+            .message(&self.to_string())
+            .build()
+            .into_response()
     }
 }

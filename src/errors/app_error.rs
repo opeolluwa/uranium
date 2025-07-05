@@ -1,5 +1,6 @@
+use crate::adapters::response::api_response::ApiResponseBuilder;
+use crate::adapters::response::api_response::EmptyResponseBody;
 use axum::{http::StatusCode, response::IntoResponse};
-
 #[derive(thiserror::Error, Debug, Clone)]
 pub enum AppError {
     #[error("App failed to start up due to {0}")]
@@ -10,14 +11,21 @@ pub enum AppError {
     OperationFailed(String),
 }
 
+impl AppError {
+    pub fn status_code(&self) -> StatusCode {
+        match self {
+            AppError::StartupError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::EnvError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::OperationFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
 impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
-        let (message, status_code) = match self {
-            AppError::StartupError(err) => (err, StatusCode::INTERNAL_SERVER_ERROR),
-            AppError::EnvError(err) => (err, StatusCode::INTERNAL_SERVER_ERROR),
-            AppError::OperationFailed(err) => (err, StatusCode::INTERNAL_SERVER_ERROR),
-        };
-
-        (status_code, message).into_response()
+        ApiResponseBuilder::<EmptyResponseBody>::new()
+            .status_code(self.status_code())
+            .message(&self.to_string())
+            .build()
+            .into_response()
     }
 }
