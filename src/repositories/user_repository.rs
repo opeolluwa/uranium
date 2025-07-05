@@ -23,21 +23,36 @@ impl UserRepository {
 }
 
 pub trait UserRepositoryTrait {
-    async fn find_by_identifier(&self, identifier: &Uuid) -> Option<UserEntity>;
+    fn find_by_identifier(
+        &self,
+        identifier: &Uuid,
+    ) -> impl std::future::Future<Output = Option<UserEntity>> + Send;
 
-    async fn find_by_email(&self, email: &str) -> Option<UserEntity>;
+    fn find_by_email(
+        &self,
+        email: &str,
+    ) -> impl std::future::Future<Output = Option<UserEntity>> + Send;
 
-    async fn update_account_status(&self, identifier: &Uuid) -> Result<(), ServiceError>;
+    fn update_account_status(
+        &self,
+        identifier: &Uuid,
+    ) -> impl std::future::Future<Output = Result<(), ServiceError>> + Send;
 
-    async fn update_password(
+    fn update_password(
         &self,
         identifier: &Uuid,
         new_password: &str,
-    ) -> Result<(), ServiceError>;
+    ) -> impl std::future::Future<Output = Result<(), ServiceError>> + Send;
 
-    async fn create_user(&self, user: CreateUserRequest) -> Result<(), UserServiceError>;
+    fn create_user(
+        &self,
+        user: CreateUserRequest,
+    ) -> impl std::future::Future<Output = Result<(), UserServiceError>> + Send;
 
-    async fn retrieve_information(&self, identifier: &Uuid) -> Result<UserDto, UserServiceError>;
+    fn retrieve_information(
+        &self,
+        identifier: &Uuid,
+    ) -> impl std::future::Future<Output = Result<UserDto, UserServiceError>> + Send;
 }
 
 impl UserRepositoryTrait for UserRepository {
@@ -90,13 +105,14 @@ impl UserRepositoryTrait for UserRepository {
         identifier: &Uuid,
         new_password: &str,
     ) -> Result<(), ServiceError> {
-        let _ =
-            sqlx::query_as::<_, UserEntity>("UPDATE users SET password = $1  WHERE identifier  = $2")
-                .bind(new_password)
-                .bind(identifier)
-                .fetch_one(self.pool.as_ref())
-                .await
-                .map_err(|err| UserServiceError::OperationFailed(err.to_string()));
+        let _ = sqlx::query_as::<_, UserEntity>(
+            "UPDATE users SET password = $1  WHERE identifier  = $2",
+        )
+        .bind(new_password)
+        .bind(identifier)
+        .fetch_one(self.pool.as_ref())
+        .await
+        .map_err(|err| UserServiceError::OperationFailed(err.to_string()));
 
         Ok(())
     }

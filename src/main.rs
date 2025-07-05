@@ -1,5 +1,7 @@
 #![warn(unused_extern_crates)]
 
+use uralium_lib::{errors, routes, shared};
+
 use errors::app_error::AppError;
 use routes::router::load_routes;
 use shared::extract_env::extract_env;
@@ -9,18 +11,6 @@ use std::{
     net::{Ipv4Addr, SocketAddr, SocketAddrV4},
     path::Path,
 };
-
-mod adapters;
-mod config;
-mod controllers;
-mod entities;
-mod errors;
-mod middlewares;
-mod repositories;
-mod routes;
-mod services;
-mod shared;
-mod states;
 
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
@@ -58,3 +48,4 @@ async fn main() -> Result<(), AppError> {
 
     Ok(())
 }
+

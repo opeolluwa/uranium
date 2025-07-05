@@ -3,6 +3,10 @@ name = "uranium"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "uralium_lib"
+path = "src/lib.rs"
+
 [dependencies]
 axum = { version = "0.8.3", features = ["tracing"] }
 axum-extra = { version = "0.10.1", features = ["typed-header"] }
@@ -23,3 +27,4 @@ validator = { version = "0.20.0", features = ["derive"] }
 
 [dev-dependencies]
 axum = { version = "0.8.3", features = ["macros"] }
+axum-test = "17.3.0"

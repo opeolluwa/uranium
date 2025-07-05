@@ -35,38 +35,38 @@ impl AuthenticationService {
     }
 }
 pub trait AuthenticationServiceTrait {
-    async fn create_account(
+    fn create_account(
         &self,
         request: &CreateUserRequest,
-    ) -> Result<(), AuthenticationServiceError>;
+    ) -> impl std::future::Future<Output = Result<(), AuthenticationServiceError>> + Send;
 
-    async fn login(
+    fn login(
         &self,
         request: &LoginRequest,
-    ) -> Result<LoginResponse, AuthenticationServiceError>;
+    ) -> impl std::future::Future<Output = Result<LoginResponse, AuthenticationServiceError>> + Send;
 
-    async fn forgotten_password(
+    fn forgotten_password(
         &self,
 
         request: &ForgottenPasswordRequest,
-    ) -> Result<ForgottenPasswordResponse, AuthenticationServiceError>;
+    ) -> impl std::future::Future<Output = Result<ForgottenPasswordResponse, AuthenticationServiceError>> + Send;
 
-    async fn set_new_password(
+    fn set_new_password(
         &self,
         request: &SetNewPasswordRequest,
         claims: &Claims,
-    ) -> Result<SetNewPasswordResponse, AuthenticationServiceError>;
+    ) -> impl std::future::Future<Output = Result<SetNewPasswordResponse, AuthenticationServiceError>> + Send;
 
-    async fn verify_account(
+    fn verify_account(
         &self,
         claims: &Claims,
         request: &VerifyAccountRequest,
-    ) -> Result<VerifyAccountResponse, AuthenticationServiceError>;
+    ) -> impl std::future::Future<Output = Result<VerifyAccountResponse, AuthenticationServiceError>> + Send;
 
-    async fn request_refresh_token(
+    fn request_refresh_token(
         &self,
         request: &RefreshTokenRequest,
-    ) -> Result<RefreshTokenResponse, AuthenticationServiceError>;
+    ) -> impl std::future::Future<Output = Result<RefreshTokenResponse, AuthenticationServiceError>> + Send;
 }
 
 impl AuthenticationServiceTrait for AuthenticationService {
