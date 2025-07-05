@@ -19,7 +19,7 @@ where
     async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
         let Form(value) = Form::<T>::from_request(req, state)
             .await
-            .map_err(|err| ServiceError::AxumFormRejection(err))?;
+            .map_err(ServiceError::AxumFormRejection)?;
         value.validate()?;
         Ok(ValidatedRequest(value))
     }

@@ -27,7 +27,6 @@ pub struct LoginRequest {
 
 #[derive(Debug, Serialize, Deserialize, Validate)]
 #[serde(rename_all = "camelCase")]
-
 pub struct ForgottenPasswordRequest {
     #[validate(email)]
     pub email: String,
