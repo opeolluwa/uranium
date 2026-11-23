@@ -2,8 +2,9 @@ use axum::extract::State;
 
 use crate::{
     adapters::{
-        dto::{jwt::Claims, user::UserDto},
-        response::api_response::{ApiResponse, ApiResponseBuilder},
+        api_response::{ApiResponse, ApiResponseBuilder},
+        jwt::Claims,
+        user::UserDto,
     },
     errors::user_service_error::UserServiceError,
     services::user_service::UserService,

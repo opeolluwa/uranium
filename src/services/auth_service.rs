@@ -1,14 +1,14 @@
 use sea_orm::DatabaseConnection;
 
-use crate::adapters::dto::jwt::{Claims, JwtCredentials, TEN_MINUTES, TWENTY_FIVE_MINUTES};
-use crate::entities::user;
+use crate::adapters::jwt::{Claims, JwtCredentials, TEN_MINUTES, TWENTY_FIVE_MINUTES};
+use crate::entities::users;
 use crate::{
     adapters::{
-        requests::auth::{
+        auth_request::{
             CreateUserRequest, ForgottenPasswordRequest, LoginRequest, RefreshTokenRequest,
             SetNewPasswordRequest, VerifyAccountRequest,
         },
-        response::auth::{
+        auth_response::{
             ForgottenPasswordResponse, LoginResponse, RefreshTokenResponse, SetNewPasswordResponse,
             VerifyAccountResponse,
         },
@@ -147,7 +147,7 @@ impl AuthenticationServiceTrait for AuthenticationService {
             return Err(AuthenticationServiceError::WrongCredentials);
         };
 
-        let user::Model {
+        let users::Model {
             email, identifier, first_name, ..
         } = user.unwrap();
 

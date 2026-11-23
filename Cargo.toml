@@ -6,6 +6,14 @@ edition = "2024"
 [workspace]
 members = ["entities", "macros", "migration"]
 
+[workspace.dependencies]
+sea-orm = { version = "2.0.2" }
+sea-orm-migration = { version = "2.0.2", features = ["runtime-tokio-rustls", "sqlx-postgres"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+tokio = { version = "1.44.2", features = ["full"] }
+ulid = "1.2.1"
+
 [lib]
 name = "uranium_lib"
 path = "src/lib.rs"
@@ -17,14 +25,15 @@ bcrypt = "0.17.0"
 chrono = { version = "0.4.41", features = ["serde"] }
 jsonwebtoken = "9.3.1"
 log = "0.4.27"
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
-sea-orm = { version = "2.0.2", features = ["runtime-tokio-rustls", "sqlx-postgres", "macros", "debug-print", "with-chrono", "with-uuid"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sea-orm = { workspace = true, features = ["runtime-tokio-rustls", "sqlx-postgres", "macros", "debug-print", "with-chrono", "with-uuid"] }
+entities = { version = "0.1.0", path = "entities", package = "uranium_entities" }
 migration = { version = "0.1.0", path = "migration", package = "uranium_migration" }
 lettre = { version = "0.11.22", default-features = false, features = ["smtp-transport", "pool", "builder", "hostname", "tokio1-rustls", "ring", "rustls-native-certs"] }
 askama = "0.15.6"
 thiserror = "2.0.12"
-tokio = { version = "1.44.2", features = ["full"] }
+tokio = { workspace = true }
 tower-http = { version = "0.6.6", features = ["limit", "trace", "cors", "timeout", "sensitive-headers", "compression-gzip"] }
 url = "2.5"
 tracing = "0.1"
@@ -41,7 +50,6 @@ rand = "0.9"
 [dev-dependencies]
 axum = { version = "0.8.3", features = ["macros"] }
 axum-test = "17.3.0"
-
 
 [profile.release]
 opt-level = 3

@@ -1,7 +1,7 @@
 use sea_orm::DatabaseConnection;
 use uuid::Uuid;
 
-use crate::adapters::dto::user::UserDto;
+use crate::adapters::user::UserDto;
 use crate::errors::user_service_error::UserServiceError;
 use crate::repositories::user_repository::{UserRepository, UserRepositoryTrait};
 

@@ -2,7 +2,7 @@ use axum::{Router, http::StatusCode, response::IntoResponse};
 use sea_orm::DatabaseConnection;
 
 use crate::{
-    adapters::response::api_response::ApiResponseBuilder,
+    adapters::api_response::ApiResponseBuilder,
     config::env::AppConfig,
     errors::app_error::AppError,
     routes::{auth::authentication_routes, public::public_routes, users::user_routes},

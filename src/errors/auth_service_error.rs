@@ -1,4 +1,4 @@
-use crate::adapters::response::api_response::ApiResponseBuilder;
+use crate::adapters::api_response::ApiResponseBuilder;
 use crate::errors::{
     app_error::AppError, common_service_error::ServiceError,
     email_service_error::EmailServiceError, user_service_error::UserServiceError,

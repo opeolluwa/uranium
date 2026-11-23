@@ -2,8 +2,8 @@ use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, Qu
 use uuid::Uuid;
 
 use crate::{
-    adapters::{dto::user::UserDto, requests::auth::CreateUserRequest},
-    entities::user::{self, Entity as Users},
+    adapters::{auth_request::CreateUserRequest, user::UserDto},
+    entities::users::{self, Entity as Users},
     errors::{common_service_error::ServiceError, user_service_error::UserServiceError},
 };
 
@@ -22,12 +22,12 @@ pub trait UserRepositoryTrait {
     fn find_by_identifier(
         &self,
         identifier: &Uuid,
-    ) -> impl std::future::Future<Output = Option<user::Model>> + Send;
+    ) -> impl std::future::Future<Output = Option<users::Model>> + Send;
 
     fn find_by_email(
         &self,
         email: &str,
-    ) -> impl std::future::Future<Output = Option<user::Model>> + Send;
+    ) -> impl std::future::Future<Output = Option<users::Model>> + Send;
 
     fn update_account_status(
         &self,
@@ -53,7 +53,7 @@ pub trait UserRepositoryTrait {
 
 impl UserRepositoryTrait for UserRepository {
     async fn create_user(&self, user: CreateUserRequest) -> Result<(), UserServiceError> {
-        let model = user::ActiveModel {
+        let model = users::ActiveModel {
             identifier: Set(Uuid::new_v4()),
             first_name: Set(user.first_name),
             last_name: Set(user.last_name),
@@ -70,13 +70,13 @@ impl UserRepositoryTrait for UserRepository {
         Ok(())
     }
 
-    async fn find_by_identifier(&self, identifier: &Uuid) -> Option<user::Model> {
+    async fn find_by_identifier(&self, identifier: &Uuid) -> Option<users::Model> {
         Users::find_by_id(*identifier).one(&self.db).await.ok()?
     }
 
-    async fn find_by_email(&self, email: &str) -> Option<user::Model> {
+    async fn find_by_email(&self, email: &str) -> Option<users::Model> {
         Users::find()
-            .filter(user::Column::Email.eq(email))
+            .filter(users::Column::Email.eq(email))
             .one(&self.db)
             .await
             .ok()?
@@ -93,7 +93,7 @@ impl UserRepositoryTrait for UserRepository {
                 ))
             })?;
 
-        let mut active: user::ActiveModel = user.into();
+        let mut active: users::ActiveModel = user.into();
         active.is_active = Set(true);
         active
             .update(&self.db)
@@ -118,7 +118,7 @@ impl UserRepositoryTrait for UserRepository {
                 ))
             })?;
 
-        let mut active: user::ActiveModel = user.into();
+        let mut active: users::ActiveModel = user.into();
         active.password = Set(new_password.to_string());
         active
             .update(&self.db)
