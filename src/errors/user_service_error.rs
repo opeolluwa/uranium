@@ -1,6 +1,6 @@
-use axum::{http::StatusCode, response::IntoResponse};
+use axum::{http::StatusCode, response::IntoResponse, Json};
 
-use crate::adapters::api_response::ApiResponseBuilder;
+use crate::adapters::message::Message;
 use crate::errors::common_service_error::ServiceError;
 
 #[derive(thiserror::Error, Debug)]
@@ -28,10 +28,6 @@ impl UserServiceError {
 
 impl IntoResponse for UserServiceError {
     fn into_response(self) -> axum::response::Response {
-        ApiResponseBuilder::<()>::new()
-            .status_code(self.status_code())
-            .message(&self.to_string())
-            .build()
-            .into_response()
+        (self.status_code(), Json(Message::new(&self.to_string()))).into_response()
     }
 }

@@ -1,8 +1,8 @@
-use axum::{Router, http::StatusCode, response::IntoResponse};
+use axum::{http::StatusCode, response::IntoResponse, Json, Router};
 use sea_orm::DatabaseConnection;
 
 use crate::{
-    adapters::api_response::ApiResponseBuilder,
+    adapters::message::Message,
     config::env::AppConfig,
     errors::app_error::AppError,
     routes::{auth::authentication_routes, public::public_routes, users::user_routes},
@@ -18,10 +18,10 @@ pub fn load_routes(db: DatabaseConnection, app_config: &AppConfig) -> Result<Rou
         .merge(authentication_routes(state.clone()))
         .nest("/users", user_routes(state.clone()))
         .fallback(async || {
-            ApiResponseBuilder::<()>::new()
-                .message("the resource you're looking for does not exist or it has been permanently moved")
-                .status_code(StatusCode::NOT_FOUND)
-                .build()
+            (
+                StatusCode::NOT_FOUND,
+                Json(Message::new("the resource you're looking for does not exist or it has been permanently moved")),
+            )
                 .into_response()
         }))
 }

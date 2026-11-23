@@ -1,6 +1,6 @@
-use axum::{http::StatusCode, response::IntoResponse};
+use axum::{http::StatusCode, response::IntoResponse, Json};
 
-use crate::adapters::api_response::ApiResponseBuilder;
+use crate::adapters::message::Message;
 
 #[derive(thiserror::Error, Debug)]
 pub enum EmailServiceError {
@@ -27,10 +27,6 @@ impl EmailServiceError {
 
 impl IntoResponse for EmailServiceError {
     fn into_response(self) -> axum::response::Response {
-        ApiResponseBuilder::<()>::new()
-            .status_code(self.status_code())
-            .message(&self.to_string())
-            .build()
-            .into_response()
+        (self.status_code(), Json(Message::new(&self.to_string()))).into_response()
     }
 }
