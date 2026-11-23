@@ -3,34 +3,80 @@ use axum_extra::{
     TypedHeader,
     headers::{Authorization, authorization::Bearer},
 };
-use jsonwebtoken::{Validation, decode};
 
-use crate::adapters::dto::jwt::Keys;
-use crate::{
-    adapters::dto::jwt::Claims, errors::auth_service_error::AuthenticationServiceError,
-    utils::extract_env::extract_env,
-};
+use crate::errors::auth_service_error::AuthenticationServiceError;
+use crate::services::token_service::{TokenClaims, TokenService, TokenType};
+use crate::state::ServicesState;
 
-impl<S> FromRequestParts<S> for Claims
-where
-    S: Send + Sync,
-{
+async fn extract_and_validate(
+    parts: &mut Parts,
+    token_service: &TokenService,
+    allowed_types: &[TokenType],
+) -> Result<(TokenClaims, String), AuthenticationServiceError> {
+    let TypedHeader(Authorization(bearer)) = parts
+        .extract::<TypedHeader<Authorization<Bearer>>>()
+        .await
+        .map_err(|_| AuthenticationServiceError::MissingCredentials)?;
+
+    let raw_token = bearer.token().to_string();
+    let claims = token_service.validate_token(&raw_token, allowed_types)?;
+
+    if token_service.is_blacklisted(&raw_token).await? {
+        return Err(AuthenticationServiceError::TokenBlacklisted);
+    }
+
+    Ok((claims, raw_token))
+}
+
+pub struct AuthenticatedUser(pub TokenClaims);
+
+impl FromRequestParts<ServicesState> for AuthenticatedUser {
     type Rejection = AuthenticationServiceError;
 
-    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        let secret =
-            extract_env::<String>("JWT_SIGNING_KEY").map_err(AuthenticationServiceError::from)?;
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &ServicesState,
+    ) -> Result<Self, Self::Rejection> {
+        let (claims, _) =
+            extract_and_validate(parts, &state.token_service, &[TokenType::Access]).await?;
+        Ok(Self(claims))
+    }
+}
 
-        let decoding_key = Keys::new(secret.as_bytes()).decoding;
-        // Extract the token from the authorization header
-        let TypedHeader(Authorization(bearer)) = parts
-            .extract::<TypedHeader<Authorization<Bearer>>>()
-            .await
-            .map_err(|_| AuthenticationServiceError::MissingCredentials)?;
-        // Decode the user data
-        let token_data = decode::<Claims>(bearer.token(), &decoding_key, &Validation::default())
-            .map_err(|_| AuthenticationServiceError::InvalidToken)?;
+pub struct ChallengeToken(pub TokenClaims);
 
-        Ok(token_data.claims)
+impl FromRequestParts<ServicesState> for ChallengeToken {
+    type Rejection = AuthenticationServiceError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &ServicesState,
+    ) -> Result<Self, Self::Rejection> {
+        let (claims, _) = extract_and_validate(
+            parts,
+            &state.token_service,
+            &[
+                TokenType::Access,
+                TokenType::TwoFactor,
+                TokenType::PasswordReset,
+            ],
+        )
+        .await?;
+        Ok(Self(claims))
+    }
+}
+
+pub struct RawToken(pub TokenClaims, pub String);
+
+impl FromRequestParts<ServicesState> for RawToken {
+    type Rejection = AuthenticationServiceError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &ServicesState,
+    ) -> Result<Self, Self::Rejection> {
+        let (claims, raw) =
+            extract_and_validate(parts, &state.token_service, &[TokenType::Access]).await?;
+        Ok(Self(claims, raw))
     }
 }

@@ -1,8 +1,8 @@
 use axum::extract::rejection::{FormRejection, JsonRejection};
 use axum::response::Response;
-use axum::{http::StatusCode, response::IntoResponse};
+use axum::{Json, http::StatusCode, response::IntoResponse};
 
-use crate::adapters::response::api_response::ApiResponseBuilder;
+use crate::adapters::message::Message;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ServiceError {
@@ -28,10 +28,6 @@ impl ServiceError {
 }
 impl IntoResponse for ServiceError {
     fn into_response(self) -> Response {
-        ApiResponseBuilder::<()>::new()
-            .status_code(self.status_code())
-            .message(&self.to_string())
-            .build()
-            .into_response()
+        (self.status_code(), Json(Message::new(&self.to_string()))).into_response()
     }
 }

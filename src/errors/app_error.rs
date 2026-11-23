@@ -1,7 +1,6 @@
-use axum::{http::StatusCode, response::IntoResponse};
+use axum::{Json, http::StatusCode, response::IntoResponse};
 
-use crate::adapters::response::api_response::ApiResponseBuilder;
-use crate::adapters::response::api_response::EmptyResponseBody;
+use crate::adapters::message::Message;
 
 #[derive(thiserror::Error, Debug, Clone)]
 pub enum AppError {
@@ -33,10 +32,6 @@ impl From<std::io::Error> for AppError {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> axum::response::Response {
-        ApiResponseBuilder::<EmptyResponseBody>::new()
-            .status_code(self.status_code())
-            .message(&self.to_string())
-            .build()
-            .into_response()
+        (self.status_code(), Json(Message::new(&self.to_string()))).into_response()
     }
 }

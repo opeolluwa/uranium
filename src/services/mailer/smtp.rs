@@ -59,8 +59,14 @@ impl SmtpEmailSender {
         password: &str,
         tls_mode: SmtpTlsMode,
     ) -> Result<Self, EmailServiceError> {
-        let builder =
-            transport_builder(host, port, username, password, tls_mode, Some(DEFAULT_SEND_TIMEOUT))?;
+        let builder = transport_builder(
+            host,
+            port,
+            username,
+            password,
+            tls_mode,
+            Some(DEFAULT_SEND_TIMEOUT),
+        )?;
         Ok(Self {
             mailer: builder.build(),
         })

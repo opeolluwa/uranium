@@ -2,6 +2,7 @@ use sea_orm::DatabaseConnection;
 
 use super::{Contracts, Repositories, ServicesState};
 use crate::config::env::AppConfig;
+use crate::config::redis::init_redis_pool;
 use crate::errors::app_error::AppError;
 
 pub struct Application {
@@ -14,9 +15,10 @@ pub struct Application {
 impl Application {
     pub async fn new(db: &DatabaseConnection) -> Result<Self, AppError> {
         let config = AppConfig::from_env()?;
+        let redis = init_redis_pool(&config).await?;
         let contracts = Contracts::new(&config)?;
         let repositories = Repositories::new(db);
-        let services = ServicesState::new(db, &contracts);
+        let services = ServicesState::new(db, &contracts, redis, &config);
 
         Ok(Self {
             services,

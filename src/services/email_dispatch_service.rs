@@ -1,21 +1,17 @@
 use askama::Template;
 
-use crate::errors::email_service_error::EmailServiceError;
-use crate::utils::extract_env::extract_env;
-
 use super::mailer::templates::{
-    account_confirmation::AccountConfirmationTemplate,
-    otp_code::OtpCodeTemplate,
-    password_reset::PasswordResetTemplate,
-    welcome::WelcomeTemplate,
+    account_confirmation::AccountConfirmationTemplate, otp_code::OtpCodeTemplate,
+    password_reset::PasswordResetTemplate, welcome::WelcomeTemplate,
 };
 use super::mailer::{EmailContext, EmailSender};
+use crate::errors::email_service_error::EmailServiceError;
+use crate::utils::extract_env::extract_env;
 
 fn sender_identity() -> (String, String) {
     let address = extract_env::<String>("EMAIL_FROM_ADDRESS")
         .unwrap_or_else(|_| "noreply@uranium.dev".to_string());
-    let name = extract_env::<String>("EMAIL_FROM_NAME")
-        .unwrap_or_else(|_| "Uranium".to_string());
+    let name = extract_env::<String>("EMAIL_FROM_NAME").unwrap_or_else(|_| "Uranium".to_string());
     (address, name)
 }
 

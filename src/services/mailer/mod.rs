@@ -1,9 +1,8 @@
 pub mod smtp;
 pub mod templates;
+pub use smtp::SmtpEmailSender;
 
 use crate::errors::email_service_error::EmailServiceError;
-
-pub use smtp::SmtpEmailSender;
 
 #[derive(Clone, Debug)]
 pub struct EmailContext {

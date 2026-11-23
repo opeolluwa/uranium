@@ -60,8 +60,21 @@ pub struct AppConfig {
     #[serde(default = "default_rate_limit_otp_per_hour")]
     pub rate_limit_otp_per_hour: u32,
 
+    // Redis
+    pub redis_url: SecretString,
+
     // JWT
     pub jwt_key: SecretString,
+
+    // Token TTLs
+    #[serde(default = "default_access_token_ttl")]
+    pub access_token_ttl_secs: u64,
+    #[serde(default = "default_refresh_token_ttl")]
+    pub refresh_token_ttl_secs: u64,
+    #[serde(default = "default_reset_token_ttl")]
+    pub reset_token_ttl_secs: u64,
+    #[serde(default = "default_two_factor_token_ttl")]
+    pub two_factor_token_ttl_secs: u64,
 
     // Frontend
     #[serde(default = "default_frontend_url")]
@@ -85,15 +98,11 @@ impl AppConfig {
             extract_env("SMTP_TLS_MODE").unwrap_or_else(|_| default_smtp_tls_mode());
 
         let smtp_host = extract_optional_env::<String>("SMTP_HOST").unwrap_or_default();
-        let smtp_username =
-            extract_optional_env::<String>("SMTP_USERNAME").unwrap_or_default();
-        let smtp_password =
-            extract_optional_env::<String>("SMTP_PASSWORD").unwrap_or_default();
+        let smtp_username = extract_optional_env::<String>("SMTP_USERNAME").unwrap_or_default();
+        let smtp_password = extract_optional_env::<String>("SMTP_PASSWORD").unwrap_or_default();
 
         if smtp_host.trim().is_empty() {
-            return Err(AppError::EnvError(
-                "SMTP_HOST is required".to_string(),
-            ));
+            return Err(AppError::EnvError("SMTP_HOST is required".to_string()));
         }
 
         if environment == Environment::Production && smtp_tls_mode == SmtpTlsMode::None {
@@ -157,7 +166,21 @@ impl AppConfig {
             rate_limit_otp_per_hour: extract_env("RATE_LIMIT_OTP_PER_HOUR")
                 .unwrap_or_else(|_| default_rate_limit_otp_per_hour()),
 
+            redis_url: SecretString::from(
+                extract_env::<String>("REDIS_URL")
+                    .unwrap_or_else(|_| "redis://localhost:7379".to_string()),
+            ),
+
             jwt_key: SecretString::from(jwt_key),
+
+            access_token_ttl_secs: extract_env("ACCESS_TOKEN_TTL_SECS")
+                .unwrap_or_else(|_| default_access_token_ttl()),
+            refresh_token_ttl_secs: extract_env("REFRESH_TOKEN_TTL_SECS")
+                .unwrap_or_else(|_| default_refresh_token_ttl()),
+            reset_token_ttl_secs: extract_env("RESET_TOKEN_TTL_SECS")
+                .unwrap_or_else(|_| default_reset_token_ttl()),
+            two_factor_token_ttl_secs: extract_env("TWO_FACTOR_TOKEN_TTL_SECS")
+                .unwrap_or_else(|_| default_two_factor_token_ttl()),
 
             frontend_url: if environment == Environment::Production {
                 let value = extract_env::<String>("FRONTEND_URL")?;
@@ -324,4 +347,20 @@ fn default_rate_limit_otp_per_hour() -> u32 {
 
 fn default_frontend_url() -> String {
     "http://localhost:3000".into()
+}
+
+fn default_access_token_ttl() -> u64 {
+    600
+}
+
+fn default_refresh_token_ttl() -> u64 {
+    86400
+}
+
+fn default_reset_token_ttl() -> u64 {
+    900
+}
+
+fn default_two_factor_token_ttl() -> u64 {
+    300
 }

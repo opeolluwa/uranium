@@ -1,10 +1,10 @@
 # Uranium Core
 
-Free Identitity and access management system built on Rust and Axum
+Free Identity and access management system built on Rust and Axum
 
 ## Getting started
 
-To run the appliction locally, ensure the following prerequsites are made
+To run the application locally, ensure the following prerequisites are made
 available
 
 - [Rust](https://rust-lang.org)
