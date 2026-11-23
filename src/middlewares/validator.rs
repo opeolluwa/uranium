@@ -1,9 +1,10 @@
-use crate::errors::common_service_error::ServiceError;
-use axum::{Form, Json};
 use axum::extract::rejection::FormRejection;
 use axum::extract::{FromRequest, Request};
+use axum::{Form, Json};
 use serde::de::DeserializeOwned;
 use validator::Validate;
+
+use crate::errors::common_service_error::ServiceError;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct ValidatedRequest<T>(pub T);

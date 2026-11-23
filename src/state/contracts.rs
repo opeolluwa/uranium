@@ -2,8 +2,8 @@ use secrecy::ExposeSecret;
 
 use crate::config::env::AppConfig;
 use crate::errors::app_error::AppError;
-use crate::services::mailer::smtp::SmtpEmailSender;
 use crate::services::mailer::SenderIdentity;
+use crate::services::mailer::smtp::SmtpEmailSender;
 
 #[derive(Clone)]
 pub struct Contracts {

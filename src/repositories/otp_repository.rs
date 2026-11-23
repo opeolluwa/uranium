@@ -64,10 +64,7 @@ impl OtpRepository {
         Ok(new_attempts)
     }
 
-    pub async fn revoke_otp(
-        &self,
-        otp: one_time_passwords::Model,
-    ) -> Result<(), OtpServiceError> {
+    pub async fn revoke_otp(&self, otp: one_time_passwords::Model) -> Result<(), OtpServiceError> {
         let mut active: one_time_passwords::ActiveModel = otp.into();
         active.is_revoked = Set(true);
         active.update(&self.db).await?;

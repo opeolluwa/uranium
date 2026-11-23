@@ -1,10 +1,11 @@
+use axum::{Json, http::StatusCode, response::IntoResponse};
+
 use crate::adapters::message::Message;
 use crate::errors::{
     app_error::AppError, common_service_error::ServiceError,
     email_service_error::EmailServiceError, otp_service_error::OtpServiceError,
     user_service_error::UserServiceError,
 };
-use axum::{http::StatusCode, response::IntoResponse, Json};
 
 #[derive(Debug, thiserror::Error)]
 pub enum AuthenticationServiceError {

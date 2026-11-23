@@ -55,7 +55,11 @@ impl FromRequestParts<ServicesState> for ChallengeToken {
         let (claims, _) = extract_and_validate(
             parts,
             &state.token_service,
-            &[TokenType::Access, TokenType::TwoFactor, TokenType::PasswordReset],
+            &[
+                TokenType::Access,
+                TokenType::TwoFactor,
+                TokenType::PasswordReset,
+            ],
         )
         .await?;
         Ok(Self(claims))

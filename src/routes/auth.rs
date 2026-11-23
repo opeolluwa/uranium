@@ -3,8 +3,8 @@ use axum::{Router, routing::post};
 use crate::{
     config::env::AppConfig,
     controllers::auth::{
-        create_account, forgotten_password, login, logout, request_new_otp,
-        request_refresh_token, set_new_password, verify_account, verify_otp,
+        create_account, forgotten_password, login, logout, request_new_otp, request_refresh_token,
+        set_new_password, verify_account, verify_otp,
     },
     state::ServicesState,
 };

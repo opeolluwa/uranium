@@ -120,7 +120,8 @@ impl TokenService {
         identifier: &Uuid,
     ) -> Result<GeneratedToken, AuthenticationServiceError> {
         let generated = self.generate_token(email, identifier, TokenType::Refresh)?;
-        self.store_refresh_token(&generated.token, identifier).await?;
+        self.store_refresh_token(&generated.token, identifier)
+            .await?;
         Ok(generated)
     }
 
@@ -145,8 +146,9 @@ impl TokenService {
         raw_token: &str,
         allowed_types: &[TokenType],
     ) -> Result<TokenClaims, AuthenticationServiceError> {
-        let token_data = decode::<TokenClaims>(raw_token, &self.decoding_key, &Validation::default())
-            .map_err(|_| AuthenticationServiceError::InvalidToken)?;
+        let token_data =
+            decode::<TokenClaims>(raw_token, &self.decoding_key, &Validation::default())
+                .map_err(|_| AuthenticationServiceError::InvalidToken)?;
 
         let claims = token_data.claims;
         if !allowed_types.contains(&claims.token_type) {

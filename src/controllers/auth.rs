@@ -1,6 +1,6 @@
+use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::Json;
 
 use crate::adapters::auth_request::{
     CreateUserRequest, ForgottenPasswordRequest, LoginRequest, RefreshTokenRequest,

@@ -1,5 +1,6 @@
-use crate::errors::user_service_error::UserServiceError;
 use bcrypt::{DEFAULT_COST, hash, verify};
+
+use crate::errors::user_service_error::UserServiceError;
 
 #[derive(Clone)]
 pub struct UserHelperService {}

@@ -7,6 +7,10 @@ use axum::{
     extract::DefaultBodyLimit,
     http::{HeaderName, HeaderValue, StatusCode},
 };
+use tower_http::{
+    compression::CompressionLayer, limit::RequestBodyLimitLayer,
+    sensitive_headers::SetSensitiveHeadersLayer, timeout::TimeoutLayer,
+};
 use uranium_lib::config::db::init_db_pool;
 use uranium_lib::config::redis::init_redis_pool;
 use uranium_lib::config::{
@@ -19,7 +23,10 @@ const SECURITY_HEADERS: &[(&str, &str)] = &[
     ("x-content-type-options", "nosniff"),
     ("x-frame-options", "DENY"),
     ("referrer-policy", "no-referrer"),
-    ("permissions-policy", "geolocation=(), microphone=(), camera=()"),
+    (
+        "permissions-policy",
+        "geolocation=(), microphone=(), camera=()",
+    ),
     ("cross-origin-opener-policy", "same-origin"),
     ("cross-origin-resource-policy", "same-origin"),
     (
@@ -27,11 +34,6 @@ const SECURITY_HEADERS: &[(&str, &str)] = &[
         "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
     ),
 ];
-use tower_http::{
-    compression::CompressionLayer, limit::RequestBodyLimitLayer,
-    sensitive_headers::SetSensitiveHeadersLayer, timeout::TimeoutLayer,
-};
-
 #[tokio::main]
 async fn main() -> Result<(), AppError> {
     let app_config = load_config()?;
@@ -62,22 +64,24 @@ async fn main() -> Result<(), AppError> {
         .layer(init_cors(&app_config))
         .layer({
             let is_production = app_config.is_production();
-            axum::middleware::map_response(move |mut response: axum::response::Response| async move {
-                let headers = response.headers_mut();
-                for &(name, value) in SECURITY_HEADERS {
-                    headers.insert(
-                        HeaderName::from_static(name),
-                        HeaderValue::from_static(value),
-                    );
-                }
-                if is_production {
-                    headers.insert(
-                        HeaderName::from_static("strict-transport-security"),
-                        HeaderValue::from_static("max-age=31536000; includeSubDomains"),
-                    );
-                }
-                response
-            })
+            axum::middleware::map_response(
+                move |mut response: axum::response::Response| async move {
+                    let headers = response.headers_mut();
+                    for &(name, value) in SECURITY_HEADERS {
+                        headers.insert(
+                            HeaderName::from_static(name),
+                            HeaderValue::from_static(value),
+                        );
+                    }
+                    if is_production {
+                        headers.insert(
+                            HeaderName::from_static("strict-transport-security"),
+                            HeaderValue::from_static("max-age=31536000; includeSubDomains"),
+                        );
+                    }
+                    response
+                },
+            )
         });
 
     let ip_address = SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, app_config.port);

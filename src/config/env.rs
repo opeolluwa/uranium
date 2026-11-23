@@ -98,15 +98,11 @@ impl AppConfig {
             extract_env("SMTP_TLS_MODE").unwrap_or_else(|_| default_smtp_tls_mode());
 
         let smtp_host = extract_optional_env::<String>("SMTP_HOST").unwrap_or_default();
-        let smtp_username =
-            extract_optional_env::<String>("SMTP_USERNAME").unwrap_or_default();
-        let smtp_password =
-            extract_optional_env::<String>("SMTP_PASSWORD").unwrap_or_default();
+        let smtp_username = extract_optional_env::<String>("SMTP_USERNAME").unwrap_or_default();
+        let smtp_password = extract_optional_env::<String>("SMTP_PASSWORD").unwrap_or_default();
 
         if smtp_host.trim().is_empty() {
-            return Err(AppError::EnvError(
-                "SMTP_HOST is required".to_string(),
-            ));
+            return Err(AppError::EnvError("SMTP_HOST is required".to_string()));
         }
 
         if environment == Environment::Production && smtp_tls_mode == SmtpTlsMode::None {
@@ -368,4 +364,3 @@ fn default_reset_token_ttl() -> u64 {
 fn default_two_factor_token_ttl() -> u64 {
     300
 }
-

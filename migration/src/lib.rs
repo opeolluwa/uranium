@@ -1,8 +1,8 @@
-pub use sea_orm_migration::prelude::*;
-
 mod m20220101_000001_create_table;
 mod m20241123_000002_add_two_factor_to_users;
 mod m20241123_000003_create_otp_table;
+
+pub use sea_orm_migration::prelude::*;
 
 pub struct Migrator;
 

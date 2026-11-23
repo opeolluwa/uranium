@@ -76,10 +76,13 @@ impl AuthenticationService {
         let email = user.email.clone();
         let first_name = user.first_name.clone();
 
-        self.user_repository.create_user(user).await.map_err(|err| {
-            tracing::error!("{}", err.to_string());
-            AuthenticationServiceError::from(err)
-        })?;
+        self.user_repository
+            .create_user(user)
+            .await
+            .map_err(|err| {
+                tracing::error!("{}", err.to_string());
+                AuthenticationServiceError::from(err)
+            })?;
 
         let sender = self.email_sender.clone();
         tokio::task::spawn(async move {

@@ -133,9 +133,7 @@ impl UserRepositoryTrait for UserRepository {
             .one(&self.db)
             .await
             .map_err(|err| UserServiceError::OperationFailed(err.to_string()))?
-            .ok_or_else(|| {
-                UserServiceError::OperationFailed("user not found".to_string())
-            })?;
+            .ok_or_else(|| UserServiceError::OperationFailed("user not found".to_string()))?;
 
         Ok(UserDto {
             identifier: user.identifier,
