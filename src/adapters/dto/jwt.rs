@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::errors::auth_service_error::AuthenticationServiceError;
-use crate::shared::extract_env::extract_env;
+use crate::utils::extract_env::extract_env;
 
 pub const _FIVE_MINUTES: Duration = Duration::from_secs(5 * 60 * 60);
 pub const TWENTY_FIVE_MINUTES: Duration = Duration::from_secs(26 * 60 * 60);

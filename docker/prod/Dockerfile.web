@@ -1,0 +1,79 @@
+# syntax=docker/dockerfile:1
+
+# --- Stage 1: regenerate core migration SQL from source -------------------
+# The SPA replays these PGlite migrations at runtime (synced into
+# console/app/layers/shared/data/core/migrations by the prebuild hook). No wasm-pack is
+# needed: the console only consumes core types + this SQL.
+FROM rust:1.94-slim-bookworm AS migrations
+
+RUN set -e && \
+    apt-get update -q && \
+    apt-get install -yq --no-install-recommends \
+        libssl-dev \
+        pkg-config \
+        clang \
+        libclang-dev \
+        zlib1g-dev \
+        llvm-dev \
+        build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /repo
+
+COPY core ./core
+
+RUN cargo run --quiet \
+        --manifest-path core/migration/Cargo.toml \
+        --bin migration-export -- core/generated/pglite/migrations
+
+# --- Stage 2: build the Nuxt SPA -------------------------------------------
+FROM node:22-slim AS builder
+
+# Baked into the client bundle at build time.
+ARG NUXT_PUBLIC_APOLLO_ENDPOINT=http://localhost:8000/orchard
+ARG SERVER_URL=http://localhost:5006
+ENV NUXT_PUBLIC_APOLLO_ENDPOINT=$NUXT_PUBLIC_APOLLO_ENDPOINT \
+    SERVER_URL=$SERVER_URL
+
+WORKDIR /repo
+
+# Install first so dependency layers cache while sources churn.
+# --ignore-scripts skips core's `prepare` (cargo + wasm-pack); the console
+# only uses core types + the migration SQL, both handled elsewhere.
+COPY console/package.json console/package-lock.json ./console/
+COPY core ./core
+
+# npm runs `prepare` for file: deps even with --ignore-scripts; core's prepare
+# invokes cargo + wasm-pack (not needed here), so neutralize it before install.
+RUN node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('core/package.json','utf8'));delete p.scripts.prepare;fs.writeFileSync('core/package.json',JSON.stringify(p,null,2)+'\n')" \
+ && cd console && npm ci --ignore-scripts --no-audit --no-fund
+
+# Overwrite the committed SQL with the freshly generated one.
+COPY --from=migrations /repo/core/generated ./core/generated
+
+COPY console ./console
+
+WORKDIR /repo/console
+
+# postinstall (nuxt prepare) was skipped by --ignore-scripts; run it here.
+RUN npx nuxt prepare && npm run build
+
+# --- Stage 3: runtime (Nitro node server for the SPA) ----------------------
+FROM node:22-slim AS runtime
+
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOST=0.0.0.0
+
+WORKDIR /app
+
+COPY --from=builder --chown=node:node /repo/console/.output .output
+
+USER node
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD node -e "fetch('http://localhost:' + (process.env.PORT || 3000) + '/').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"
+
+CMD ["node", ".output/server/index.mjs"]

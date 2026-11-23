@@ -12,7 +12,7 @@ pub enum UserServiceError {
     #[error(transparent)]
     ServiceError(#[from] ServiceError),
     #[error(transparent)]
-    SqlxError(#[from] sqlx::error::Error),
+    DbError(#[from] sea_orm::DbErr),
 }
 
 impl UserServiceError {
@@ -21,7 +21,7 @@ impl UserServiceError {
             Self::OperationFailed(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::ConflictError(_) => StatusCode::CONFLICT,
             Self::ServiceError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::SqlxError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::DbError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }

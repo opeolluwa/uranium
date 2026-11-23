@@ -4,7 +4,7 @@ services:
     container_name: uranium
     build:
       context: .
-      dockerfile: docker/${ENVIRONMENT}/Dockerfile
+      dockerfile: docker/${ENVIRONMENT}/Dockerfile.app
       args:
         - CARGO_TARGET_DIR=/cargo-target
     ports:
@@ -19,10 +19,17 @@ services:
       DATABASE_HOST: postgres
       DATABASE_URL: postgres://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
       JWT_SIGNING_KEY: fXUuojVKfWgVi3qLgQl8GjPWHsihf33aExhi
-    # env_file:
-    #   - .env.local
+      SMTP_HOST: maildev
+      SMTP_PORT: 1025
+      SMTP_USERNAME: ""
+      SMTP_PASSWORD: ""
+      SMTP_TLS_MODE: none
+      EMAIL_FROM_ADDRESS: accounts@uranium.dev
+      EMAIL_FROM_NAME: Uranium Accounts
     depends_on:
-      database: 
+      database:
+        condition: service_started
+      maildev:
         condition: service_started
     networks:
       - internal
@@ -30,7 +37,7 @@ services:
       - .:/app:cached
       - cargo-target:/cargo-target:delegated
       - rust-cache:/usr/local/cargo/registry:delegated
-    command: cargo watch -qcx run 
+    command: cargo watch -qcx run
     stdin_open: true
     tty: true
     healthcheck:
@@ -38,18 +45,68 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s  # Wait 30 seconds before starting health checks
+      start_period: 30s
 
   database:
-    image: postgres:15-alpine 
+    image: postgres:15-alpine
     restart: always
     container_name: postgres
     environment:
       - POSTGRES_USER=${DATABASE_USER}
       - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
       - POSTGRES_DB=${DATABASE_NAME}
+    ports:
+      - "6543:5432"
     networks:
       - internal
+
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    ports:
+      - "7379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  redisinsight:
+    image: redis/redisinsight:3.8
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      RI_REDIS_HOST: redis
+      RI_REDIS_PORT: 6379
+    volumes:
+      - redisinsight-data:/data
+    networks:
+      - internal
+    ports:
+      - 5540:5540
+
+  maildev:
+    image: maildev/maildev
+    container_name: maildev
+    ports:
+      - "1080:1080"   # WEB UI
+      - "1025:1025"  #SMTP port 
+    environment:
+      - MAILDEV_OUTGOING_HOST=localhost
+      - MAILDEV_OUTGOING_PORT=3400
+      - MAILDEV_OUTGOING_USER=backoffice
+      - MAILDEV_OUTGOING_PASS=backoffice
+
+    networks:
+      - internal
+
 
 networks:
   internal:
@@ -58,3 +115,7 @@ networks:
 volumes:
   cargo-target:
   rust-cache:
+  postgres-data:
+  pgadmin-data:
+  redis-data:
+  redisinsight-data:

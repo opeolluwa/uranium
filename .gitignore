@@ -26,3 +26,5 @@ Cargo.lock
 .env.production
 .env.local
 zzzsandbox
+.env
+scripts/node_modules/

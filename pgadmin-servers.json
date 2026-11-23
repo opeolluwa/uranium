@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Uranium Dev DB",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "uranium",
+      "Username": "uranium",
+      "Password": "uranium",
+      "SSLMode": "prefer",
+      "SavePassword": true
+    }
+  }
+}

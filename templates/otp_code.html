@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Your verification code{% endblock %}
+
+{% block preheader %}Your verification code is inside — it expires in 5 minutes.{% endblock %}
+
+{% block greeting %}Hi {{ name }},{% endblock %}
+
+{% block content %}
+  <p style="margin: 0 0 16px; color: #4a5560;">
+    Use the code below to verify your email address. It confirms that this inbox
+    belongs to you.
+  </p>
+
+  <div style="text-align: center;">
+    <table
+      border="0"
+      cellpadding="0"
+      cellspacing="0"
+      role="presentation"
+      style="margin: 24px auto 0;"
+    >
+      <tbody>
+        <tr>
+          <td
+            align="center"
+            style="
+              padding: 16px 32px;
+              border-radius: 8px;
+              background-color: #f3f0ff;
+              font-family: 'Lato', Arial, sans-serif;
+              font-size: 34px;
+              font-weight: 700;
+              letter-spacing: 8px;
+              color: #6d28d9;
+            "
+          >{{ code }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p style="margin: 28px 0 8px; color: #8a9490; font-size: 13px;">
+    This code expires in 5 minutes. If it expires, request a new one — each code
+    can only be used once.
+  </p>
+  <p style="margin: 0; color: #8a9490; font-size: 13px;">
+    We will never ask you for this code. If someone is trying to get you to
+    share it, don't — it grants access to your account. You can safely ignore
+    this email if you didn't request a code.
+  </p>
+{% endblock %}

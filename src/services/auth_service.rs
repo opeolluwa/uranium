@@ -1,7 +1,7 @@
-use sqlx::{Pool, Postgres};
+use sea_orm::DatabaseConnection;
 
 use crate::adapters::dto::jwt::{Claims, JwtCredentials, TEN_MINUTES, TWENTY_FIVE_MINUTES};
-use crate::entities::user::UserEntity;
+use crate::entities::user;
 use crate::{
     adapters::{
         requests::auth::{
@@ -17,20 +17,26 @@ use crate::{
         auth_service_error::AuthenticationServiceError, user_service_error::UserServiceError,
     },
     repositories::user_repository::{UserRepository, UserRepositoryTrait},
-    services::user_helper_service::{UserHelperService, UserHelperServiceTrait},
+    services::{
+        mailer::SmtpEmailSender,
+        email_dispatch_service::EmailDispatchService,
+        user_helper_service::{UserHelperService, UserHelperServiceTrait},
+    },
 };
 
 #[derive(Clone)]
 pub struct AuthenticationService {
     user_repository: UserRepository,
     user_helper_service: UserHelperService,
+    email_sender: SmtpEmailSender,
 }
 
 impl AuthenticationService {
-    pub fn init(pool: &Pool<Postgres>) -> Self {
+    pub fn init(db: &DatabaseConnection, email_sender: SmtpEmailSender) -> Self {
         Self {
-            user_repository: UserRepository::init(pool),
+            user_repository: UserRepository::init(db),
             user_helper_service: UserHelperService::init(),
+            email_sender,
         }
     }
 }
@@ -93,10 +99,22 @@ impl AuthenticationServiceTrait for AuthenticationService {
             last_name: request.last_name.to_owned(),
         };
 
+        let email = user.email.clone();
+        let first_name = user.first_name.clone();
+
         self.user_repository.create_user(user).await.map_err(|err| {
             log::error!("{}", err.to_string());
             AuthenticationServiceError::from(err)
-        })
+        })?;
+
+        let sender = self.email_sender.clone();
+        tokio::task::spawn(async move {
+            if let Err(err) = sender.send_welcome_email(&email, &first_name, "/dashboard").await {
+                tracing::error!("Failed to send welcome email: {}", err);
+            }
+        });
+
+        Ok(())
     }
 
     async fn login(
@@ -129,13 +147,22 @@ impl AuthenticationServiceTrait for AuthenticationService {
             return Err(AuthenticationServiceError::WrongCredentials);
         };
 
-        tokio::task::spawn(async move { todo!("send account retrival email") });
-
-        let UserEntity {
-            email, identifier, ..
+        let user::Model {
+            email, identifier, first_name, ..
         } = user.unwrap();
 
         let token = JwtCredentials::new(&email, &identifier).generate_token(TEN_MINUTES)?;
+
+        let sender = self.email_sender.clone();
+        let reset_link = format!("/reset-password?token={}", token);
+        let user_email = email.clone();
+        let user_name = first_name.clone();
+        tokio::task::spawn(async move {
+            if let Err(err) = sender.send_password_reset_email(&user_email, &user_name, &reset_link).await {
+                tracing::error!("Failed to send password reset email: {}", err);
+            }
+        });
+
         Ok(ForgottenPasswordResponse { token })
     }
 
@@ -145,7 +172,7 @@ impl AuthenticationServiceTrait for AuthenticationService {
         claims: &Claims,
     ) -> Result<SetNewPasswordResponse, AuthenticationServiceError> {
         let new_password = self.user_helper_service.hash_password(&request.password)?;
-    
+
         if self
             .user_repository
             .find_by_identifier(&claims.identifier)
@@ -176,7 +203,6 @@ impl AuthenticationServiceTrait for AuthenticationService {
             return Err(AuthenticationServiceError::InvalidToken);
         };
 
-        //todo: validate account credentials
         self.user_repository
             .update_account_status(&claims.identifier)
             .await?;

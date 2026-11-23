@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Confirm your account{% endblock %}
+
+{% block preheader %}Confirm your email address to activate your Uranium account.{% endblock %}
+
+{% block greeting %}Hi {{ name }},{% endblock %}
+
+{% block content %}
+  <p style="margin: 0 0 16px; color: #4a5560;">
+    One last step — confirm your email address to activate your account.
+  </p>
+
+  {% match code %}
+    {% when Some with (code) %}
+    <p style="margin: 0 0 8px; color: #4a5560;">
+      Enter this code to confirm your email:
+    </p>
+    <div style="text-align: center;">
+      <table
+        border="0"
+        cellpadding="0"
+        cellspacing="0"
+        role="presentation"
+        style="margin: 24px auto 0;"
+      >
+        <tbody>
+          <tr>
+            <td
+              align="center"
+              style="
+                padding: 16px 32px;
+                border-radius: 8px;
+                background-color: #f3f0ff;
+                font-family: 'Lato', Arial, sans-serif;
+                font-size: 34px;
+                font-weight: 700;
+                letter-spacing: 8px;
+                color: #6d28d9;
+              "
+            >{{ code }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin: 28px 0 8px; color: #8a9490; font-size: 13px;">
+      This code expires in 5 minutes.
+    </p>
+    {% when None %}
+  {% endmatch %}
+
+  {% match confirmation_link %}
+    {% when Some with (link) %}
+    {{ cta(href=link, label="Confirm your email") }}
+
+    <p style="margin: 28px 0 8px; color: #8a9490; font-size: 13px;">
+      This link expires in 15 minutes.
+    </p>
+
+    {{ raw_link(href=link) }}
+    {% when None %}
+  {% endmatch %}
+
+  <p style="margin: 20px 0 0; color: #8a9490; font-size: 13px;">
+    If you didn't create this account, you can safely ignore this email.
+  </p>
+{% endblock %}

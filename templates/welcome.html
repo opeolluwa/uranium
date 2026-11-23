@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to Uranium{% endblock %}
+
+{% block preheader %}Your Uranium account is ready.{% endblock %}
+
+{% block greeting %}Hi {{ name }},{% endblock %}
+
+{% block content %}
+  <p style="margin: 0 0 16px; color: #4a5560;">
+    Your account has been created and is ready to use. You can sign in and
+    start exploring right away.
+  </p>
+
+  {{ cta(href=dashboard_link, label="Go to your dashboard") }}
+
+  <p style="margin: 28px 0 8px; color: #8a9490; font-size: 13px;">
+    This link is personal to you. Please don't share it.
+  </p>
+
+  {{ raw_link(href=dashboard_link) }}
+
+  <p style="margin: 24px 0 0; color: #8a9490; font-size: 13px;">
+    Didn't create this account? Reply to this email and we'll sort it out.
+  </p>
+{% endblock %}

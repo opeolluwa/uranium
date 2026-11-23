@@ -7,5 +7,5 @@ pub mod middlewares;
 pub mod repositories;
 pub mod routes;
 pub mod services;
-pub mod shared;
-pub mod states;
+pub mod state;
+pub mod utils;

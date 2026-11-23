@@ -8,7 +8,7 @@ use crate::{
         create_account, forgotten_password, login, request_refresh_token, set_new_password,
         verify_account,
     },
-    states::services_state::ServicesState,
+    state::ServicesState,
 };
 
 pub(super) fn authentication_routes(state: ServicesState) -> Router {
