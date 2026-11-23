@@ -101,8 +101,8 @@ services:
     environment:
       - MAILDEV_OUTGOING_HOST=localhost
       - MAILDEV_OUTGOING_PORT=3400
-      - MAILDEV_OUTGOING_USER=backoffice
-      - MAILDEV_OUTGOING_PASS=backoffice
+      - MAILDEV_OUTGOING_USER=uranium
+      - MAILDEV_OUTGOING_PASS=uranium
 
     networks:
       - internal
