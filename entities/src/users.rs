@@ -17,9 +17,20 @@ pub struct Model {
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: Option<DateTimeWithTimeZone>,
     pub is_active: bool,
+    #[sea_orm(default_value = false)]
+    pub two_factor_enabled: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
+pub enum Relation {
+    #[sea_orm(has_many = "super::one_time_passwords::Entity")]
+    OneTimePasswords,
+}
+
+impl Related<super::one_time_passwords::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::OneTimePasswords.def()
+    }
+}
 
 impl ActiveModelBehavior for ActiveModel {}

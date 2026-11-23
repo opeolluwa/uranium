@@ -8,6 +8,7 @@ use axum::{
     http::{HeaderName, HeaderValue, StatusCode},
 };
 use uranium_lib::config::db::init_db_pool;
+use uranium_lib::config::redis::init_redis_pool;
 use uranium_lib::config::{
     cors::init_cors, env::load_config, logger::init_tracing, shutdown::shutdown_signal,
 };
@@ -38,7 +39,8 @@ async fn main() -> Result<(), AppError> {
     init_tracing(&app_config);
 
     let db_conn = init_db_pool(&app_config).await?;
-    let http_routes = load_http_routes(db_conn, &app_config)?;
+    let redis_conn = init_redis_pool(&app_config).await?;
+    let http_routes = load_http_routes(db_conn, &app_config, redis_conn)?;
 
     let app = Router::new()
         .merge(http_routes)

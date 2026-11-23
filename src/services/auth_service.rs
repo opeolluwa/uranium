@@ -1,27 +1,25 @@
 use sea_orm::DatabaseConnection;
 
-use crate::adapters::jwt::{Claims, JwtCredentials, TEN_MINUTES, TWENTY_FIVE_MINUTES};
+use crate::adapters::{
+    auth_request::{
+        CreateUserRequest, ForgottenPasswordRequest, LoginRequest, RefreshTokenRequest,
+        SetNewPasswordRequest, VerifyAccountRequest, VerifyOtpRequest,
+    },
+    auth_response::{
+        ForgottenPasswordResult, LoginChallenge, LoginResponse, LoginResult, RefreshTokenResult,
+        SetNewPasswordResult, VerifyAccountResult,
+    },
+};
 use crate::entities::users;
-use crate::{
-    adapters::{
-        auth_request::{
-            CreateUserRequest, ForgottenPasswordRequest, LoginRequest, RefreshTokenRequest,
-            SetNewPasswordRequest, VerifyAccountRequest,
-        },
-        auth_response::{
-            ForgottenPasswordResponse, LoginResponse, RefreshTokenResponse, SetNewPasswordResponse,
-            VerifyAccountResponse,
-        },
-    },
-    errors::{
-        auth_service_error::AuthenticationServiceError, user_service_error::UserServiceError,
-    },
-    repositories::user_repository::{UserRepository, UserRepositoryTrait},
-    services::{
-        mailer::SmtpEmailSender,
-        email_dispatch_service::EmailDispatchService,
-        user_helper_service::{UserHelperService, UserHelperServiceTrait},
-    },
+use crate::errors::auth_service_error::AuthenticationServiceError;
+use crate::errors::user_service_error::UserServiceError;
+use crate::repositories::user_repository::{UserRepository, UserRepositoryTrait};
+use crate::services::{
+    email_dispatch_service::EmailDispatchService,
+    mailer::SmtpEmailSender,
+    otp_service::{OtpPurpose, OtpService},
+    token_service::{TokenClaims, TokenService, TokenType},
+    user_helper_service::{UserHelperService, UserHelperServiceTrait},
 };
 
 #[derive(Clone)]
@@ -29,54 +27,30 @@ pub struct AuthenticationService {
     user_repository: UserRepository,
     user_helper_service: UserHelperService,
     email_sender: SmtpEmailSender,
+    token_service: TokenService,
+    otp_service: OtpService,
+    frontend_url: String,
 }
 
 impl AuthenticationService {
-    pub fn init(db: &DatabaseConnection, email_sender: SmtpEmailSender) -> Self {
+    pub fn init(
+        db: &DatabaseConnection,
+        email_sender: SmtpEmailSender,
+        token_service: TokenService,
+        otp_service: OtpService,
+        frontend_url: String,
+    ) -> Self {
         Self {
             user_repository: UserRepository::init(db),
             user_helper_service: UserHelperService::init(),
             email_sender,
+            token_service,
+            otp_service,
+            frontend_url,
         }
     }
-}
-pub trait AuthenticationServiceTrait {
-    fn create_account(
-        &self,
-        request: &CreateUserRequest,
-    ) -> impl std::future::Future<Output = Result<(), AuthenticationServiceError>> + Send;
 
-    fn login(
-        &self,
-        request: &LoginRequest,
-    ) -> impl std::future::Future<Output = Result<LoginResponse, AuthenticationServiceError>> + Send;
-
-    fn forgotten_password(
-        &self,
-
-        request: &ForgottenPasswordRequest,
-    ) -> impl std::future::Future<Output = Result<ForgottenPasswordResponse, AuthenticationServiceError>> + Send;
-
-    fn set_new_password(
-        &self,
-        request: &SetNewPasswordRequest,
-        claims: &Claims,
-    ) -> impl std::future::Future<Output = Result<SetNewPasswordResponse, AuthenticationServiceError>> + Send;
-
-    fn verify_account(
-        &self,
-        claims: &Claims,
-        request: &VerifyAccountRequest,
-    ) -> impl std::future::Future<Output = Result<VerifyAccountResponse, AuthenticationServiceError>> + Send;
-
-    fn request_refresh_token(
-        &self,
-        request: &RefreshTokenRequest,
-    ) -> impl std::future::Future<Output = Result<RefreshTokenResponse, AuthenticationServiceError>> + Send;
-}
-
-impl AuthenticationServiceTrait for AuthenticationService {
-    async fn create_account(
+    pub async fn create_account(
         &self,
         request: &CreateUserRequest,
     ) -> Result<(), AuthenticationServiceError> {
@@ -87,7 +61,7 @@ impl AuthenticationServiceTrait for AuthenticationService {
             .is_some()
         {
             return Err(AuthenticationServiceError::from(
-                UserServiceError::ConflictError("User with the email already exists".to_string()),
+                UserServiceError::ConflictError("User with this email already exists".to_string()),
             ));
         }
 
@@ -103,13 +77,16 @@ impl AuthenticationServiceTrait for AuthenticationService {
         let first_name = user.first_name.clone();
 
         self.user_repository.create_user(user).await.map_err(|err| {
-            log::error!("{}", err.to_string());
+            tracing::error!("{}", err.to_string());
             AuthenticationServiceError::from(err)
         })?;
 
         let sender = self.email_sender.clone();
         tokio::task::spawn(async move {
-            if let Err(err) = sender.send_welcome_email(&email, &first_name, "/dashboard").await {
+            if let Err(err) = sender
+                .send_welcome_email(&email, &first_name, "/dashboard")
+                .await
+            {
                 tracing::error!("Failed to send welcome email: {}", err);
             }
         });
@@ -117,7 +94,7 @@ impl AuthenticationServiceTrait for AuthenticationService {
         Ok(())
     }
 
-    async fn login(
+    pub async fn login(
         &self,
         request: &LoginRequest,
     ) -> Result<LoginResponse, AuthenticationServiceError> {
@@ -132,46 +109,106 @@ impl AuthenticationServiceTrait for AuthenticationService {
             return Err(AuthenticationServiceError::WrongCredentials);
         }
 
-        let token =
-            JwtCredentials::new(&user.email, &user.identifier).generate_token(TEN_MINUTES)?;
+        if !user.is_active {
+            return Err(AuthenticationServiceError::AccountInactive);
+        }
 
-        Ok(LoginResponse { token })
+        if user.two_factor_enabled {
+            return self.handle_two_factor_login(&user).await;
+        }
+
+        self.issue_login_tokens(&user).await
     }
 
-    async fn forgotten_password(
+    async fn handle_two_factor_login(
         &self,
-        request: &ForgottenPasswordRequest,
-    ) -> Result<ForgottenPasswordResponse, AuthenticationServiceError> {
-        let user = self.user_repository.find_by_email(&request.email).await;
-        if user.is_none() {
-            return Err(AuthenticationServiceError::WrongCredentials);
-        };
+        user: &users::Model,
+    ) -> Result<LoginResponse, AuthenticationServiceError> {
+        let two_factor_token = self
+            .token_service
+            .generate_two_factor_token(&user.email, &user.identifier)?;
 
-        let users::Model {
-            email, identifier, first_name, ..
-        } = user.unwrap();
-
-        let token = JwtCredentials::new(&email, &identifier).generate_token(TEN_MINUTES)?;
+        let otp_code = self
+            .otp_service
+            .generate_otp(&user.identifier, OtpPurpose::TwoFactor)
+            .await?;
 
         let sender = self.email_sender.clone();
-        let reset_link = format!("/reset-password?token={}", token);
-        let user_email = email.clone();
-        let user_name = first_name.clone();
+        let email = user.email.clone();
+        let name = user.first_name.clone();
         tokio::task::spawn(async move {
-            if let Err(err) = sender.send_password_reset_email(&user_email, &user_name, &reset_link).await {
-                tracing::error!("Failed to send password reset email: {}", err);
+            if let Err(err) = sender.send_otp_email(&email, &name, &otp_code).await {
+                tracing::error!("Failed to send OTP email: {}", err);
             }
         });
 
-        Ok(ForgottenPasswordResponse { token })
+        Ok(LoginResponse::TwoFactorRequired(LoginChallenge {
+            token: two_factor_token.token,
+            expires_at: two_factor_token.expires_at,
+            two_factor_enabled: true,
+        }))
     }
 
-    async fn set_new_password(
+    async fn issue_login_tokens(
+        &self,
+        user: &users::Model,
+    ) -> Result<LoginResponse, AuthenticationServiceError> {
+        let access = self
+            .token_service
+            .generate_access_token(&user.email, &user.identifier)?;
+        let refresh = self
+            .token_service
+            .generate_refresh_token(&user.email, &user.identifier)
+            .await?;
+
+        Ok(LoginResponse::Success(LoginResult {
+            access_token: access.token,
+            refresh_token: refresh.token,
+            access_token_expiry: access.expires_at,
+            refresh_token_expiry: refresh.expires_at,
+            two_factor_enabled: user.two_factor_enabled,
+        }))
+    }
+
+    pub async fn forgotten_password(
+        &self,
+        request: &ForgottenPasswordRequest,
+    ) -> Result<ForgottenPasswordResult, AuthenticationServiceError> {
+        if let Some(user) = self.user_repository.find_by_email(&request.email).await {
+            let reset_token = self
+                .token_service
+                .generate_reset_token(&user.email, &user.identifier)?;
+
+            let reset_link = format!(
+                "{}/reset-password?token={}",
+                self.frontend_url, reset_token.token
+            );
+
+            let sender = self.email_sender.clone();
+            let email = user.email.clone();
+            let name = user.first_name.clone();
+            tokio::task::spawn(async move {
+                if let Err(err) = sender
+                    .send_password_reset_email(&email, &name, &reset_link)
+                    .await
+                {
+                    tracing::error!("Failed to send password reset email: {}", err);
+                }
+            });
+        }
+
+        Ok(ForgottenPasswordResult {})
+    }
+
+    pub async fn set_new_password(
         &self,
         request: &SetNewPasswordRequest,
-        claims: &Claims,
-    ) -> Result<SetNewPasswordResponse, AuthenticationServiceError> {
-        let new_password = self.user_helper_service.hash_password(&request.password)?;
+        claims: &TokenClaims,
+        raw_token: &str,
+    ) -> Result<SetNewPasswordResult, AuthenticationServiceError> {
+        if claims.token_type != TokenType::PasswordReset {
+            return Err(AuthenticationServiceError::InvalidTokenType);
+        }
 
         if self
             .user_repository
@@ -180,20 +217,28 @@ impl AuthenticationServiceTrait for AuthenticationService {
             .is_none()
         {
             return Err(AuthenticationServiceError::InvalidToken);
-        };
+        }
 
+        let new_password = self.user_helper_service.hash_password(&request.password)?;
         self.user_repository
             .update_password(&claims.identifier, &new_password)
             .await?;
 
-        Ok(SetNewPasswordResponse {})
+        self.token_service
+            .blacklist_token(raw_token, claims.exp)
+            .await?;
+        self.token_service
+            .revoke_all_refresh_tokens(&claims.identifier)
+            .await?;
+
+        Ok(SetNewPasswordResult {})
     }
 
-    async fn verify_account(
+    pub async fn verify_account(
         &self,
-        claims: &Claims,
-        _request: &VerifyAccountRequest,
-    ) -> Result<VerifyAccountResponse, AuthenticationServiceError> {
+        claims: &TokenClaims,
+        request: &VerifyAccountRequest,
+    ) -> Result<VerifyAccountResult, AuthenticationServiceError> {
         if self
             .user_repository
             .find_by_identifier(&claims.identifier)
@@ -201,23 +246,153 @@ impl AuthenticationServiceTrait for AuthenticationService {
             .is_none()
         {
             return Err(AuthenticationServiceError::InvalidToken);
-        };
+        }
+
+        self.otp_service
+            .validate_otp(
+                &claims.identifier,
+                OtpPurpose::AccountVerification,
+                &request.otp,
+            )
+            .await?;
 
         self.user_repository
             .update_account_status(&claims.identifier)
             .await?;
-        Ok(VerifyAccountResponse {})
+
+        Ok(VerifyAccountResult {})
     }
 
-    async fn request_refresh_token(
+    pub async fn verify_otp(
+        &self,
+        claims: &TokenClaims,
+        request: &VerifyOtpRequest,
+    ) -> Result<LoginResult, AuthenticationServiceError> {
+        if claims.token_type != TokenType::TwoFactor {
+            return Err(AuthenticationServiceError::InvalidTokenType);
+        }
+
+        let Some(user) = self
+            .user_repository
+            .find_by_identifier(&claims.identifier)
+            .await
+        else {
+            return Err(AuthenticationServiceError::InvalidToken);
+        };
+
+        if !user.is_active {
+            return Err(AuthenticationServiceError::AccountInactive);
+        }
+
+        self.otp_service
+            .validate_otp(&claims.identifier, OtpPurpose::TwoFactor, &request.otp)
+            .await?;
+
+        let access = self
+            .token_service
+            .generate_access_token(&user.email, &user.identifier)?;
+        let refresh = self
+            .token_service
+            .generate_refresh_token(&user.email, &user.identifier)
+            .await?;
+
+        Ok(LoginResult {
+            access_token: access.token,
+            refresh_token: refresh.token,
+            access_token_expiry: access.expires_at,
+            refresh_token_expiry: refresh.expires_at,
+            two_factor_enabled: user.two_factor_enabled,
+        })
+    }
+
+    pub async fn request_refresh_token(
         &self,
         request: &RefreshTokenRequest,
-    ) -> Result<RefreshTokenResponse, AuthenticationServiceError> {
-        let refresh_token = JwtCredentials::new(&request.email, &request.identifier)
-            .generate_token(TWENTY_FIVE_MINUTES)?;
+    ) -> Result<RefreshTokenResult, AuthenticationServiceError> {
+        let claims = self
+            .token_service
+            .validate_token(&request.refresh_token, &[TokenType::Refresh])?;
 
-        Ok(RefreshTokenResponse {
-            token: refresh_token,
+        let Some(user) = self
+            .user_repository
+            .find_by_identifier(&claims.identifier)
+            .await
+        else {
+            return Err(AuthenticationServiceError::InvalidToken);
+        };
+
+        if !user.is_active {
+            return Err(AuthenticationServiceError::AccountInactive);
+        }
+
+        let consumed = self
+            .token_service
+            .consume_refresh_token(&request.refresh_token, &claims.identifier)
+            .await?;
+
+        if !consumed {
+            self.token_service
+                .revoke_all_refresh_tokens(&claims.identifier)
+                .await?;
+            return Err(AuthenticationServiceError::RefreshTokenConsumed);
+        }
+
+        let access = self
+            .token_service
+            .generate_access_token(&user.email, &user.identifier)?;
+        let refresh = self
+            .token_service
+            .generate_refresh_token(&user.email, &user.identifier)
+            .await?;
+
+        Ok(RefreshTokenResult {
+            access_token: access.token,
+            refresh_token: refresh.token,
+            access_token_expiry: access.expires_at,
+            refresh_token_expiry: refresh.expires_at,
         })
+    }
+
+    pub async fn logout(
+        &self,
+        claims: &TokenClaims,
+        raw_token: &str,
+    ) -> Result<(), AuthenticationServiceError> {
+        self.token_service
+            .blacklist_token(raw_token, claims.exp)
+            .await?;
+        self.token_service
+            .revoke_all_refresh_tokens(&claims.identifier)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn request_otp(
+        &self,
+        claims: &TokenClaims,
+    ) -> Result<(), AuthenticationServiceError> {
+        let Some(user) = self
+            .user_repository
+            .find_by_identifier(&claims.identifier)
+            .await
+        else {
+            return Err(AuthenticationServiceError::InvalidToken);
+        };
+
+        let otp_code = self
+            .otp_service
+            .generate_otp(&claims.identifier, OtpPurpose::TwoFactor)
+            .await?;
+
+        let sender = self.email_sender.clone();
+        let email = user.email.clone();
+        let name = user.first_name.clone();
+        tokio::task::spawn(async move {
+            if let Err(err) = sender.send_otp_email(&email, &name, &otp_code).await {
+                tracing::error!("Failed to send OTP email: {}", err);
+            }
+        });
+
+        Ok(())
     }
 }

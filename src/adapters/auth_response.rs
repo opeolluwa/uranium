@@ -2,34 +2,46 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct CreateUserResponse {
-    pub email: String,
-    pub password: String,
-    pub first_name: String,
-    pub last_name: String,
+pub struct LoginResult {
+    pub access_token: String,
+    pub refresh_token: String,
+    pub access_token_expiry: i64,
+    pub refresh_token_expiry: i64,
+    pub two_factor_enabled: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct LoginResponse {
+pub struct LoginChallenge {
     pub token: String,
+    pub expires_at: i64,
+    pub two_factor_enabled: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged, rename_all = "camelCase")]
+pub enum LoginResponse {
+    Success(LoginResult),
+    TwoFactorRequired(LoginChallenge),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ForgottenPasswordResponse {
-    pub token: String,
-}
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SetNewPasswordResponse {}
+pub struct ForgottenPasswordResult {}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct VerifyAccountResponse {}
+pub struct SetNewPasswordResult {}
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct RefreshTokenResponse {
-    pub token: String,
+pub struct VerifyAccountResult {}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RefreshTokenResult {
+    pub access_token: String,
+    pub refresh_token: String,
+    pub access_token_expiry: i64,
+    pub refresh_token_expiry: i64,
 }

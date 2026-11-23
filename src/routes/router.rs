@@ -1,4 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Json, Router};
+use redis::aio::ConnectionManager;
 use sea_orm::DatabaseConnection;
 
 use crate::{
@@ -9,13 +10,17 @@ use crate::{
     state::{Contracts, ServicesState},
 };
 
-pub fn load_routes(db: DatabaseConnection, app_config: &AppConfig) -> Result<Router, AppError> {
+pub fn load_routes(
+    db: DatabaseConnection,
+    app_config: &AppConfig,
+    redis: ConnectionManager,
+) -> Result<Router, AppError> {
     let contracts = Contracts::new(app_config)?;
-    let state = ServicesState::new(&db, &contracts);
+    let state = ServicesState::new(&db, &contracts, redis, app_config);
 
     Ok(Router::new()
         .merge(public_routes(state.clone()))
-        .merge(authentication_routes(state.clone()))
+        .merge(authentication_routes(state.clone(), app_config))
         .nest("/users", user_routes(state.clone()))
         .fallback(async || {
             (

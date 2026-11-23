@@ -2,4 +2,5 @@
 
 pub mod prelude;
 
+pub mod one_time_passwords;
 pub mod users;
