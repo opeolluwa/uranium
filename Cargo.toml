@@ -3,8 +3,11 @@ name = "uranium"
 version = "0.1.0"
 edition = "2024"
 
+[workspace]
+members = ["entities", "macros", "migration"]
+
 [lib]
-name = "uralium_lib"
+name = "uranium_lib"
 path = "src/lib.rs"
 
 [dependencies]
@@ -16,15 +19,35 @@ jsonwebtoken = "9.3.1"
 log = "0.4.27"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
-sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "postgres", "macros", "uuid", "migrate"] }
+sea-orm = { version = "2.0.2", features = ["runtime-tokio-rustls", "sqlx-postgres", "macros", "debug-print", "with-chrono", "with-uuid"] }
+migration = { version = "0.1.0", path = "migration", package = "uranium_migration" }
+lettre = { version = "0.11.22", default-features = false, features = ["smtp-transport", "pool", "builder", "hostname", "tokio1-rustls", "ring", "rustls-native-certs"] }
+askama = "0.15.6"
 thiserror = "2.0.12"
 tokio = { version = "1.44.2", features = ["full"] }
-tower-http = { version = "0.6.1", features = ["trace"] }
+tower-http = { version = "0.6.6", features = ["limit", "trace", "cors", "timeout", "sensitive-headers", "compression-gzip"] }
+url = "2.5"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1.16.0", features = ["serde", "v4"] }
 validator = { version = "0.20.0", features = ["derive"] }
+axum-governor = "2.1.2"
+secrecy = { version = "0.10.3", features = ["serde"] }
+base64 = "0.23.1"
+aes-gcm = "0.11.1"
+hex = "0.4.3"
+rand = "0.9"
 
 [dev-dependencies]
 axum = { version = "0.8.3", features = ["macros"] }
 axum-test = "17.3.0"
+
+
+[profile.release]
+opt-level = 3
+codegen-units = 1
+lto = "thin"
+panic = "abort"
+strip = "symbols"
+debug = false
+incremental = false

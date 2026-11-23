@@ -7,7 +7,7 @@ use crate::adapters::response::api_response::ApiResponseBuilder;
 #[derive(thiserror::Error, Debug)]
 pub enum ServiceError {
     #[error("an internal database error has occurred")]
-    DatabaseError(#[from] sqlx::error::Error),
+    DatabaseError(#[from] sea_orm::DbErr),
     #[error(transparent)]
     ValidationError(#[from] validator::ValidationErrors),
     #[error(transparent)]
